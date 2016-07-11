@@ -1,0 +1,12 @@
+{
+	"name": "middcir2",
+	"authors": [
+		"burner"
+	],
+	"description": "A minimal D application.",
+	"copyright": "Copyright © 2016, burner",
+	"license": "proprietary",
+	"dependencies": {
+		"emsi_containers": ">=0.4.3"
+	}
+}
