@@ -7,7 +7,7 @@ struct Iterator(T) {
 
 	void opUnary(string s)() if(s == "++") { increment(); }
 	void opUnary(string s)() if(s == "--") { decrement(); }
-	T opUnary(string s)() if(s == "*") { return getData(); }
+	ref T opUnary(string s)() if(s == "*") { return getData(); }
 
 	this(Node!(T) current) {
 		this.current = current;
@@ -122,7 +122,15 @@ class Node(T) {
 	}
 }
 
-struct RBTree(T) {
+bool defaultLess(T)(ref T l, ref T r) {
+	return l < r;
+}
+
+bool defaultEqual(T)(ref T l, ref T r) {
+	return l == r;
+}
+
+struct RBTree(T,alias less = defaultLess, alias equal = defaultEqual) {
 	size_t size;
 	Node!(T) root;
 
@@ -249,8 +257,14 @@ struct RBTree(T) {
 			int lh = validate(ln, node);
 			int rh = validate(rn, node);
 			
-			if((ln !is null && ln.data >= node.data)
-					|| (rn !is null && rn.data <= node.data)) {
+			//if((ln !is null && ln.data >= node.data)
+			if((ln !is null 
+					&& (less(node.data, ln.data) || equal(node.data, ln.data))
+				)
+					//|| (rn !is null && rn.data <= node.data)) 
+					|| (rn !is null 
+						&& (!less(rn.data, node.data) || equal(rn.data, node.data))))
+			{
 				writeln("Binary tree violation");
 				return 0;
 			}
@@ -276,12 +290,12 @@ struct RBTree(T) {
 	}
 
 	private Node!(T) search(Node!(T) node ,T data) {
-		if(node is null)
+		if(node is null) {
 			return null;
-		else if(node.data == data)
+		} else if(equal(node.data, data)) {
 			return node;
-		else {
-			bool dir = node.data < data;
+		} else {
+			bool dir = less(node.data, data);
 			return this.search(node.link[dir], data);
 		}
 	}
@@ -318,7 +332,7 @@ struct RBTree(T) {
 			done = true;
 		else {
 			bool dir;
-			if(node.data == data) {
+			if(equal(node.data, data)) {
 				succes = true;
 				if(node.link[0] is null || node.link[1] is null) {
 					Node!(T) save = node.link[node.link[0] is null];	
@@ -339,7 +353,7 @@ struct RBTree(T) {
 					data = heir.data;
 				}
 			}
-			dir = node.data < data;
+			dir = less(node.data, data);
 			node.link[dir] = removeR(node.link[dir], data, done, succes);
 			if(node.link[dir] !is null) {
 				node.link[dir].parent = node;
@@ -351,7 +365,7 @@ struct RBTree(T) {
 		return node;
 	}
 
-	private static removeBalance(Node!(T) node, bool dir, ref bool done) {
+	private static Node!(T) removeBalance(Node!(T) node, bool dir, ref bool done) {
 		Node!(T) p = node;
 		Node!(T) s = node.link[!dir];
 		if(isRed(s)) {
@@ -361,27 +375,30 @@ struct RBTree(T) {
 		
 		if(s !is null) {
 			if(!isRed(s.link[0]) && !isRed(s.link[1])) {
-				if(isRed(p))
+				if(isRed(p)) {
 					done = true;
+				}
 				p.red = false;
 				s.red = true;
 			} else {
+				assert(node !is null);
+				assert(p !is null);
 				bool save = p.red;
-				bool newRoot = (node == p);
+				bool newRoot = (node is p);
 				
-				if(isRed(s.link[!dir]))
+				if(isRed(s.link[!dir])) {
 					p = singleRotate(p, dir);
-				else
+				} else {
 					p = doubleRotate(p, dir);
+				}
 
 				p.red = save;
 				p.link[0].red = false;
 				p.link[1].red = false;
 
-				if(newRoot)
+				if(newRoot) {
 					node = p;
-				else {
-					node.link[dir] = p;
+				} else {
 					if(node.link[dir] !is null) {
 						node.link[dir].parent = node;
 					}
@@ -444,12 +461,12 @@ struct RBTree(T) {
 					}
 				}
 
-				if(q.data == data) {
+				if(equal(q.data, data)) {
 					break;
 				}
 
 				last = dir;
-				dir = q.data < data;
+				dir = less(q.data, data);
 
 				if(g !is null)
 					t = g;
@@ -488,6 +505,7 @@ unittest {
 	
 	foreach(lots; lot) {
 		RBTree!(int) a;
+		assert(a.validate());
 		int[int] at;
 		foreach(idx, it; lots) {
 			assert(a.insert(it), to!(string)(it));
@@ -522,6 +540,7 @@ unittest {
 			assert(cnt == a.length(), to!(string)(cnt) ~
 				" " ~ to!(string)(a.length()));
 
+			assert(a.validate());
 		}
 		//writeln(__LINE__);
 		foreach(idx, it; lots) {
@@ -560,32 +579,46 @@ unittest {
 			}
 			assert(cnt == a.length(), to!(string)(cnt) ~
 				" " ~ to!(string)(a.length()));
+
+			assert(a.validate());
 		}
+		assert(a.validate());
 		//writeln(__LINE__);
 	}
 
 	for(int i = 0; i < lot[0].length; i++) {
 		RBTree!(int) itT;
+		assert(itT.validate());
 		foreach(it; lot[0]) {
 			itT.insert(it);
+			assert(itT.validate());
 		}
+		assert(itT.validate());
 		assert(itT.length == lot[0].length);
 		Iterator!(int) be = itT.begin();
 		while(be.isValid()) {
 			assert(itT.remove(be, true));
+			assert(itT.validate());
 		}
+		assert(itT.validate());
 		assert(itT.length() == 0);
 	}
 
 	for(int i = 0; i < lot[0].length; i++) {
 		RBTree!(int) itT;
+		assert(itT.validate());
 		foreach(it; lot[0]) {
 			itT.insert(it);
+			assert(itT.validate());
 		}
 		assert(itT.length() == lot[0].length);
 		Iterator!(int) be = itT.end();
-		while(be.isValid())
+		assert(itT.validate());
+		while(be.isValid()) {
 			assert(itT.remove(be, false));
+			assert(itT.validate());
+		}
 		assert(itT.length() == 0);
+		assert(itT.validate());
 	}
 }

@@ -1,4 +1,5 @@
 // LGPL 3 or higher Robert Burner Schadek rburners@gmail.com
+module bitset;
 
 import std.stdio;
 
