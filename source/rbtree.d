@@ -375,22 +375,18 @@ struct RBTree(T,alias less = defaultLess, alias equal = defaultEqual) {
 		
 		if(s !is null) {
 			if(!isRed(s.link[0]) && !isRed(s.link[1])) {
-				if(isRed(p)) {
+				if(isRed(p))
 					done = true;
-				}
 				p.red = false;
 				s.red = true;
 			} else {
-				assert(node !is null);
-				assert(p !is null);
 				bool save = p.red;
 				bool newRoot = (node is p);
 				
-				if(isRed(s.link[!dir])) {
+				if(isRed(s.link[!dir]))
 					p = singleRotate(p, dir);
-				} else {
+				else
 					p = doubleRotate(p, dir);
-				}
 
 				p.red = save;
 				p.link[0].red = false;
@@ -399,6 +395,7 @@ struct RBTree(T,alias less = defaultLess, alias equal = defaultEqual) {
 				if(newRoot) {
 					node = p;
 				} else {
+					node.link[dir] = p;
 					if(node.link[dir] !is null) {
 						node.link[dir].parent = node;
 					}
