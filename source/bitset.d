@@ -103,7 +103,7 @@ struct Bitset(Store) {
 
 	// compare
 	
-	bool opEqual(const ref Bitset!Store rhs) const {
+	bool opEquals(const ref Bitset!Store rhs) const {
 		return this.store == rhs.store;
 	}
 
@@ -128,14 +128,24 @@ unittest {
 	import std.meta : AliasSeq;
 	foreach(T; AliasSeq!(ubyte,ushort,uint,ulong)) {
 		Bitset!T store;
+		assert(store == store);
 		store[2] = true;
 		store[4] = true;
+		assert(store == store);
 		assert(store[2]);
+		assert(store.test(2));
+		assert(!store.test(1));
+		assert(store.count() == 2);
+		assert(store.any());
+		assert(!store.none());
+		assert(!store.all());
 
 		Bitset!T store2;
+		assert(store != store2);
 		store2[2] = true;
 
 		assert(store.hasSubSet(store2));
+		assert(!store2.hasSubSet(store));
 
 		store2[2] = false;
 		store2[4] = true;
