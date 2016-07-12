@@ -1,6 +1,11 @@
 import std.stdio;
 
-void main()
-{
-	writeln("Edit source/app.d to start your project.");
+import protocols.mcs;
+
+void main() {
+	auto mcs = MCS(10);
+	auto rslt = mcs.calcP();
+	foreach(idx, it; rslt) {
+		writefln("%3d %.15f", idx, it);
+	}
 }
