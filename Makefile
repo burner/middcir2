@@ -1,3 +1,4 @@
 all:
 	#dub test --compiler=ldc 
-	dub test -debug
+	#dub test -debug --compiler=ldc
+	dub test -debug --coverage

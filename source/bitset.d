@@ -1,7 +1,8 @@
 // LGPL 3 or higher Robert Burner Schadek rburners@gmail.com
-module bitset;
+module bitsetmodule;
 
 import std.stdio;
+import std.typecons : isIntegral;
 
 immutable size_t[256] bits_in_uint8 = [
 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
@@ -27,10 +28,19 @@ pure size_t countImpl(const ulong n) {
 		bits_in_uint8[(n >> 48) & 0xFFU] + bits_in_uint8[(n >> 56) & 0xFFU];
 }
 
+Bitset!T bitset(T)(T t) if(isIntegral!T) {
+	return Bitset!T(bitset(t));
+}
+
 struct Bitset(Store) {
 	Store store = 0;
+	alias StoreType = Store;
 
 	// constructor
+	this(Store s) {
+		this.store = s;
+	}
+
 	bool opIndex(const size_t idx) const {
 		return cast(bool)(this.store & (1<<idx));
 	}
@@ -121,7 +131,16 @@ struct Bitset(Store) {
 	}
 
 	bool hasSubSet(const ref Bitset!Store rhs) const {
-		return (rhs.store & this.store) == rhs.store;
+		return this.hasSubSet(rhs.store);
+	}
+
+	bool hasSubSet(const Store rhs) const {
+		return (rhs & this.store) == rhs;
+	}
+
+	void toString(scope void delegate(const(char)[]) sink) const {
+		import std.format : formattedWrite;
+		formattedWrite(sink, "%b", this.store);
 	}
 }
 

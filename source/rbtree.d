@@ -82,7 +82,15 @@ class Node(T) {
 		this.red = true;
 	}
 
+	ref T opUnary(string s)() if(s == "*") { 
+		return getData(); 
+	}
+
 	ref T getData() {
+		return this.data;
+	}
+
+	ref const(T) getData() const {
 		return this.data;
 	}
 
@@ -124,11 +132,13 @@ class Node(T) {
 	}
 
 	void toString(Out)(ref Out app, int indent) const {
+		import std.format : formattedWrite;
 		foreach(i; 0 .. indent) {
 			app.put(" ");
 		}
 
-		app.put(isRed(this) ? "R\n" : "B\n");
+		app.put(isRed(this) ? "R" : "B");
+		formattedWrite(app, " %s\n", this.getData());
 
 		foreach(i; 0 .. 2) {
 			if(this.link[i] !is null) {
@@ -345,6 +355,8 @@ struct RBTree(T,alias less = defaultLess, alias equal = defaultEqual) {
 
 	private static Node!(T) removeR(Node!(T) node, T data, ref bool done, 
 			ref bool succes) {
+		import core.memory : GC;
+
 		if(node is null)
 			done = true;
 		else {
@@ -360,6 +372,9 @@ struct RBTree(T,alias less = defaultLess, alias equal = defaultEqual) {
 						save.red = false;
 						done = true;
 					}
+
+					//GC.free(cast(void*)node);
+
 					return save;
 				} else {
 					Node!(T) heir = node.link[0];
@@ -526,11 +541,20 @@ unittest {
 	2476, 3297, 487, 1397, 973, 2287, 2516, 543, 3784, 916, 2642, 312, 1130,
 	756, 210, 170, 3510, 987], [0,1,2,3,4,5,6,7,8,9,10],
 	[10,9,8,7,6,5,4,3,2,1,0],[10,9,8,7,6,5,4,3,2,1,0,11],
-	[0,1,2,3,4,5,6,7,8,9,10,-1],[11,1,2,3,4,5,6,7,8,0]];
+	[0,1,2,3,4,5,6,7,8,9,10,-1],[11,1,2,3,4,5,6,7,8,0], []];
 	
 	foreach(lots; lot) {
 		RBTree!(int) a;
 		assert(a.validate());
+
+		{
+			RBTree!(int) b;
+			assert(b.validate());
+			foreach(idx, it; lots) {
+				b.insert(it);
+			}
+		}
+
 		int[int] at;
 		foreach(idx, it; lots) {
 			assert(a.insert(it), to!(string)(it));
