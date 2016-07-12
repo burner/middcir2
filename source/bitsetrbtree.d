@@ -2,7 +2,7 @@ module bitsetrbtree;
 
 import rbtree;
 import bitsetmodule;
-import std.typecons : isIntegral;
+import std.typecons : isIntegral, Nullable;
 
 bool bitsetLess(T)(const BitsetArray!T l, const BitsetArray!T r) {
 	return l.bitset.store < r.bitset.store;
@@ -22,7 +22,7 @@ struct BitsetArray(T) {
 
 	this(Bitset!T value) {
 		this.bitset = value;
-		this.subsets.reserve(32);
+		//this.subsets.reserve(32);
 	}
 
 	void toString(scope void delegate(const(char)[]) sink) const {
@@ -39,35 +39,71 @@ BitsetArray!(T.StoreType) bitsetArray(T)(T t) if(!isIntegral!T) {
 	return BitsetArray!(T.StoreType)(t);
 }
 
-alias BitsetRBTree(T) = RBTree!(BitsetArray!T, bitsetLess!T, bitsetEqual!T);
+//alias BitsetRBTree(T) = RBTree!(BitsetArray!T, bitsetLess!T, bitsetEqual!T);
+
+struct BitsetRBTree(T) {
+	RBTree!(BitsetArray!T, bitsetLess!T, bitsetEqual!T) tree;
+
+	void insert(T t) {
+		auto bs = Bitset!T(t);
+		this.insert(bs);
+	}
+
+	void insert(Bitset!T bs) {
+		auto bsa = bitsetArray(bs);
+		auto it = this.tree.search(bsa);
+		if(it !is null) {
+			(*it).subsets ~= bs;
+		} else {
+			this.tree.insert(bsa);
+		}
+	}
+
+	Nullable!(BitsetArray!(T)*) search(Bitset!T bs) {
+		auto a = bitsetArray(bs);
+		auto tmp = this.tree.search(a);
+		if(tmp !is null) {
+			return Nullable!(BitsetArray!(T)*)(&tmp.getData());
+		} else {
+			return Nullable!(BitsetArray!(T)*).init;
+		}
+	}
+
+	@property size_t length() const {
+		return this.tree.length;
+	}
+
+	string toString() const {
+		return this.tree.toString();
+	}	
+}
 
 unittest {
 	import std.stdio : writeln;
-	BitsetRBTree!ushort t;
+	BitsetRBTree!ushort tree;
 	auto a = Bitset!(ushort)(cast(ushort)(0b0000_1111_0000_1111));
-	auto abs = bitsetArray(a);
-	t.insert(abs);
+	tree.insert(a);
 
-	auto it = t.search(abs);
-	assert(it !is null);
+	auto it = tree.search(a);
+	assert(!it.isNull());
 	
 	auto b = Bitset!(ushort)(cast(ushort)(0b0000_1111_0110_1111));
-	assert(b.hasSubSet(it.getData().bitset));
+	assert(b.hasSubSet(it.get().bitset));
 
 	auto c = Bitset!(ushort)(cast(ushort)(0b0000_1111_0000_1101));
-	assert(!c.hasSubSet(it.getData().bitset));
+	assert(!c.hasSubSet(it.get().bitset));
 
-	(*it).subsets ~= b;
+	it.get().subsets ~= b;
 
-	auto it2 = t.search(abs);
+	auto it2 = tree.search(a);
 	assert(it2 !is null);
 	assert((*it2).subsets.length == 1);
 	assert((*it2).subsets[0] == b);
 
-	t.insert(BitsetArray!(ushort)(c));
-	assert(t.length == 2);
+	tree.insert(c);
+	assert(tree.length == 2);
 
 	auto d = Bitset!(ushort)(cast(ushort)(0b0000_1111_1111_1111));
-	t.insert(bitsetArray(c));
-	writeln(t.toString());
+	tree.insert(d);
+	writeln(tree.toString());
 }
