@@ -26,13 +26,11 @@ struct MCS {
 
 	void testAll() {
 		const upTo = 1 << numNodes;
-		//writefln("%s %s", upTo, this.majority);
 		for(uint it = 0; it < upTo; ++it) {
 			if(popcnt(it) > this.majority) {
 				tree.insert(it);
 			}
 		}
-		//writeln(tree.toString());
 	}
 
 	double[] calcP(const double stepCount = 0.01, const double fromP = 0.0, 
