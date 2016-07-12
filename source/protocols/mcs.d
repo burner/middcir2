@@ -6,9 +6,22 @@ import core.bitop : popcnt;
 import std.math;
 import std.format;
 
-double availability(T,S)(const T bitSet, const S numNodes, double p) pure nothrow @nogc {
+double availability(T,S)(const T bitSet, const S numNodes, double p) pure {
 	const bitsSet = popcnt(bitSet);
+	//return binomial(numNodes, bitsSet) * pow(p, bitsSet) * pow((1.0 - p), numNodes - bitsSet);
 	return pow(p, bitsSet) * pow((1.0 - p), numNodes - bitsSet);
+}
+
+long binomial(long n, long k) pure {
+	long c = 1; 
+	if(k > n-k) {
+		k = n-k;	/* take advantage of symmetry */
+	}
+	for(long i = 1; i <= k; i++, n--) {
+		if(c/i > long.max/n) throw new Exception("binomial overflow");	/* return 0 on overflow */
+		c = c/i * n + c%i * n / i;	/* split c*n/i into (c/i*i + c%i)*n/i */
+	}
+	return c;
 }
 
 struct MCS {
