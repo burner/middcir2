@@ -17,7 +17,6 @@ struct Iterator(T) {
 		return Iterator!(T)(this.current);
 	}
 
-	//void opUnary(string s)() if(s == "++") {
 	void increment() {
 		Node!(T) y;
 		if(null !is (y = this.current.link[true])) {
@@ -39,7 +38,6 @@ struct Iterator(T) {
 		return this.current.getData();
 	}
 
-	//void opUnary(string s)() if(s == "--") {
 	void decrement() {
 		Node!(T) y;
 		if(null !is (y = this.current.link[false])) {
@@ -60,6 +58,10 @@ struct Iterator(T) {
 	bool isValid() const {
 		return this.current !is null;
 	}
+}
+
+private pure bool isRed(T)(const Node!(T) n) {
+	return n !is null && n.red;
 }
 
 class Node(T) {
@@ -118,6 +120,20 @@ class Node(T) {
 		}
 		if(this.link[1] !is null) {
 			this.link[1].print();
+		}
+	}
+
+	void toString(Out)(ref Out app, int indent) const {
+		foreach(i; 0 .. indent) {
+			app.put(" ");
+		}
+
+		app.put(isRed(this) ? "R\n" : "B\n");
+
+		foreach(i; 0 .. 2) {
+			if(this.link[i] !is null) {
+				this.link[i].toString(app, indent + 1);
+			}
 		}
 	}
 }
@@ -199,9 +215,6 @@ struct RBTree(T,alias less = defaultLess, alias equal = defaultEqual) {
 	bool isEmpty() const {
 	    return this.root is null;
 	}
-	private static isRed(const Node!(T) n) {
-		return n !is null && n.red;
-	}
 
 	private static singleRotate(Node!(T) node, bool dir) {
 		Node!(T) save = node.link[!dir];
@@ -256,16 +269,18 @@ struct RBTree(T,alias less = defaultLess, alias equal = defaultEqual) {
 			}
 			int lh = validate(ln, node);
 			int rh = validate(rn, node);
-			
-			//if((ln !is null && ln.data >= node.data)
-			if((ln !is null 
-					&& (less(node.data, ln.data) || equal(node.data, ln.data))
-				)
-					//|| (rn !is null && rn.data <= node.data)) 
-					|| (rn !is null 
-						&& (!less(rn.data, node.data) || equal(rn.data, node.data))))
+
+			if(ln !is null && 
+					(!less(ln.data, node.data) || equal(node.data, ln.data)))
 			{
-				writeln("Binary tree violation");
+				writeln("Binary tree violation left");
+				return 0;
+			}
+
+			if(rn !is null && 
+					(!less(node.data, rn.data) || equal(node.data, rn.data)))
+			{
+				writeln("Binary tree violation right");
 				return 0;
 			}
 
@@ -274,10 +289,12 @@ struct RBTree(T,alias less = defaultLess, alias equal = defaultEqual) {
 				return 0;
 			}
 
-			if(lh != 0 && rh != 0)
+			if(lh != 0 && rh != 0) {
 				return isRed(node) ? lh : lh +1;
-			else
+			} else {
+				writeln(__LINE__);
 				return 0;
+			}
 		}
 	}
 
@@ -478,6 +495,17 @@ struct RBTree(T,alias less = defaultLess, alias equal = defaultEqual) {
 		}
 		this.root.red = false;				
 		return true;
+	}
+
+	string toString() const {
+		import std.array : appender;
+		auto app = appender!string();
+
+		if(this.root !is null) {
+			this.root.toString(app, 0);
+		}
+
+		return app.data;
 	}
 }
 
