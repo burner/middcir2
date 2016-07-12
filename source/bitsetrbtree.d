@@ -76,6 +76,14 @@ struct BitsetRBTree(T) {
 	string toString() const {
 		return this.tree.toString();
 	}	
+
+	auto begin() {
+		return this.tree.begin();
+	}
+
+	auto end() {
+		return this.tree.end();
+	}
 }
 
 unittest {
@@ -105,5 +113,28 @@ unittest {
 
 	auto d = Bitset!(ushort)(cast(ushort)(0b0000_1111_1111_1111));
 	tree.insert(d);
-	writeln(tree.toString());
+	//writeln(tree.toString());
+}
+
+unittest {
+	import std.stdio : writeln;
+	import std.conv : to;
+	import std.random : uniform;
+	import core.bitop;
+
+	BitsetRBTree!ushort tree;
+	foreach(it; 0 .. ushort.max) {
+		auto t = to!ushort(uniform(0,ushort.max));
+		if(popcnt(t) > 6) {
+			tree.insert(t);
+		}
+	}
+	//writeln(tree.toString());
+
+	auto be = tree.begin();
+	auto en = tree.end();
+	while(be != en) {
+		//writeln((*be).bitset);
+		++be;
+	}
 }
