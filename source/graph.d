@@ -3,6 +3,13 @@ module graph;
 import std.traits : isIntegral;
 import gfm.math.vector;
 
+void populate(A,V)(ref A arr, size_t size, V defaultValue) {
+	arr.reserve(size);
+	for(size_t i = 0; i < size; ++i) {
+		arr.insertBack(defaultValue);
+	}
+}
+
 struct Graph(int Size) {
 	import bitsetmodule;
 	import std.container.array;
@@ -24,8 +31,7 @@ struct Graph(int Size) {
 	void setNodePos(size_t nodeId, vec3d newPos) {
 		assert(nodeId < Size);
 		if(this.nodePositions.empty) {
-			this.nodePositions.reserve(Size);
-			this.nodePositions[0 .. Size] = vec3d();
+			this.nodePositions.populate(Size, vec3d(0.0, 0.0, 0.0));
 		}
 
 		this.nodePositions[nodeId] = newPos;
