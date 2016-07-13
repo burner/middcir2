@@ -88,6 +88,8 @@ unittest {
 	auto mcs = MCS(10);
 	auto rslt = mcs.calcP();
 	foreach(idx, it; rslt) {
-		writefln("%3d %.15f", idx, it);
+		if(idx > 10) {
+			assert(!approxEqual(it, 0.0, 0.0000000002), format("%s", idx));
+		}
 	}
 }

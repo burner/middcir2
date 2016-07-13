@@ -7,6 +7,7 @@
 	"copyright": "Copyright © 2016, burner",
 	"license": "proprietary",
 	"dependencies": {
-		"emsi_containers": ">=0.4.3"
+		"emsi_containers": ">=0.4.3",
+		"gfm:math": ">=6.1.1"
 	}
 }
