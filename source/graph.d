@@ -24,17 +24,42 @@ struct Graph(int Size) {
 		alias Node = Bitset!ulong;
 	}
 
+	int numNodes;
+
+	this(int numNodes) {
+		this.numNodes = numNodes;
+	}
+
 	Node[Size] nodes;
 
 	Array!vec3d nodePositions;
 
 	void setNodePos(size_t nodeId, vec3d newPos) {
-		assert(nodeId < Size);
+		assert(nodeId < this.numNodes);
 		if(this.nodePositions.empty) {
-			this.nodePositions.populate(Size, vec3d(0.0, 0.0, 0.0));
+			this.nodePositions.populate(this.numNodes, vec3d(0.0, 0.0, 0.0));
 		}
 
 		this.nodePositions[nodeId] = newPos;
+	}
+
+	void setEdge(int f, int t) pure {
+		assert(f < this.numNodes);
+		assert(t < this.numNodes);
+
+		nodes[f].set(t);
+		nodes[t].set(f);
+	}
+
+	bool testEdge(int f, int t) pure const {
+		assert(f < this.numNodes);
+		assert(t < this.numNodes);
+
+		return this.nodes[f][t];
+	}
+
+	@property size_t length() pure const {
+		return this.numNodes;
 	}
 }
 
@@ -45,9 +70,42 @@ unittest {
 	Graph!12 g4;
 	Graph!17 g5;
 	Graph!28 g6;
-	Graph!63 g7;
+	auto g7 = Graph!63(32);
 
 	g7.setNodePos(18, vec3d(1.0,2.0,3.0));
 
 	//pragma(msg, Graph!9.sizeof);
+}
+
+unittest {
+	int len = 8;
+	auto g = Graph!16(len);
+	g.setEdge(4,5);
+	assert(g.testEdge(4,5));
+}
+
+unittest {
+	import std.random : uniform;
+	int len = 16;
+
+	bool[][] test = new bool[][](16,16);
+	auto g = Graph!16(len);
+
+	const upTo = (len * len) / 5;
+	for(int i = 0; i < upTo; ++i) {
+		const f = uniform(0, 16);
+		const t = uniform(0, 16);
+		test[f][t] = true;
+
+		g.setEdge(f,t);
+	}
+
+	foreach(int ridx, row; test) {
+		foreach(int cidx, col; row) {
+			if(col) {
+				assert(g.testEdge(ridx, cidx));
+				assert(g.testEdge(cidx, ridx));
+			}
+		}
+	}
 }

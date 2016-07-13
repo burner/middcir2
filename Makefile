@@ -8,4 +8,4 @@ debug:
 	dub --compiler=ldc --build=debug
 
 test:
-	dub test -debug --coverage --compiler=ldc 
+	dub test -debug --coverage --compiler=dmd 
