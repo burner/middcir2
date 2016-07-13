@@ -128,3 +128,20 @@ unittest {
 	assert(fr.first[4][6] == 5, fr.toString());
 	log(fr);
 }
+
+unittest {
+	import std.random : uniform;
+	int len = 9;
+
+	auto g = Graph!32(len);
+	const upTo = (len * len) / 6;
+	for(int i = 0; i < upTo; ++i) {
+		const f = uniform(0, len);
+		const t = uniform(0, len);
+		logf("%2d %2d", f, t);
+		g.setEdge(f,t);
+	}
+
+	auto fr = Floyd(g);
+	log(fr);
+}
