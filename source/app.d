@@ -6,12 +6,12 @@ import plot;
 import plot.gnuplot;
 
 void main() {
-	auto mcs = MCS(9);
-	auto rslt = mcs.calcP();
-	int idx = 0;
-	foreach(ref r, w; lockstep(rslt.readAvail[], rslt.writeAvail[])) {
-		writefln("%3d %.15f %.15f", idx++, r, w);
-	}
+	int mcsN = 20;
+	auto mcs = MCS(mcsN);
+	auto rsltMCS = ResultPlot(mcs.name(), mcs.calcP());
 
-	gnuPlot(ResultPlot("MCS9", rslt));
+	auto mcsF = MCSFormula(mcsN);
+	auto rsltMCSF = ResultPlot(mcsF.name(), mcsF.calcP());
+
+	gnuPlot(rsltMCS, rsltMCSF);
 }
