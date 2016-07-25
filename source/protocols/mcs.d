@@ -20,10 +20,6 @@ struct MCS {
 		this.numNodes = nn;
 		this.majority = this.numNodes / 2 + 1;
 		this.half = to!int((this.numNodes / 2.0)+0.51);
-
-		/*logf("numNodes %s majority %s half %s", this.numNodes, this.majority,
-				this.half
-		);*/
 	}
 
 	BitsetRBTree!uint testAll(int atLeast) {

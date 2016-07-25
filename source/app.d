@@ -14,7 +14,7 @@ bool equal(double a, double b) {
 }
 
 void main() {
-	int[9] toPerm = [0,1,2,3,4,5,6,7,8];
+	int[8] toPerm = [0,1,2,3,4,5,6,7];
 
 	foreach(perm; permutations(toPerm[])) {
 		logf("%s", perm);
