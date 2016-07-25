@@ -4,6 +4,24 @@ import bitsetmodule;
 
 import std.math;
 
+ulong factorial(const ulong fac) {
+	assert(fac < 23);
+	ulong ret = 1;
+	for(ulong i = 1; i <= fac; ++i) {
+		ret *= i;
+	}
+	return ret;
+}
+
+unittest {
+	import std.format;
+	assert(factorial(0) == 1);
+	assert(factorial(1) == 1);
+	assert(factorial(2) == 2);
+	assert(factorial(3) == 6);
+	assert(factorial(4) == 24);
+}
+
 double availability(T,S)(const ref Bitset!T bitSet, const S numNodes, double p) pure {
 	import core.bitop : popcnt;
 	const bitsSet = popcnt(bitSet.store);
