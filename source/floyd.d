@@ -59,8 +59,10 @@ struct Floyd {
 			for(int j = 0; j < graph.length; ++j) {
 				if(i == j) {
 					this.distance[i][j] = 0;
+					this.first[i][j] = cast(ubyte)j;
 				} else if(graph.testEdge(i,j)) {
 					this.distance[i][j] = 1;
+					this.first[i][j] = cast(ubyte)j;
 				}
 			}
 		}
@@ -88,31 +90,33 @@ struct Floyd {
 
 	void floyd() {
 		const nn = distance.length;
-
-		size_t k, i, j;
-		ubyte ik, kj, tmp;
-		for(k = 0; k < nn; ++k) {
-			for(i = 0; i < nn; ++i) {
-				ik = this.distance[i][k];
-				if(ik == INF) {
-					continue;
-				}
-				for(j = 0; j <= i; ++j) {
-					if(i == j) {
-						continue;
+		for(int k = 0; k < nn; ++k){
+			for(int i = 0; i < nn; ++i){
+				for(int j = 0; j < nn; ++j){
+					//If the path using two edges is less than the path using one edge...
+					auto tmp = (this.distance[i][k] + this.distance[k][j]);
+					if(this.distance[i][j] > tmp) {
+						//Set the cost of the edge to be the lesser cost.
+						this.distance[i][j] = cast(ubyte)(tmp);
+						//Have the nextNode array go to the other node
+						//before going to the final node. This ensures proper path reconstruction.
+						this.first[i][j] = this.first[i][k];
 					}
-					kj = this.distance[k][j];
-					if(kj == INF) {
-						continue;
-					}
-					tmp = cast(ubyte)(this.distance[i][k] + kj);
-					if(tmp < this.distance[i][j]) {
-						this.distance[j][i] = this.distance[i][j] = tmp;
-						this.first[i][j] = this.first[j][i] = cast(ubyte)k;
-					}
-				}
+				}  	  
 			}
 		}
+	}
+
+	bool path(T)(const uint from, const uint to, ref T rslt) {
+		rslt ~= from;
+		auto next = this.first[from][to];
+		while(next != INF && next != to) {
+			rslt ~= next;
+			next = this.first[next][to];
+		}
+
+		rslt ~= to;
+		return next == to;
 	}
 }
 
@@ -126,7 +130,6 @@ unittest {
 	auto fr = Floyd(g);
 	assert(fr.distance[4][6] == 2);
 	assert(fr.first[4][6] == 5, fr.toString());
-	log(fr);
 }
 
 unittest {
@@ -138,10 +141,63 @@ unittest {
 	for(int i = 0; i < upTo; ++i) {
 		const f = uniform(0, len);
 		const t = uniform(0, len);
-		logf("%2d %2d", f, t);
+		//logf("%2d %2d", f, t);
 		g.setEdge(f,t);
 	}
 
 	auto fr = Floyd(g);
-	log(fr);
+}
+
+unittest {
+	import std.conv : to;
+	import std.format : format;
+	import containers.dynamicarray;
+	import utils;
+
+	auto edges = [
+		[0,1],
+		[1,2],
+		[2,3],
+		[2,7],
+		[1,4],
+	];
+
+	auto length = 8;
+
+	auto g = Graph!16(length);
+	foreach(ref it; edges) {
+		g.setEdge(it[0], it[1]);
+	}
+
+	auto f = Floyd(g);
+	logf("%s", f.toString());
+
+	DynamicArray!uint rslt;
+	for(int i = 0; i < length; ++i) {
+		inner: for(int j = 0; j < length; ++j) {
+			rslt.removeAll();
+			foreach(ref it; edges) {
+				foreach(ref jt; edges) {
+					if((i == it[0] || i == it[1]) 
+							&& (j == jt[0] || j == jt[1])) 
+					{
+						bool pathFound = f.path(i, j, rslt);
+						assert(pathFound, f.toString() ~ " " ~ to!string(rslt[]));
+						assert(rslt.front == i && rslt.back == j);
+						continue inner;
+					}
+				}
+			}
+			bool pathFound = f.path(i, j, rslt);
+			if(i == j) {
+				assert(pathFound);
+				assert(rslt.length == 2);
+				assert(rslt.front == i);
+				assert(rslt.back == j);
+			} else {
+				assert(!pathFound, format("from(%s) to(%s) %s %s", i, j, 
+					f.toString(), to!string(rslt[])));
+			}
+		}
+	}
 }
