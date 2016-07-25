@@ -150,7 +150,8 @@ unittest {
 
 unittest {
 	import std.conv : to;
-	import std.format : format;
+	import std.format : format, formattedWrite;
+	import std.array : appender;
 	import containers.dynamicarray;
 	import utils;
 
@@ -170,7 +171,8 @@ unittest {
 	}
 
 	auto f = Floyd(g);
-	logf("%s", f.toString());
+	auto app = appender!string();
+	formattedWrite(app, "%s", f);
 
 	DynamicArray!uint rslt;
 	for(int i = 0; i < length; ++i) {
