@@ -9,3 +9,6 @@ debug:
 
 test:
 	dub test -debug --coverage --compiler=dmd 
+
+genAvailLookup:
+	rdmd availlookupgen.d > source/availabilitylookuptable.d
