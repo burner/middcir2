@@ -32,6 +32,24 @@ double availability(S)(const int numAvail, const S numNodes, double p) pure {
 	return pow(p, cast(double)numAvail) * pow((1.0 - p), cast(double)(numNodes - numAvail));
 }
 
+unittest {
+	import std.format : format;
+	import availabilitylookuptable;
+	double step = 0.01;
+	for(int i = 0; i < 24; ++i) {
+		for(int j = 0; j <= i; ++j) {
+			for(size_t p = 0; p < 101; ++p) {
+				auto oldAvail = availability(j, i, p * step);
+				auto newAvail = fastAvailabilty(i, j, p);
+				assert(approxEqual(oldAvail, newAvail, 0.0000001),
+					format("%10.8f %10.8f %3d %3d %3d",
+						oldAvail, newAvail, i, j, p)
+				);
+			}
+		}
+	}
+}
+
 long binomialFunc(long n, long k) pure {
 	long c = 1; 
 	if(k > n-k) {
