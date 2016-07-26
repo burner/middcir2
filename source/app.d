@@ -14,12 +14,6 @@ bool equal(double a, double b) {
 }
 
 void main() {
-	int[8] toPerm = [0,1,2,3,4,5,6,7];
-
-	foreach(perm; permutations(toPerm[])) {
-		logf("%s", perm);
-	}
-
 	int mcsN = 20;
 	auto mcs = MCS(mcsN);
 	auto mcsRslt = mcs.calcP();
