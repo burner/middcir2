@@ -33,27 +33,36 @@ private void calcAvailForTreeImpl(const int numNodes,
 		ref BitsetRBTree!uint tree, ref double[101] avail,
 	   	ref double[101] costs)
 {
+	import std.format : format;
+	import core.bitop : popcnt;
+
 	import config : stepCount;
 	import math : availability;
-	import std.format : format;
 
 	auto it = tree.begin();
 	auto end = tree.end();
+	size_t numQuorums = 0;
 
 	bool[101] test;
 	while(it != end) {
+		const bsa = *it;
+
+		numQuorums += 1;
+		numQuorums += bsa.subsets.length;
+
 		test[] = false;
 		for(int idx = 0; idx < 101; ++idx) {
 			double step = stepCount * idx;
 			assert(!test[idx]);
 			test[idx] = true;
 
-			const bsa = *it;
-
-			avail[idx] += availability(numNodes, bsa.bitset, idx, stepCount);
+			const availBsa = availability(numNodes, bsa.bitset, idx, stepCount);
+			avail[idx] += availBsa;
+			costs[idx] += availBsa * popcnt(bsa.bitset.store);
 
 			foreach(jt; bsa.subsets) {
 				avail[idx] += availability(numNodes, jt, idx, stepCount);
+				costs[idx] += availBsa * popcnt(jt.store);
 			}
 		}
 		foreach(idx, jt; test) {
@@ -63,4 +72,6 @@ private void calcAvailForTreeImpl(const int numNodes,
 		}
 		++it;
 	}
+
+	costs[] /= cast(double)numQuorums;
 }

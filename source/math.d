@@ -29,7 +29,7 @@ double availability(T,S)(const S numNodes, const ref Bitset!T bitSet,
 	return availability(numNodes, bitsSet, p, stepWidth);
 }
 
-double availability(S)(const S numNodes, const int numAvail, const size_t p,
+double availability(S)(const S numNodes, const size_t numAvail, const size_t p,
 		const double stepWidth = 0.01) pure 
 {
 	import availabilitylookuptable;
