@@ -8,6 +8,7 @@ import std.experimental.logger;
 
 import protocols;
 import math;
+import utils;
 
 struct MCS {
 	import bitsetrbtree;
@@ -15,6 +16,8 @@ struct MCS {
 	const int numNodes;
 	const int majority;
 	const int half;
+	BitsetRBTree!uint read;
+	BitsetRBTree!uint write;
 
 	this(int nn) {
 		this.numNodes = nn;
@@ -22,9 +25,8 @@ struct MCS {
 		this.half = to!int((this.numNodes / 2.0)+0.51);
 	}
 
-	BitsetRBTree!uint testAll(int atLeast) {
+	void testAll(ref BitsetRBTree!uint tree, int atLeast) {
 		import core.bitop : popcnt;
-		BitsetRBTree!uint tree;
 
 		const upTo = 1 << numNodes;
 		for(uint it = 0; it < upTo; ++it) {
@@ -32,20 +34,33 @@ struct MCS {
 				tree.insert(it);
 			}
 		}
-
-		return tree;
 	}
 
 	Result calcP(const double stepCount = 0.01) {
-		auto readTree = this.testAll(this.half);
-		auto writeTree = this.testAll(this.majority);
+		this.testAll(this.read, this.half);
+		this.testAll(this.write, this.majority);
 
-		return calcAvailForTree(this.numNodes, readTree, writeTree);
+		return calcAvailForTree(this.numNodes, this.read, this.write);
 	}
 
 	string name() const pure {
 		return format("MCS %s", this.numNodes);
 	}
+}
+
+unittest {
+	int mcsN = 6;
+	auto mcs = MCS(mcsN);
+	auto mcsRslt = mcs.calcP();
+	testQuorumIntersection(mcs.read, mcs.write);
+
+	auto mcsF = MCSFormula(mcsN);
+	auto mcsFRslt = mcsF.calcP();
+
+	compare(mcsFRslt.readAvail, mcsRslt.readAvail, &equal);
+	compare(mcsFRslt.writeAvail, mcsRslt.writeAvail, &equal);
+	compare(mcsFRslt.readCosts, mcsRslt.readCosts, &equal);
+	compare(mcsFRslt.writeCosts, mcsRslt.writeCosts, &equal);
 }
 
 struct MCSFormula {

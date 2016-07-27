@@ -108,14 +108,14 @@ struct Floyd {
 	}
 
 	bool path(T)(const uint from, const uint to, ref T rslt) {
-		rslt ~= from;
+		rslt.insertBack(from);
 		auto next = this.first[from][to];
 		while(next != INF && next != to) {
-			rslt ~= next;
+			rslt.insertBack(next);
 			next = this.first[next][to];
 		}
 
-		rslt ~= to;
+		rslt.insertBack(to);
 		return next == to;
 	}
 }
@@ -152,7 +152,8 @@ unittest {
 	import std.conv : to;
 	import std.format : format, formattedWrite;
 	import std.array : appender;
-	import containers.dynamicarray;
+	//import containers.dynamicarray;
+	import std.container : Array;
 	import utils;
 
 	auto edges = [
@@ -174,7 +175,7 @@ unittest {
 	auto app = appender!string();
 	formattedWrite(app, "%s", f);
 
-	DynamicArray!uint rslt;
+	Array!uint rslt;
 	for(int i = 0; i < length; ++i) {
 		inner: for(int j = 0; j < length; ++j) {
 			rslt.removeAll();

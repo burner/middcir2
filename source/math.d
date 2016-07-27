@@ -38,6 +38,14 @@ double availability(S)(const S numNodes, const size_t numAvail, const size_t p,
 	return fastAvailabilty(numNodes, numAvail, p);
 }
 
+double oldAvailability(S)(const S numNodes, const size_t numAvail, const size_t p,
+		const double stepWidth = 0.01) pure 
+{
+	import availabilitylookuptable;
+	const double realP = cast(double)(p) * stepWidth;
+	return pow(realP, cast(double)numAvail) * pow((1.0 - realP), cast(double)(numNodes - numAvail));
+}
+
 unittest {
 	import std.format : format;
 	import availabilitylookuptable;
@@ -45,8 +53,8 @@ unittest {
 	for(int i = 0; i < 24; ++i) {
 		for(int j = 0; j <= i; ++j) {
 			for(size_t p = 0; p < 101; ++p) {
-				auto oldAvail = availability(j, i, p * step);
-				auto newAvail = fastAvailabilty(i, j, p);
+				auto oldAvail = oldAvailability(i, j, p);
+				auto newAvail = availability(i, j, p);
 				assert(approxEqual(oldAvail, newAvail, 0.0000001),
 					format("%10.8f %10.8f %3d %3d %3d",
 						oldAvail, newAvail, i, j, p)
