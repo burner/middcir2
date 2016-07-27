@@ -56,10 +56,12 @@ struct MCS {
 
 					const bsa = *it;
 
-					ret.readAvail[idx] += availability(bsa.bitset, this.numNodes, step);
+					ret.readAvail[idx] += availability(this.numNodes,
+							bsa.bitset, idx, stepCount);
 
 					foreach(jt; bsa.subsets) {
-						ret.readAvail[idx] += availability(jt, this.numNodes, step);
+						ret.readAvail[idx] += availability(this.numNodes, jt,
+								idx, stepCount);
 					}
 				}
 				foreach(idx, jt; test) {
@@ -84,10 +86,12 @@ struct MCS {
 					test[idx] = true;
 
 					const bsa = *it;
-					ret.writeAvail[idx] += availability(bsa.bitset, this.numNodes, step);
+					ret.writeAvail[idx] += availability(this.numNodes,
+							bsa.bitset, idx, stepCount);
 
 					foreach(jt; bsa.subsets) {
-						ret.writeAvail[idx] += availability(jt, this.numNodes, step);
+						ret.writeAvail[idx] += availability(this.numNodes, jt,
+								idx, stepCount);
 					}
 				}
 				foreach(idx, jt; test) {
@@ -125,7 +129,7 @@ struct MCSFormula {
 			//logf("%2d %.5f", idx, p);
 			for(int avail = this.half; avail < nn; ++avail) {
 				const bino = binomial(this.numNodes, avail);
-				const av = availability(avail, this.numNodes, p);
+				const av = availability(this.numNodes, avail, idx, stepCount);
 				//logf("%2d %4d %.15f", avail, bino, av);
 				ret.readAvail[idx] += bino * av;
 			}
@@ -133,7 +137,7 @@ struct MCSFormula {
 			for(int avail = this.majority; avail < nn; ++avail) {
 				const bino = binomial(this.numNodes, avail);
 				ret.writeAvail[idx] += 
-					 bino * availability(avail, this.numNodes, p);
+					 bino * availability(this.numNodes, avail, idx, stepCount);
 			}
 		}
 

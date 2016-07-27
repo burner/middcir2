@@ -22,14 +22,18 @@ unittest {
 	assert(factorial(4) == 24);
 }
 
-double availability(T,S)(const ref Bitset!T bitSet, const S numNodes, double p) pure {
+double availability(T,S)(const S numNodes, const ref Bitset!T bitSet, 
+		const size_t p, const double stepWidth = 0.01) pure {
 	import core.bitop : popcnt;
 	const bitsSet = popcnt(bitSet.store);
-	return availability(bitsSet, numNodes, p);
+	return availability(numNodes, bitsSet, p, stepWidth);
 }
 
-double availability(S)(const int numAvail, const S numNodes, double p) pure {
-	return pow(p, cast(double)numAvail) * pow((1.0 - p), cast(double)(numNodes - numAvail));
+double availability(S)(const S numNodes, const int numAvail, const size_t p,
+		const double stepWidth = 0.01) pure 
+{
+	const double realP = cast(double)(p) * stepWidth;
+	return pow(realP, cast(double)numAvail) * pow((1.0 - realP), cast(double)(numNodes - numAvail));
 }
 
 unittest {
