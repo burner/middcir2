@@ -14,10 +14,10 @@ bool equal(double a, double b) {
 }
 
 void main() {
-	int mcsN = 20;
+	int mcsN = 10;
 	auto mcs = MCS(mcsN);
 	auto mcsRslt = mcs.calcP();
-	auto rsltMCS = ResultPlot(mcs.name(), mcs.calcP());
+	auto rsltMCS = ResultPlot(mcs.name(), mcsRslt);
 
 	auto mcsF = MCSFormula(mcsN);
 	auto mcsFRslt = mcsF.calcP();

@@ -1,5 +1,8 @@
 module protocols;
 
+import std.container : Array;
+import std.experimental.logger;
+
 import bitsetrbtree;
 
 struct Result {
@@ -34,13 +37,15 @@ private void calcAvailForTreeImpl(const int numNodes,
 	   	ref double[101] costs)
 {
 	import std.format : format;
+	import std.algorithm.sorting : sort;
 	import core.bitop : popcnt;
 
 	import config : stepCount;
-	import math : availability;
+	import math : availability, binomial;
 
 	auto it = tree.begin();
 	auto end = tree.end();
+
 	size_t numQuorums = 0;
 
 	bool[101] test;
@@ -57,12 +62,17 @@ private void calcAvailForTreeImpl(const int numNodes,
 			test[idx] = true;
 
 			const availBsa = availability(numNodes, bsa.bitset, idx, stepCount);
+			const minQuorumNodeCnt = popcnt(bsa.bitset.store);
+
 			avail[idx] += availBsa;
-			costs[idx] += availBsa * popcnt(bsa.bitset.store);
+
+			double bino = binomial(numNodes, minQuorumNodeCnt);
+			costs[idx] += minQuorumNodeCnt * availBsa;
 
 			foreach(jt; bsa.subsets) {
-				avail[idx] += availability(numNodes, jt, idx, stepCount);
-				costs[idx] += availBsa * popcnt(jt.store);
+				auto availJt = availability(numNodes, jt, idx, stepCount);
+				avail[idx] += availJt;
+				costs[idx] += minQuorumNodeCnt * availJt;
 			}
 		}
 		foreach(idx, jt; test) {
@@ -73,5 +83,7 @@ private void calcAvailForTreeImpl(const int numNodes,
 		++it;
 	}
 
-	costs[] /= cast(double)numQuorums;
+	for(int idx = 0; idx < 101; ++idx) {
+		costs[idx] /= avail[idx];
+	}
 }

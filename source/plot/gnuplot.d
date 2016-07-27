@@ -1,6 +1,7 @@
 module plot.gnuplot;
 
 import std.experimental.logger;
+import std.exception : enforce;
 import std.format : formattedWrite;
 import std.stdio : File;
 
@@ -19,16 +20,16 @@ void gnuPlot(ResultPlot[] results ...) {
 	createGnuplotFiles(results);
 
 	auto gnuplot = execute(["gnuplot", "-c", gnuplotFilenameAvail]);
-	assert(gnuplot.status == 0);
+	enforce(gnuplot.status == 0);
 
 	gnuplot = execute(["gnuplot", "-c", gnuplotFilenameCost]);
-	assert(gnuplot.status == 0);
+	enforce(gnuplot.status == 0);
 
 	auto epstopdf = execute(["epstopdf", resultFilenameAvail]);
-	assert(epstopdf.status == 0);
+	enforce(epstopdf.status == 0);
 
 	epstopdf = execute(["epstopdf", resultFilenameCost]);
-	assert(epstopdf.status == 0);
+	enforce(epstopdf.status == 0);
 }
 
 void createDataFiles(ResultPlot[] results ...) {
@@ -59,13 +60,14 @@ void createDataFiles(ResultPlot[] results ...) {
 
 void createGnuplotFiles(ResultPlot[] results ...) {
 	createGnuplotFile(resultFilenameAvail, dataFilenameAvail,
-			gnuplotFilenameAvail, results);
+			gnuplotFilenameAvail, "Protocol Availability", results);
 
 	createGnuplotFile(resultFilenameCost, dataFilenameCost,
-			gnuplotFilenameCost, results);
+			gnuplotFilenameCost, "Protocol Costs", results);
 }
 
-void createGnuplotFile(string rsltFN, string dataFN, string gpFN, ResultPlot[] results ...) {
+void createGnuplotFile(string rsltFN, string dataFN, string gpFN, 
+		string ylabel, ResultPlot[] results ...) {
 	import std.array : appender;
 
 	auto app = appender!string();
@@ -81,10 +83,10 @@ set border 3 back lc rgb "black"
 set key left top
 set style data linespoints
 #set key at 50,112
-set xlabel 'Node Availability'
-set ylabel 'Protocol Avaiability' offset 1,0
+set xlabel 'Node Avaiability'
+set ylabel '%s' offset 1,0
 set tics scale 0.75
-plot `, rsltFN);
+plot `, rsltFN, ylabel);
 
 	bool first = true;
 	size_t idx = 2;

@@ -37,7 +37,6 @@ struct MCS {
 	}
 
 	Result calcP(const double stepCount = 0.01) {
-
 		auto readTree = this.testAll(this.half);
 		auto writeTree = this.testAll(this.majority);
 
@@ -66,11 +65,9 @@ struct MCSFormula {
 		const nn = this.numNodes+1;
 		for(int idx = 0; idx < 101; ++idx) {
 			const double p = stepCount * idx;
-			//logf("%2d %.5f", idx, p);
 			for(int avail = this.half; avail < nn; ++avail) {
 				const bino = binomial(this.numNodes, avail);
 				const av = availability(this.numNodes, avail, idx, stepCount);
-				//logf("%2d %4d %.15f", avail, bino, av);
 				ret.readAvail[idx] += bino * av;
 			}
 
@@ -81,6 +78,10 @@ struct MCSFormula {
 			}
 		}
 
+		for(size_t idx = 1; idx < 101; ++idx) {
+			ret.writeCosts[idx] = this.majority;
+			ret.readCosts[idx] = this.half;
+		}
 
 		return ret;
 	}
