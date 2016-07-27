@@ -32,8 +32,10 @@ double availability(T,S)(const S numNodes, const ref Bitset!T bitSet,
 double availability(S)(const S numNodes, const int numAvail, const size_t p,
 		const double stepWidth = 0.01) pure 
 {
+	import availabilitylookuptable;
 	const double realP = cast(double)(p) * stepWidth;
-	return pow(realP, cast(double)numAvail) * pow((1.0 - realP), cast(double)(numNodes - numAvail));
+	//return pow(realP, cast(double)numAvail) * pow((1.0 - realP), cast(double)(numNodes - numAvail));
+	return fastAvailabilty(numNodes, numAvail, p);
 }
 
 unittest {

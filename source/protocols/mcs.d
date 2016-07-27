@@ -38,70 +38,10 @@ struct MCS {
 
 	Result calcP(const double stepCount = 0.01) {
 
-		auto ret = Result();
+		auto readTree = this.testAll(this.half);
+		auto writeTree = this.testAll(this.majority);
 
-		{
-			auto readTree = this.testAll(this.half);
-
-			auto it = readTree.begin();
-			auto end = readTree.end();
-
-			bool[101] test;
-			while(it != end) {
-				test[] = false;
-				for(int idx = 0; idx < 101; ++idx) {
-					double step = stepCount * idx;
-					assert(!test[idx]);
-					test[idx] = true;
-
-					const bsa = *it;
-
-					ret.readAvail[idx] += availability(this.numNodes,
-							bsa.bitset, idx, stepCount);
-
-					foreach(jt; bsa.subsets) {
-						ret.readAvail[idx] += availability(this.numNodes, jt,
-								idx, stepCount);
-					}
-				}
-				foreach(idx, jt; test) {
-					assert(jt, format("%s", idx));
-				}
-				++it;
-			}
-		}
-
-		{
-			auto writeTree = this.testAll(this.majority);
-
-			auto it = writeTree.begin();
-			auto end = writeTree.end();
-
-			bool[101] test;
-			while(it != end) {
-				test[] = false;
-				for(size_t idx = 0; idx < 101; ++idx) {
-					double step = stepCount * idx;
-					assert(!test[idx]);
-					test[idx] = true;
-
-					const bsa = *it;
-					ret.writeAvail[idx] += availability(this.numNodes,
-							bsa.bitset, idx, stepCount);
-
-					foreach(jt; bsa.subsets) {
-						ret.writeAvail[idx] += availability(this.numNodes, jt,
-								idx, stepCount);
-					}
-				}
-				foreach(idx, jt; test) {
-					assert(jt, format("%s", idx));
-				}
-				++it;
-			}
-		}
-
-		return ret;
+		return calcAvailForTree(this.numNodes, readTree, writeTree);
 	}
 
 	string name() const pure {
