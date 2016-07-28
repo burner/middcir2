@@ -3,7 +3,7 @@ module utils;
 import std.container : Array;
 import std.exception : enforce;
 import std.format : format;
-import std.math : approxEqual;
+import std.math : approxEqual, abs, isNaN;
 import std.experimental.logger;
 
 import protocols;
@@ -16,24 +16,42 @@ void removeAll(T)(ref Array!T arr) {
 }
 
 bool equal(double a, double b) {
-	return approxEqual(a, b, 0.000001);
-}
-
-void compare(CMP)(const ref double[101] a, const ref double[101] b, CMP cmp) {
-	for(size_t i = 0; i < 101; ++i) {
-		assert(cmp(a[i], a[i]));
+	if(isNaN(a) || isNaN(b)) {
+		return true;
+	}
+	if(a < b) {
+		return abs(b - a) < 0.05;
+	} else {
+		return abs(a - b) < 0.05;
 	}
 }
 
-void testQuorumIntersection(ref BitsetRBTree!uint read, 
-		ref BitsetRBTree!uint write) 
+bool pointFive(double a, double b) {
+	//logf("%.7f %.7f %.7f", a, b, (a+b)/2.0);
+	return equal((a + b) / 2.0, 0.5);
+}
+
+void compare(A,B,CMP)(const ref A a, const ref B b, CMP cmp) {
+	enforce(a.length == 101);
+	enforce(b.length == 101);
+	for(size_t i = 0; i < 101; ++i) {
+		version(unittest) {
+			assert(cmp(a[i], b[i]), format("i(%s) a(%s) b(%s)", i, a[i], b[i]));
+		} else {
+			enforce(cmp(a[i], b[i]), format("i(%s) a(%s) b(%s)", i, a[i], b[i]));
+		}
+	}
+}
+
+void testQuorumIntersection(ref BitsetStore!uint read, 
+		ref BitsetStore!uint write) 
 {
 	testQuorumIntersectionImpl(read, write);
 	testQuorumIntersectionImpl(write, write);
 }
 
-void testQuorumIntersectionImpl(ref BitsetRBTree!uint read, 
-		ref BitsetRBTree!uint write) 
+void testQuorumIntersectionImpl(ref BitsetStore!uint read, 
+		ref BitsetStore!uint write) 
 {
 	auto rbegin = read.begin();
 	auto rend = read.end();

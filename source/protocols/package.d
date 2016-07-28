@@ -23,7 +23,7 @@ struct Result {
 }
 
 Result calcAvailForTree(const int numNodes,
-		ref BitsetRBTree!uint read, ref BitsetRBTree!uint write)
+		ref BitsetStore!uint read, ref BitsetStore!uint write)
 {
 	auto ret = Result();
 	calcAvailForTreeImpl(numNodes, read, ret.readAvail, ret.readCosts);
@@ -33,7 +33,7 @@ Result calcAvailForTree(const int numNodes,
 }
 
 private void calcAvailForTreeImpl(const int numNodes,
-		ref BitsetRBTree!uint tree, ref double[101] avail,
+		ref BitsetStore!uint tree, ref double[101] avail,
 	   	ref double[101] costs)
 {
 	import std.format : format;
@@ -41,7 +41,7 @@ private void calcAvailForTreeImpl(const int numNodes,
 	import core.bitop : popcnt;
 
 	import config : stepCount;
-	import math : availability, binomial;
+	import math : availability, binomial, isNaN;
 
 	auto it = tree.begin();
 	auto end = tree.end();

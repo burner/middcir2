@@ -16,16 +16,18 @@ struct MCS {
 	const int numNodes;
 	const int majority;
 	const int half;
-	BitsetRBTree!uint read;
-	BitsetRBTree!uint write;
+	BitsetStore!uint read;
+	BitsetStore!uint write;
 
 	this(int nn) {
 		this.numNodes = nn;
 		this.majority = this.numNodes / 2 + 1;
 		this.half = to!int((this.numNodes / 2.0)+0.51);
+		this.read.array.reserve(32);
+		this.write.array.reserve(32);
 	}
 
-	void testAll(ref BitsetRBTree!uint tree, int atLeast) {
+	void testAll(ref BitsetStore!uint tree, int atLeast) {
 		import core.bitop : popcnt;
 
 		const upTo = 1 << numNodes;
@@ -36,7 +38,7 @@ struct MCS {
 		}
 	}
 
-	Result calcP(const double stepCount = 0.01) {
+	Result calcAC() {
 		this.testAll(this.read, this.half);
 		this.testAll(this.write, this.majority);
 
@@ -51,11 +53,11 @@ struct MCS {
 unittest {
 	int mcsN = 6;
 	auto mcs = MCS(mcsN);
-	auto mcsRslt = mcs.calcP();
+	auto mcsRslt = mcs.calcAC();
 	testQuorumIntersection(mcs.read, mcs.write);
 
 	auto mcsF = MCSFormula(mcsN);
-	auto mcsFRslt = mcsF.calcP();
+	auto mcsFRslt = mcsF.calcAC();
 
 	compare(mcsFRslt.readAvail, mcsRslt.readAvail, &equal);
 	compare(mcsFRslt.writeAvail, mcsRslt.writeAvail, &equal);
@@ -74,7 +76,8 @@ struct MCSFormula {
 		this.half = to!int((this.numNodes / 2.0)+0.51);
 	}
 
-	Result calcP(const double stepCount = 0.01) {
+	Result calcAC() {
+		import config;
 		auto ret = Result();
 
 		const nn = this.numNodes+1;
@@ -108,5 +111,5 @@ struct MCSFormula {
 
 unittest {
 	auto mcs = MCS(10);
-	auto rslt = mcs.calcP();
+	auto rslt = mcs.calcAC();
 }
