@@ -11,7 +11,7 @@ import plot.gnuplot;
 import utils;
 
 void main() {
-	int mcsN = 16;
+	int mcsN = 20;
 	auto mcs = MCS(mcsN);
 	auto mcsRslt = mcs.calcAC();
 	auto rsltMCS = ResultPlot(mcs.name(), mcsRslt);
@@ -23,16 +23,19 @@ void main() {
 	gnuPlot(rsltMCS, rsltMCSF);
 	*/
 
-	auto grid = Grid(4,4);
+	log();
+	auto grid = Grid(4,5);
 	auto gridRslt = grid.calcAC();
 	auto rsltGrid = ResultPlot(grid.name(), gridRslt);
+	gnuPlot(rsltMCS, rsltGrid);
+
 	//auto writeAvailReverse = gridRslt.writeAvail.dup;
 	//reverse(writeAvailReverse);
 	//compare(gridRslt.readAvail, writeAvailReverse, &pointFive);
 
 
-	auto gridF = GridFormula(4,4);
+	/*auto gridF = GridFormula(4,4);
 	auto gridFRslt = gridF.calcAC();
 	auto rsltFGrid = ResultPlot(gridF.name(), gridFRslt);
-	gnuPlot(rsltMCS, rsltGrid, rsltFGrid);
+	*/
 }
