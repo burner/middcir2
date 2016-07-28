@@ -27,7 +27,6 @@ struct BitsetArray(T) {
 
 	this(Bitset!T value) {
 		this.bitset = value;
-		//this.subsets.reserve(32);
 	}
 
 	void toString(scope void delegate(const(char)[]) sink) const {
@@ -43,8 +42,6 @@ BitsetArray!T bitsetArray(T)(T t) if(isIntegral!T) {
 BitsetArray!(T.StoreType) bitsetArray(T)(T t) if(!isIntegral!T) {
 	return BitsetArray!(T.StoreType)(t);
 }
-
-//alias BitsetRBTree(T) = RBTree!(BitsetArray!T, bitsetLess!T, bitsetEqual!T);
 
 struct BitsetRBTree(T) {
 	RBTree!(BitsetArray!T, bitsetLess!T, bitsetEqual!T) tree;
