@@ -4,6 +4,13 @@ import std.experimental.logger;
 
 import graph;
 
+auto floyd(int Size)(const ref Graph!(Size) graph) {
+	Floyd rslt;
+	rslt.init!(Size)(graph);
+
+	return rslt;
+}
+
 struct Floyd {
 	import std.container.array;
 
@@ -12,13 +19,10 @@ struct Floyd {
 	Array!(Array!(ubyte)) distance;
 	Array!(Array!(ubyte)) first;
 
-	static Floyd opCall(G)(const ref G graph) {
-		Floyd rslt;
+	void init(Size)(const ref Graph!Size graph) {
 		rslt.reserveArrays(graph.numNodes);
 		rslt.initArrays(graph);
 		rslt.floyd();
-	
-		return rslt;
 	}
 
 	string toString() const {
@@ -60,7 +64,7 @@ struct Floyd {
 				if(i == j) {
 					this.distance[i][j] = 0;
 					this.first[i][j] = cast(ubyte)j;
-				} else if(graph.testEdge(i,j)) {
+				} else if(graph.testEdge(i, j)) {
 					this.distance[i][j] = 1;
 					this.first[i][j] = cast(ubyte)j;
 				}
@@ -127,7 +131,7 @@ unittest {
 	g.setEdge(4,5);
 	g.setEdge(5,6);
 
-	auto fr = Floyd(g);
+	auto fr = floyd!(16)(g);
 	assert(fr.distance[4][6] == 2);
 	assert(fr.first[4][6] == 5, fr.toString());
 }
@@ -145,7 +149,7 @@ unittest {
 		g.setEdge(f,t);
 	}
 
-	auto fr = Floyd(g);
+	auto fr = floyd(g);
 }
 
 unittest {
@@ -171,7 +175,7 @@ unittest {
 		g.setEdge(it[0], it[1]);
 	}
 
-	auto f = Floyd(g);
+	auto f = floyd(g);
 	auto app = appender!string();
 	formattedWrite(app, "%s", f);
 

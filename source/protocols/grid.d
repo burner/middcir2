@@ -140,16 +140,13 @@ struct GridFormula {
 }
 
 unittest {
-	import std.algorithm : reverse;
 	import utils;
 
 	auto grid = Grid(3,3);
 	auto gridRslt = grid.calcAC();
 	testQuorumIntersection(grid.read, grid.write);
 
-	auto writeAvailReverse = gridRslt.writeAvail.dup;
-	reverse(writeAvailReverse);
-	compare(gridRslt.readAvail, writeAvailReverse, &pointFive);
+	testSemetry(gridRslt);
 
 	auto it = grid.read.begin();
 	auto end = grid.read.end();

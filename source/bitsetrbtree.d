@@ -20,6 +20,7 @@ bool bitsetEqual(T)(const BitsetArray!T l, const BitsetArray!T r) {
 struct BitsetArray(T) {
 	Bitset!T bitset;
 	Array!(Bitset!(T)) subsets;
+	//Bitset!(T)[] subsets;
 
 	this(T value) {
 		this(Bitset!T(value));

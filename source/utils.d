@@ -87,3 +87,11 @@ void testQuorumIntersectionImpl(ref BitsetStore!uint read,
 		++rbegin;
 	}
 }
+
+void testSemetry(ref Result rslt) {
+	import std.algorithm : reverse;
+
+	auto writeAvailReverse = rslt.writeAvail.dup;
+	reverse(writeAvailReverse);
+	compare(rslt.readAvail, writeAvailReverse, &pointFive);
+}
