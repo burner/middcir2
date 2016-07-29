@@ -33,7 +33,7 @@ pure size_t countImpl(const ulong n) {
 }
 
 Bitset!T bitset(T)(T t) if(isIntegral!T) {
-	return Bitset!T(bitset(t));
+	return Bitset!T(t);
 }
 
 struct Bitset(Store) {
@@ -93,7 +93,7 @@ struct Bitset(Store) {
 	}
 
 	Bitset!Store reset(const size_t idx) {
-		if(idx > (Store.sizeof * 8u)) {
+		if(idx > this.size()) {
 			throw new Exception("out of bound access to Bitset");
 		} else {
 			this.store &= ~(1<<idx);
@@ -109,10 +109,10 @@ struct Bitset(Store) {
 	}
 
 	Bitset!Store flip(const size_t idx) {
-		if(idx > (Store.sizeof * 8)) {
+		if(idx > this.size()) {
 			throw new Exception("out of bound access to Bitset");
 		} else {
-			this.store ^= (1<<idx);
+			this.store = cast(Store)(this.store ^ (cast(ulong)(1)<<idx));
 		}
 
 		return this;
@@ -146,7 +146,20 @@ struct Bitset(Store) {
 
 	void toString(scope void delegate(const(char)[]) sink) const {
 		import std.format : formattedWrite;
-		formattedWrite(sink, "%b", this.store);
+		/*bool first = true;
+		Store v = this.store;
+		for(int i = 0; i < this.size() / 4 && v != cast(Store)(0); ++i) {
+			if(!first) {
+				formattedWrite(sink, "_");
+			} else {
+				first = false;
+			}
+
+			auto mask = (cast(ulong)(1) << 4) -1;
+			formattedWrite(sink, "%04b", v & mask);
+			v = v >> 4;
+		}*/
+		formattedWrite(sink, "%4b", this.store);
 	}
 }
 
@@ -177,5 +190,65 @@ unittest {
 		store2[4] = true;
 
 		assert(store.hasSubSet(store2));
+	}
+}
+
+unittest {
+	Bitset!ubyte bs;
+	bs.flip(2);
+	assert(bs.test(2));
+}
+
+unittest {
+	import std.meta : AliasSeq;
+	import std.format : format;
+	import std.experimental.logger;
+	foreach(T; AliasSeq!(ubyte,ushort,uint,ulong)) {
+		Bitset!T store;
+		for(int i = 0; i < store.size(); ++i) {
+			Bitset!T bs;
+			bs.flip(i);
+			for(int j = 0; j < i; ++j) {
+				assert(!bs.test(j), format("%s %s %s", i, j, bs));
+			}
+			assert(bs.test(i));
+			for(int j = i+1; j < i; ++j) {
+				assert(!bs.test(j));
+			}
+		}
+	}
+}
+
+unittest {
+	import std.meta : AliasSeq;
+	import std.format : format;
+	import std.experimental.logger;
+	foreach(T; AliasSeq!(/*ubyte,ushort,*/uint,ulong)) {
+		Bitset!T store;
+		store.set();
+		for(int i = 0; i < store.size(); ++i) {
+			assert(store.test(i));
+		}
+
+		for(int k = 0; k < store.size(); ++k) {
+			logf("k %s store.size %s", k, store.size());
+			store.reset(k);
+			assert(!store.test(k));
+			for(int j = 0; j < k; ++j) {
+				assert(!store.test(j));
+			}
+			store.flip(k);
+			assert(store.test(k));
+
+			for(int j = 0; j < k; ++j) {
+				assert(!store.test(j), format("k %3d j %3d %032b", k, j, store.store));
+			}
+			store.flip(k);
+			assert(!store.test(k));
+		}
+		store.flip();
+		for(int i = 0; i < store.size(); ++i) {
+			assert(store.test(i));
+		}
 	}
 }

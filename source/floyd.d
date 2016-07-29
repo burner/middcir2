@@ -3,10 +3,11 @@ module floyd;
 import std.experimental.logger;
 
 import graph;
+import bitsetmodule;
 
 auto floyd(int Size)(const ref Graph!(Size) graph) {
 	Floyd rslt;
-	rslt.init!(Size)(graph);
+	rslt.init(graph);
 
 	return rslt;
 }
@@ -19,10 +20,18 @@ struct Floyd {
 	Array!(Array!(ubyte)) distance;
 	Array!(Array!(ubyte)) first;
 
-	void init(Size)(const ref Graph!Size graph) {
-		rslt.reserveArrays(graph.numNodes);
-		rslt.initArrays(graph);
-		rslt.floyd();
+	void init(G)(const ref G graph) {
+		this.reserveArrays(graph.numNodes);
+		this.execute(graph);
+	}
+
+	void execute(G)(const ref G graph) {
+		this.execute(graph, Bitset!ulong(ulong.max));
+	}
+
+	void execute(G,B = ulong)(const ref G graph, const Bitset!B mask) {
+		this.initArrays(graph, mask);
+		this.floyd();
 	}
 
 	string toString() const {
@@ -58,15 +67,21 @@ struct Floyd {
 		}
 	}
 
-	void initArrays(G)(const ref G graph) {
+	void initArrays(G, B)(const ref G graph, const Bitset!B mask) {
 		for(int i = 0; i < graph.length; ++i) {
 			for(int j = 0; j < graph.length; ++j) {
-				if(i == j) {
+				if(i == j && mask.test(i)) {
 					this.distance[i][j] = 0;
 					this.first[i][j] = cast(ubyte)j;
-				} else if(graph.testEdge(i, j)) {
+				} else if(graph.testEdge(i, j) 
+						&& mask.test(i) 
+						&& mask.test(j)) 
+				{
 					this.distance[i][j] = 1;
 					this.first[i][j] = cast(ubyte)j;
+				} else {
+					this.distance[i][j] = INF;
+					this.first[i][j] = INF;
 				}
 			}
 		}
@@ -204,6 +219,44 @@ unittest {
 			} else {
 				assert(!pathFound, format("from(%s) to(%s) %s %s", i, j, 
 					f.toString(), to!string(rslt[])));
+			}
+		}
+	}
+}
+
+unittest {
+	import std.container.array : Array;
+	import utils;
+	auto edges = [
+		[0,1],
+		[1,2],
+		[2,3],
+		[2,7],
+		[1,4],
+	];
+
+	auto length = 8;
+
+	auto g = Graph!16(length);
+	foreach(ref it; edges) {
+		g.setEdge(it[0], it[1]);
+	}
+
+	Floyd f = floyd(g);
+	f.execute(g, bitset!ubyte(cast(ubyte)0));
+
+	Array!uint rslt;
+	const upTo = 1 << length;
+	for(uint m = 0; m < upTo; ++m) {
+		auto bs = bitset(m);
+		f.execute(g, bs);
+		for(int i = 0; i < length; ++i) {
+			for(int j = 0; j < length; ++j) {
+				rslt.removeAll();
+				auto pathExists = f.path(i,j, rslt);
+				if(m == 0) {
+					assert(!pathExists);
+				}
 			}
 		}
 	}

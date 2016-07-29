@@ -11,7 +11,7 @@ import bitsetrbtree;
 
 void removeAll(T)(ref Array!T arr) {
 	while(!arr.empty()) {
-		arr.removeBack();
+		arr.removeAny();
 	}
 }
 

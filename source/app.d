@@ -11,7 +11,7 @@ import plot.gnuplot;
 import utils;
 
 void main() {
-	int mcsN = 20;
+	int mcsN = 16;
 	auto mcs = MCS(mcsN);
 	auto mcsRslt = mcs.calcAC();
 	auto rsltMCS = ResultPlot(mcs.name(), mcsRslt);
@@ -23,8 +23,7 @@ void main() {
 	gnuPlot(rsltMCS, rsltMCSF);
 	*/
 
-	log();
-	auto grid = Grid(4,5);
+	auto grid = Grid(4,4);
 	auto gridRslt = grid.calcAC();
 	auto rsltGrid = ResultPlot(grid.name(), gridRslt);
 	gnuPlot(rsltMCS, rsltGrid);
