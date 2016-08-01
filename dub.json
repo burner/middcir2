@@ -7,6 +7,7 @@
 	"copyright": "Copyright © 2016, burner",
 	"license": "proprietary",
 	"dependencies": {
-		"gfm:math": ">=6.1.1"
+		"gfm:math": ">=6.1.1",
+		"bitfiddle": "~>0.0.1"
 	}
 }

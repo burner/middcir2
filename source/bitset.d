@@ -2,7 +2,9 @@
 module bitsetmodule;
 
 import std.stdio;
-import std.typecons : isIntegral;
+import std.typecons : isIntegral, isUnsigned;
+
+import bitfiddle;
 
 immutable size_t[256] bits_in_uint8 = [
 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
@@ -36,7 +38,7 @@ Bitset!T bitset(T)(T t) if(isIntegral!T) {
 	return Bitset!T(t);
 }
 
-struct Bitset(Store) {
+struct Bitset(Store) if(isIntegral!Store && isUnsigned!Store) {
 	Store store = 0;
 	alias StoreType = Store;
 
@@ -46,7 +48,7 @@ struct Bitset(Store) {
 	}
 
 	bool opIndex(const size_t idx) const {
-		return cast(bool)(this.store & (1<<idx));
+		return testBit(this.store, idx);
 	}
 
 	// access
@@ -72,7 +74,7 @@ struct Bitset(Store) {
 	// modify
 
 	void opIndexAssign(const bool value, const size_t idx) {
-		this.set(idx, value);
+		this.store = setBit(this.store, idx, value);
 	}
 	
 	Bitset!Store set() {
@@ -81,7 +83,7 @@ struct Bitset(Store) {
 	}
 
 	Bitset!Store set(const size_t idx, const bool value = true) {
-		this.store ^= (-cast(int)value ^ this.store) & (1 << idx);
+		this.store = setBit(this.store, idx, value);
 
 		return this;
 	}
@@ -93,11 +95,7 @@ struct Bitset(Store) {
 	}
 
 	Bitset!Store reset(const size_t idx) {
-		if(idx > this.size()) {
-			throw new Exception("out of bound access to Bitset");
-		} else {
-			this.store &= ~(1<<idx);
-		}
+		this.store = resetBit(this.store, idx);
 
 		return this;
 	}
@@ -109,11 +107,7 @@ struct Bitset(Store) {
 	}
 
 	Bitset!Store flip(const size_t idx) {
-		if(idx > this.size()) {
-			throw new Exception("out of bound access to Bitset");
-		} else {
-			this.store = cast(Store)(this.store ^ (cast(ulong)(1)<<idx));
-		}
+		this.store = flipBit(this.store, idx);
 
 		return this;
 	}
@@ -231,7 +225,6 @@ unittest {
 		}
 
 		for(int k = 0; k < store.size(); ++k) {
-			logf("k %s store.size %s", k, store.size());
 			store.reset(k);
 			assert(!store.test(k));
 			for(int j = 0; j < k; ++j) {
