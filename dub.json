@@ -8,6 +8,6 @@
 	"license": "proprietary",
 	"dependencies": {
 		"gfm:math": ">=6.1.1",
-		"bitfiddle": "~>0.0.1"
+		"bitfiddle": "~>0.0.5"
 	}
 }
