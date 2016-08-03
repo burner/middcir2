@@ -16,7 +16,7 @@ struct PathResult {
 	ValidPath validPath;
 }
 
-static PathResult selectReadQuorum(ref const(Array!(Bitset!uint)) vert,
+PathResult selectReadQuorum(ref const(Array!(Bitset!uint)) vert,
 		ref const(Array!(Bitset!uint)) hori, ref const(Array!(Bitset!uint)) diagonal)
 {
 	auto ret = PathResult(bitsetAll!uint(), ValidPath.no);
@@ -45,7 +45,7 @@ static PathResult selectReadQuorum(ref const(Array!(Bitset!uint)) vert,
 	return ret;
 }
 
-static PathResult selectWriteQuorum(ref const(Array!(Bitset!uint)) vert,
+PathResult selectWriteQuorum(ref const(Array!(Bitset!uint)) vert,
 		ref const(Array!(Bitset!uint)) hori, ref const(Array!(Bitset!uint)) diagonal)
 {
 	auto ret = PathResult(bitsetAll!uint(), ValidPath.no);
@@ -70,7 +70,7 @@ static PathResult selectWriteQuorum(ref const(Array!(Bitset!uint)) vert,
 	return ret;
 }
 
-static void testPathsBetween(ref const(Floyd) paths, ref const(Array!int) a, 
+void testPathsBetween(ref const(Floyd) paths, ref const(Array!int) a, 
 		ref const(Array!int) b, ref Array!(Bitset!uint) rslt, 
 		ref Array!uint tmpPathStore)
 {
@@ -86,7 +86,7 @@ static void testPathsBetween(ref const(Floyd) paths, ref const(Array!int) a,
 
 }
 
-static PathResult testDiagonal(ref const(Floyd) paths, const int bl,
+PathResult testDiagonal(ref const(Floyd) paths, const int bl,
 		const int tr, ref Array!uint tmpPathStore)
 {
 	auto ret = PathResult(bitsetAll!uint(), ValidPath.no);
