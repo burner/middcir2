@@ -1,7 +1,10 @@
 module bitsetrbtree;
 
 import std.container.array : Array;
+import std.exception : enforce;
 import std.typecons : isIntegral, Nullable;
+import std.format : format;
+import std.stdio;
 
 import rbtree;
 import bitsetmodule;
@@ -19,8 +22,8 @@ bool bitsetEqual(T)(const BitsetArray!T l, const BitsetArray!T r) {
 
 struct BitsetArray(T) {
 	Bitset!T bitset;
-	Array!(Bitset!(T)) subsets;
-	//Bitset!(T)[] subsets;
+	//Array!(Bitset!(T)) subsets;
+	Bitset!(T)[] subsets;
 
 	this(T value) {
 		this(Bitset!T(value));
@@ -32,7 +35,16 @@ struct BitsetArray(T) {
 
 	void toString(scope void delegate(const(char)[]) sink) const {
 		import std.format : formattedWrite;
-		formattedWrite(sink, "%b [%(%s %)]", this.bitset.store, this.subsets);
+		/*formattedWrite(sink, "%b len(%s) [%(%s %)]", this.bitset.store,
+			this.subsets.length, this.subsets[]
+		);*/
+		formattedWrite(sink, "%b len(%s) [", this.bitset.store,
+			this.subsets.length
+		);
+		foreach(ref it; this.subsets) {
+			formattedWrite(sink, "%b ", it.store);
+		}
+		formattedWrite(sink, "]");
 	}
 }
 
@@ -187,6 +199,20 @@ struct BitsetArrayArrayIterator(T) {
 struct BitsetArrayArray(T) {
 	Array!(BitsetArray!(T)) array;
 
+	void insert(Bitset!T key, Bitset!T value) {
+		auto it = this.search(key);
+		if(!it.isNull()) {
+			assert(value != (*it).bitset, format("bs(%b) it(%b)", value.store,
+					(*it).bitset.store
+			));
+			(*it).subsets ~= value;
+		} else {
+			assert(key == value);
+			enforce(key == value);
+			this.array.insert(bitsetArray(key));
+		}
+	}
+
 	void insert(T t) {
 		auto bs = Bitset!T(t);
 		this.insert(bs);
@@ -195,6 +221,10 @@ struct BitsetArrayArray(T) {
 	void insert(Bitset!T bs) {
 		auto it = this.search(bs);
 		if(!it.isNull()) {
+			//writefln("%b %b", (*it).bitset.store, bs.store);
+			assert(bs != (*it).bitset, format("bs(%b) it(%b)", bs.store,
+					(*it).bitset.store
+			));
 			(*it).subsets ~= bs;
 		} else {
 			this.array.insert(bitsetArray(bs));
@@ -227,7 +257,7 @@ struct BitsetArrayArray(T) {
 		import std.array : appender;
 		import std.format : formattedWrite;
 		auto app = appender!(string)();
-		foreach(ref it; this.array) {
+		foreach(ref it; this.array[]) {
 			formattedWrite(app, "%s\n", it);
 		}
 
@@ -239,7 +269,6 @@ struct BitsetArrayArray(T) {
 	}
 }
 unittest {
-	import std.stdio : writeln;
 	BitsetArrayArray!ushort array;
 	auto a = Bitset!(ushort)(cast(ushort)(0b0000_1111_0000_1111));
 	array.insert(a);

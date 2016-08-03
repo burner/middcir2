@@ -50,6 +50,23 @@ Bitset!T bitset(T,R)(ref Array!R r) if(isIntegral!T) {
 	return ret;
 }
 
+unittest {
+	int[] arr = [0, 4, 6, 8, 31];
+	Array!uint a;
+	a.insertBack(arr);
+
+	auto bs = bitset!uint(a);
+	foreach(it; arr) {
+		assert(bs.test(it));
+	}
+}
+
+Bitset!T bitsetAll(T)() {
+	Bitset!T ret;
+	ret.set();
+	return ret;
+}
+
 struct Bitset(Store) if(isIntegral!Store && isUnsigned!Store) {
 	Store store = 0;
 	alias StoreType = Store;
@@ -153,7 +170,6 @@ struct Bitset(Store) if(isIntegral!Store && isUnsigned!Store) {
 	}
 
 	void toString(scope void delegate(const(char)[]) sink) const {
-		import std.format : formattedWrite;
 		/*bool first = true;
 		Store v = this.store;
 		for(int i = 0; i < this.size() / 4 && v != cast(Store)(0); ++i) {
@@ -167,7 +183,26 @@ struct Bitset(Store) if(isIntegral!Store && isUnsigned!Store) {
 			formattedWrite(sink, "%04b", v & mask);
 			v = v >> 4;
 		}*/
-		formattedWrite(sink, "%4b", this.store);
+		//formattedWrite(sink, "%4b", this.store);
+		import std.format : formattedWrite;	
+		formattedWrite(sink, "0b");
+		
+		const ulong mask = 0b0000_0000_0000_0000_0000_0000_0000_1111;
+		const ulong sets  = Store.sizeof * 2;
+
+		ulong bitfield = cast(ulong)this.store;
+
+		for (size_t i = 0; i < sets; ++i) 
+		{
+			if (i > 0)
+			{
+				formattedWrite(sink, "_");
+			}
+
+			ulong shift = (sets - i - 1) * 4UL;
+			
+			formattedWrite(sink, "%04b", (bitfield >> shift) & mask);
+		}
 	}
 }
 
@@ -226,6 +261,19 @@ unittest {
 		}
 	}
 }
+
+unittest {
+	import std.meta : AliasSeq;
+	import std.format : format;
+	foreach(T; AliasSeq!(ubyte,ushort,uint,ulong)) {
+		Bitset!T v;
+		v.set();
+		for(int i = 0; i < v.size(); ++i) {
+			assert(v.test(i), format("%s %d %b", T.stringof, i, v.store));
+		}
+	}
+}
+
 
 unittest {
 	import std.meta : AliasSeq;

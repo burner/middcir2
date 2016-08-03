@@ -55,6 +55,8 @@ struct Grid {
 	}
 
 	Result calcAC() {
+		import utils : removeAll, testQuorumIntersection, testAllSubsetsSmaller;
+		
 		ubyte columnCover;
 		ubyte completeColumn;
 
@@ -69,6 +71,11 @@ struct Grid {
 			if(columnCover == this.rowMask && completeColumn > 0) {
 				this.write.insert(perm);
 			}
+		}
+
+		version(unittest) {
+			testQuorumIntersection(this.read, this.write);
+			testAllSubsetsSmaller(this.read, this.write);
 		}
 
 		return calcAvailForTree(to!int(this.width * this.height), this.read, this.write);

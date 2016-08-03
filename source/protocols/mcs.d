@@ -39,8 +39,15 @@ struct MCS {
 	}
 
 	Result calcAC() {
+		import utils : testQuorumIntersection, testAllSubsetsSmaller;
+
 		this.testAll(this.read, this.half);
 		this.testAll(this.write, this.majority);
+
+		version(unittest) {
+			testQuorumIntersection(this.read, this.write);
+			testAllSubsetsSmaller(this.read, this.write);
+		}
 
 		return calcAvailForTree(this.numNodes, this.read, this.write);
 	}

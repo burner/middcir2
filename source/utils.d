@@ -95,3 +95,22 @@ void testSemetry(ref Result rslt) {
 	reverse(writeAvailReverse);
 	compare(rslt.readAvail, writeAvailReverse, &pointFive);
 }
+
+void testAllSubsetsSmaller(ref BitsetStore!uint read, ref BitsetStore!uint write) {
+	testAllSubsetsSmallerImpl(read);
+	testAllSubsetsSmallerImpl(write);
+}
+
+void testAllSubsetsSmallerImpl(ref BitsetStore!uint store) {
+	import core.bitop : popcnt;
+
+	auto it = store.begin();
+	auto end = store.end();
+
+	while(it != end) {
+		foreach(ref ssit; (*it).subsets) {
+			assert(popcnt(ssit.store) >= popcnt((*it).bitset.store));
+		}
+		++it;
+	}
+}
