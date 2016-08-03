@@ -87,7 +87,7 @@ struct Lattice {
 
 	
 	LatticeResult selectReadQuorum(ref const(Array!(Bitset!uint)) vert,
-			ref const(Array!(Bitset!uint)) hori, const(LatticeResult) diagonal)
+			ref const(Array!(Bitset!uint)) hori, ref const(Array!(Bitset!uint)) diagonal)
 	{
 		auto ret = LatticeResult(bitsetAll!uint(), ValidPath.no);
 
@@ -105,18 +105,18 @@ struct Lattice {
 			}
 		}
 
-		if(diagonal.validPath 
-				&& popcnt(diagonal.minPath.store) < popcnt(ret.minPath.store)) 
-		{
-			ret.minPath = diagonal.minPath;
-			ret.validPath = ValidPath.yes;
+		foreach(it; diagonal) {
+			if(popcnt(it.store) < popcnt(ret.minPath.store)) {
+				ret.minPath = it;
+				ret.validPath = ValidPath.yes;
+			}
 		}
 
 		return ret;
 	}
 
 	LatticeResult selectWriteQuorum(ref const(Array!(Bitset!uint)) vert,
-			ref const(Array!(Bitset!uint)) hori, const(LatticeResult) diagonal)
+			ref const(Array!(Bitset!uint)) hori, ref const(Array!(Bitset!uint)) diagonal)
 	{
 		auto ret = LatticeResult(bitsetAll!uint(), ValidPath.no);
 
@@ -130,11 +130,11 @@ struct Lattice {
 			}
 		}
 
-		if(diagonal.validPath 
-				&& popcnt(diagonal.minPath.store) < popcnt(ret.minPath.store)) 
-		{
-			ret.minPath = diagonal.minPath;
-			ret.validPath = ValidPath.yes;
+		foreach(it; diagonal) {
+			if(popcnt(it.store) < popcnt(ret.minPath.store)) {
+				ret.minPath = it;
+				ret.validPath = ValidPath.yes;
+			}
 		}
 
 		return ret;
@@ -186,6 +186,7 @@ struct Lattice {
 
 		Array!(Bitset!uint) verticalPaths;
 		Array!(Bitset!uint) horizontalPaths;
+		Array!(Bitset!uint) diagonalPaths;
 
 		const uint upto = to!uint(1 << (this.width * this.height));
 		for(uint perm = 0; perm < upto; ++perm) {
@@ -194,6 +195,7 @@ struct Lattice {
 
 			verticalPaths.removeAll();
 			horizontalPaths.removeAll();
+			diagonalPaths.removeAll();
 
 			testPathsBetween(paths, top, bottom, verticalPaths, tmpPathStore);	
 			testPathsBetween(paths, left, right, horizontalPaths, tmpPathStore);	
@@ -201,12 +203,15 @@ struct Lattice {
 			//writefln("%(%s %)", horizontalPaths[]);
 
 			LatticeResult dia = testDiagonal(paths, 0, highestId, tmpPathStore);
+			if(dia.validPath == ValidPath.yes) {
+				diagonalPaths.insertBack(dia.minPath);
+			}
 
 			LatticeResult readQuorum = selectReadQuorum(verticalPaths,
-					horizontalPaths, dia
+					horizontalPaths, diagonalPaths
 			);
 			LatticeResult writeQuorum = selectWriteQuorum(verticalPaths,
-					horizontalPaths, dia
+					horizontalPaths, diagonalPaths
 			);
 
 			if(readQuorum.validPath == ValidPath.yes) {
