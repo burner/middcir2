@@ -4,7 +4,11 @@ import core.bitop : popcnt;
 
 import std.typecons : Flag;
 import std.container.array : Array;
+import std.experimental.logger;
 
+import protocols;
+import bitsetrbtree;
+import graph;
 import bitsetmodule;
 import floydmodule;
 import utils;
@@ -98,4 +102,61 @@ PathResult testDiagonal(ref const(Floyd) paths, const int bl,
 	}
 
 	return ret;
+}
+
+Result calcACforPathBased(ref Floyd paths, ref const(Graph!32) graph, 
+		const(Array!int) bottom, const(Array!int) top, const(Array!int) left, 
+		const(Array!int) right, const(Array!(int[2])) diagonalPairs, 
+		ref BitsetStore!uint read, ref BitsetStore!uint write, const uint upto)
+{
+	import std.conv : to;
+	Array!uint tmpPathStore;
+
+	Array!(Bitset!uint) verticalPaths;
+	Array!(Bitset!uint) horizontalPaths;
+	Array!(Bitset!uint) diagonalPaths;
+
+	for(uint perm = 0; perm < upto; ++perm) {
+		paths.execute(graph, bitset(perm));
+		//writefln("%4d, %s", perm, paths);
+
+		verticalPaths.removeAll();
+		horizontalPaths.removeAll();
+		diagonalPaths.removeAll();
+
+		testPathsBetween(paths, top, bottom, verticalPaths, tmpPathStore);	
+		testPathsBetween(paths, left, right, horizontalPaths, tmpPathStore);	
+		//writefln("%(%s %)", verticalPaths[]);
+		//writefln("%(%s %)", horizontalPaths[]);
+
+		foreach(ref int[2] diagonalPair; diagonalPairs) {
+			PathResult dia = testDiagonal(paths, diagonalPair[0],
+					diagonalPair[1], tmpPathStore
+			);
+
+			if(dia.validPath == ValidPath.yes) {
+				diagonalPaths.insertBack(dia.minPath);
+			}
+		}
+
+		PathResult readQuorum = selectReadQuorum(verticalPaths,
+				horizontalPaths, diagonalPaths
+		);
+		PathResult writeQuorum = selectWriteQuorum(verticalPaths,
+				horizontalPaths, diagonalPaths
+		);
+
+		if(readQuorum.validPath == ValidPath.yes) {
+			//writefln("read  %b %b", readQuorum.minPath.store, perm);
+			read.insert(readQuorum.minPath, bitset!uint(perm));
+		}
+
+		if(writeQuorum.validPath == ValidPath.yes) {
+			//writefln("write %b %b", writeQuorum.minPath.store, perm);
+			write.insert(writeQuorum.minPath, bitset!uint(perm));
+		}
+	}
+
+	logf("%s", upto);
+	return calcAvailForTree(to!int(upto), read, write);
 }

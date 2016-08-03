@@ -55,7 +55,8 @@ struct Grid {
 	}
 
 	Result calcAC() {
-		import utils : removeAll, testQuorumIntersection, testAllSubsetsSmaller;
+		import utils : removeAll, testQuorumIntersection,
+			testAllSubsetsSmaller, testSemetry;
 		
 		ubyte columnCover;
 		ubyte completeColumn;
@@ -73,12 +74,13 @@ struct Grid {
 			}
 		}
 
+		auto ret = calcAvailForTree(to!int(this.width * this.height), this.read, this.write);
 		version(unittest) {
 			testQuorumIntersection(this.read, this.write);
 			testAllSubsetsSmaller(this.read, this.write);
+			testSemetry(ret);
 		}
-
-		return calcAvailForTree(to!int(this.width * this.height), this.read, this.write);
+		return ret;
 	}
 
 	string name() const pure {

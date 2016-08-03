@@ -87,6 +87,8 @@ struct Lattice {
 		Array!int top;
 		Array!int left;
 		Array!int right;
+		Array!(int[2]) diagonalPairs;
+		diagonalPairs.insertBack(cast(int[2])[0, highestId]);
 		this.fillSides(bottom, top, left, right);
 		
 		auto paths = floyd!32(this.graph);
@@ -111,9 +113,14 @@ struct Lattice {
 			//writefln("%(%s %)", verticalPaths[]);
 			//writefln("%(%s %)", horizontalPaths[]);
 
-			PathResult dia = testDiagonal(paths, 0, highestId, tmpPathStore);
-			if(dia.validPath == ValidPath.yes) {
-				diagonalPaths.insertBack(dia.minPath);
+			foreach(ref int[2] diagonalPair; diagonalPairs) {
+				PathResult dia = testDiagonal(paths, diagonalPair[0],
+						diagonalPair[1], tmpPathStore
+				);
+
+				if(dia.validPath == ValidPath.yes) {
+					diagonalPaths.insertBack(dia.minPath);
+				}
 			}
 
 			PathResult readQuorum = selectReadQuorum(verticalPaths,
@@ -134,14 +141,22 @@ struct Lattice {
 			}
 		}
 
+		/*const uint upto = to!uint(1 << (this.width * this.height));
+		auto ret = calcACforPathBased(paths, this.graph, bottom, top, left, right,
+			diagonalPairs, this.read, this.write, upto
+		);*/
+		auto ret = calcAvailForTree(to!int(this.width * this.height), this.read, this.write);
+
 		version(unittest) {
 			testQuorumIntersection(this.read, this.write);
 			testAllSubsetsSmaller(this.read, this.write);
 		}
 
+		return ret;
+
 		//writefln("%s", this.read.toString());
 
-		return calcAvailForTree(to!int(this.width * this.height), this.read, this.write);
+		//return calcAvailForTree(to!int(this.width * this.height), this.read, this.write);
 	}
 
 	string name() const pure {
