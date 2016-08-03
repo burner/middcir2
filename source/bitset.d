@@ -3,6 +3,8 @@ module bitsetmodule;
 
 import std.stdio;
 import std.typecons : isIntegral, isUnsigned;
+import std.range : isRandomAccessRange;
+import std.container : Array;
 
 import bitfiddle;
 
@@ -38,6 +40,16 @@ Bitset!T bitset(T)(T t) if(isIntegral!T) {
 	return Bitset!T(t);
 }
 
+Bitset!T bitset(T,R)(ref Array!R r) if(isIntegral!T) {
+	Bitset!T ret;
+
+	foreach(ref it; r) {
+		ret.set(it);
+	}
+
+	return ret;
+}
+
 struct Bitset(Store) if(isIntegral!Store && isUnsigned!Store) {
 	Store store = 0;
 	alias StoreType = Store;
@@ -68,7 +80,9 @@ struct Bitset(Store) if(isIntegral!Store && isUnsigned!Store) {
 
 	pragma(inline, true)
 	size_t count() const {
+		import core.bitop : popcnt;
 		return countImpl(this.store);	
+		//return popcnt(this.store);
 	}
 
 	// modify

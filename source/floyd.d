@@ -1,4 +1,4 @@
-module floyd;
+module floydmodule;
 
 import std.experimental.logger;
 
@@ -126,9 +126,9 @@ struct Floyd {
 		}
 	}
 
-	bool path(T)(const uint from, const uint to, ref T rslt) {
+	bool path(T)(const uint from, const uint to, ref T rslt) const {
 		rslt.insertBack(from);
-		auto next = this.first[from][to];
+		ubyte next = this.first[from][to];
 		while(next != INF && next != to) {
 			rslt.insertBack(next);
 			next = this.first[next][to];
