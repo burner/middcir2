@@ -59,7 +59,6 @@ struct MCS {
 
 unittest {
 	for(int mcsN = 3; mcsN < 9; ++mcsN) {
-		//int mcsN = 6;
 		auto mcs = MCS(mcsN);
 		auto mcsRslt = mcs.calcAC();
 		testQuorumIntersection(mcs.read, mcs.write);

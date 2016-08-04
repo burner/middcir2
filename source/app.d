@@ -30,11 +30,11 @@ void main() {
 	auto rsltGrid = ResultPlot(grid.name(), gridRslt);
 	*/
 	//gnuPlot(rsltMCS, rsltGrid);
-	auto grid = GridFormula(4,3);
+	auto grid = GridFormula(4,4);
 	auto gridRslt = grid.calcAC();
 	auto rsltGrid = ResultPlot(grid.name(), gridRslt);
 
-	auto tl = Lattice(4,3);
+	auto tl = Lattice(4,4);
 	auto tlRslt = tl.calcAC();
 	auto rsltTL = ResultPlot(tl.name(), tlRslt);
 	gnuPlot(rsltTL, rsltGrid);
