@@ -58,18 +58,22 @@ struct MCS {
 }
 
 unittest {
-	int mcsN = 6;
-	auto mcs = MCS(mcsN);
-	auto mcsRslt = mcs.calcAC();
-	testQuorumIntersection(mcs.read, mcs.write);
+	for(int mcsN = 3; mcsN < 9; ++mcsN) {
+		//int mcsN = 6;
+		auto mcs = MCS(mcsN);
+		auto mcsRslt = mcs.calcAC();
+		testQuorumIntersection(mcs.read, mcs.write);
+		chain(testSemetry(mcsRslt), "mcsN %s", mcsN);
 
-	auto mcsF = MCSFormula(mcsN);
-	auto mcsFRslt = mcsF.calcAC();
+		auto mcsF = MCSFormula(mcsN);
+		auto mcsFRslt = mcsF.calcAC();
+		chain(testSemetry(mcsFRslt), "mcsN %s", mcsN);
 
-	compare(mcsFRslt.readAvail, mcsRslt.readAvail, &equal);
-	compare(mcsFRslt.writeAvail, mcsRslt.writeAvail, &equal);
-	compare(mcsFRslt.readCosts, mcsRslt.readCosts, &equal);
-	compare(mcsFRslt.writeCosts, mcsRslt.writeCosts, &equal);
+		compare(mcsFRslt.readAvail, mcsRslt.readAvail, &equal);
+		compare(mcsFRslt.writeAvail, mcsRslt.writeAvail, &equal);
+		compare(mcsFRslt.readCosts, mcsRslt.readCosts, &equal);
+		compare(mcsFRslt.writeCosts, mcsRslt.writeCosts, &equal);
+	}
 }
 
 struct MCSFormula {

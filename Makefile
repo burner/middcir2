@@ -12,5 +12,3 @@ test:
 
 genAvailLookup:
 	rdmd availlookupgen.d > source/availabilitylookuptable.d
-
-

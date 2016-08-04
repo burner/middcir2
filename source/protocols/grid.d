@@ -75,11 +75,18 @@ struct Grid {
 		}
 
 		auto ret = calcAvailForTree(to!int(this.width * this.height), this.read, this.write);
+		bool test;
+		debug {
+			test = true;
+		}
 		version(unittest) {
+			test = true;
+		}
+		if(test) {
 			testQuorumIntersection(this.read, this.write);
 			testAllSubsetsSmaller(this.read, this.write);
-			testSemetry(ret);
 		}
+
 		return ret;
 	}
 
@@ -173,4 +180,94 @@ unittest {
 	compare(gridFRslt.writeAvail, gridRslt.writeAvail, &equal);
 	compare(gridFRslt.readCosts, gridRslt.readCosts, &equal);
 	compare(gridFRslt.writeCosts, gridRslt.writeCosts, &equal);
+}
+
+unittest {
+	import utils;
+
+	auto grid = Grid(3,3);
+	auto gridRslt = grid.calcAC();
+	testQuorumIntersection(grid.read, grid.write);
+
+	testSemetry(gridRslt);
+
+	auto it = grid.read.begin();
+	auto end = grid.read.end();
+	while(it != end) {
+		assert((*it).bitset.count() == 3, 
+			format("%s %(%s %)", (*it).bitset, (*it).subsets)
+		);
+		++it;
+	}
+
+	auto gridF = GridFormula(3,3);
+	auto gridFRslt = gridF.calcAC();
+
+	compare(gridFRslt.readAvail, gridRslt.readAvail, &equal);
+	compare(gridFRslt.writeAvail, gridRslt.writeAvail, &equal);
+	compare(gridFRslt.readCosts, gridRslt.readCosts, &equal);
+	compare(gridFRslt.writeCosts, gridRslt.writeCosts, &equal);
+}
+
+unittest {
+	import utils;
+
+	for(int numColumn = 1; numColumn < 4; ++numColumn) {
+		//for(int numRows = 1; numRows < 4; ++numRows) {
+			int numRows = numColumn;
+			auto grid = Grid(numColumn,numRows);
+			auto gridRslt = grid.calcAC();
+
+			auto gridF = GridFormula(numColumn,numRows);
+			auto gridFRslt = gridF.calcAC();
+
+			{
+				auto it = grid.read.begin();
+				auto end = grid.read.end();
+				while(it != end) {
+					assert((*it).bitset.count() == numColumn, 
+						format("%s %(%s %)", (*it).bitset, (*it).subsets)
+					);
+					++it;
+				}
+			}
+
+			{
+				auto it = grid.write.begin();
+				auto end = grid.write.end();
+				while(it != end) {
+					assert((*it).bitset.count() == numColumn + numRows - 1, 
+						format("%s %(%s %)", (*it).bitset, (*it).subsets)
+					);
+					++it;
+				}
+			}
+
+			chain(testQuorumIntersection(grid.read, grid.write),
+				"numColumn %s, numRows %s", numColumn, numRows
+			);
+
+			/*chain(testSemetry(gridFRslt), TODO: talk to Oliver about the
+			  semetry property
+				"numColumn %s, numRows %s", numColumn, numRows
+			);
+
+			chain(testSemetry(gridRslt),
+				"numColumn %s, numRows %s", numColumn, numRows
+			);*/
+
+			chain(compare(gridFRslt.readAvail, gridRslt.readAvail, &equal),
+				"numColumn %s, numRows %s", numColumn, numRows
+			);
+			chain(compare(gridFRslt.writeAvail, gridRslt.writeAvail, &equal),
+				"numColumn %s, numRows %s", numColumn, numRows
+			);
+			chain(compare(gridFRslt.readCosts, gridRslt.readCosts, &equal),
+				"numColumn %s, numRows %s", numColumn, numRows
+			);
+			chain(compare(gridFRslt.writeCosts, gridRslt.writeCosts, &equal),
+				"numColumn %s, numRows %s", numColumn, numRows
+			);
+		//}
+	}
 }

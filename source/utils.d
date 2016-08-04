@@ -32,14 +32,15 @@ bool pointFive(double a, double b) {
 }
 
 void compare(A,B,CMP)(const ref A a, const ref B b, CMP cmp) {
+	import std.stdio : writefln;
 	enforce(a.length == 101);
 	enforce(b.length == 101);
 	for(size_t i = 0; i < 101; ++i) {
-		version(unittest) {
-			assert(cmp(a[i], b[i]), format("i(%s) a(%s) b(%s)", i, a[i], b[i]));
-		} else {
-			enforce(cmp(a[i], b[i]), format("i(%s) a(%s) b(%s)", i, a[i], b[i]));
-		}
+		/*if(!cmp(a[i], b[i])) {
+			writefln("i(%s) a(%s) b(%s)", i, a[i], b[i]);
+		}*/
+		assert(cmp(a[i], b[i]), format("i(%s) a(%s) b(%s)", i, a[i], b[i]));
+		//enforce(cmp(a[i], b[i]), format("i(%s) a(%s) b(%s)", i, a[i], b[i]));
 	}
 }
 
@@ -112,5 +113,15 @@ void testAllSubsetsSmallerImpl(ref BitsetStore!uint store) {
 			assert(popcnt(ssit.store) >= popcnt((*it).bitset.store));
 		}
 		++it;
+	}
+}
+
+auto chain(ET = Exception, F, int line = __LINE__, string file = __FILE__, Args...)
+		(lazy F exp, string msg, lazy Args args)
+{
+	try {
+		return exp();
+	} catch(Throwable e) {
+		throw new ET(format(msg, args), file, line, e);
 	}
 }

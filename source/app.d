@@ -25,10 +25,14 @@ void main() {
 	gnuPlot(rsltMCS, rsltMCSF);
 	*/
 
-	auto grid = Grid(4,3);
+	/*auto grid = Grid(4,3);
 	auto gridRslt = grid.calcAC();
 	auto rsltGrid = ResultPlot(grid.name(), gridRslt);
+	*/
 	//gnuPlot(rsltMCS, rsltGrid);
+	auto grid = GridFormula(4,3);
+	auto gridRslt = grid.calcAC();
+	auto rsltGrid = ResultPlot(grid.name(), gridRslt);
 
 	auto tl = Lattice(4,3);
 	auto tlRslt = tl.calcAC();
@@ -40,8 +44,4 @@ void main() {
 	//compare(gridRslt.readAvail, writeAvailReverse, &pointFive);
 
 
-	/*auto gridF = GridFormula(4,4);
-	auto gridFRslt = gridF.calcAC();
-	auto rsltFGrid = ResultPlot(gridF.name(), gridFRslt);
-	*/
 }
