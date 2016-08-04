@@ -42,3 +42,9 @@ __dummy.html
 .*.swp
 
 callgrind.out.*
+
+# Tex shit
+*.aux
+*.log
+*.out
+*.pdf
