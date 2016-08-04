@@ -16,13 +16,16 @@ void removeAll(T)(ref Array!T arr) {
 }
 
 bool equal(double a, double b) {
+	return equal(a, b, 0.05);
+}
+bool equal(double a, double b, const double diff) {
 	if(isNaN(a) || isNaN(b)) {
 		return true;
 	}
 	if(a < b) {
-		return abs(b - a) < 0.05;
+		return abs(b - a) < diff;
 	} else {
-		return abs(a - b) < 0.05;
+		return abs(a - b) < diff;
 	}
 }
 
