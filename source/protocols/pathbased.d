@@ -107,18 +107,19 @@ PathResult testDiagonal(ref const(Floyd) paths, const int bl,
 Result calcACforPathBased(ref Floyd paths, ref const(Graph!32) graph, 
 		const(Array!int) bottom, const(Array!int) top, const(Array!int) left, 
 		const(Array!int) right, const(Array!(int[2])) diagonalPairs, 
-		ref BitsetStore!uint read, ref BitsetStore!uint write, const uint upto)
+		ref BitsetStore!uint read, ref BitsetStore!uint write, const uint numNodes)
 {
 	import std.conv : to;
+	import std.stdio : writefln;
 	Array!uint tmpPathStore;
 
 	Array!(Bitset!uint) verticalPaths;
 	Array!(Bitset!uint) horizontalPaths;
 	Array!(Bitset!uint) diagonalPaths;
 
+	const uint upto = to!uint(1 << (numNodes));
 	for(uint perm = 0; perm < upto; ++perm) {
 		paths.execute(graph, bitset(perm));
-		//writefln("%4d, %s", perm, paths);
 
 		verticalPaths.removeAll();
 		horizontalPaths.removeAll();
@@ -126,8 +127,6 @@ Result calcACforPathBased(ref Floyd paths, ref const(Graph!32) graph,
 
 		testPathsBetween(paths, top, bottom, verticalPaths, tmpPathStore);	
 		testPathsBetween(paths, left, right, horizontalPaths, tmpPathStore);	
-		//writefln("%(%s %)", verticalPaths[]);
-		//writefln("%(%s %)", horizontalPaths[]);
 
 		foreach(ref int[2] diagonalPair; diagonalPairs) {
 			PathResult dia = testDiagonal(paths, diagonalPair[0],
@@ -147,16 +146,13 @@ Result calcACforPathBased(ref Floyd paths, ref const(Graph!32) graph,
 		);
 
 		if(readQuorum.validPath == ValidPath.yes) {
-			//writefln("read  %b %b", readQuorum.minPath.store, perm);
 			read.insert(readQuorum.minPath, bitset!uint(perm));
 		}
 
 		if(writeQuorum.validPath == ValidPath.yes) {
-			//writefln("write %b %b", writeQuorum.minPath.store, perm);
 			write.insert(writeQuorum.minPath, bitset!uint(perm));
 		}
 	}
 
-	logf("%s", upto);
-	return calcAvailForTree(to!int(upto), read, write);
+	return calcAvailForTree(to!int(numNodes), read, write);
 }

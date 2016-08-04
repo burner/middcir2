@@ -93,70 +93,25 @@ struct Lattice {
 		
 		auto paths = floyd!32(this.graph);
 
-		Array!uint tmpPathStore;
+		const uint numNodes = to!uint(this.width * this.height);
+		auto ret = calcACforPathBased(paths, this.graph, bottom, top, left, right,
+			diagonalPairs, this.read, this.write, numNodes
+		);
 
-		Array!(Bitset!uint) verticalPaths;
-		Array!(Bitset!uint) horizontalPaths;
-		Array!(Bitset!uint) diagonalPaths;
-
-		const uint upto = to!uint(1 << (this.width * this.height));
-		for(uint perm = 0; perm < upto; ++perm) {
-			paths.execute(this.graph, bitset(perm));
-			//writefln("%4d, %s", perm, paths);
-
-			verticalPaths.removeAll();
-			horizontalPaths.removeAll();
-			diagonalPaths.removeAll();
-
-			testPathsBetween(paths, top, bottom, verticalPaths, tmpPathStore);	
-			testPathsBetween(paths, left, right, horizontalPaths, tmpPathStore);	
-			//writefln("%(%s %)", verticalPaths[]);
-			//writefln("%(%s %)", horizontalPaths[]);
-
-			foreach(ref int[2] diagonalPair; diagonalPairs) {
-				PathResult dia = testDiagonal(paths, diagonalPair[0],
-						diagonalPair[1], tmpPathStore
-				);
-
-				if(dia.validPath == ValidPath.yes) {
-					diagonalPaths.insertBack(dia.minPath);
-				}
-			}
-
-			PathResult readQuorum = selectReadQuorum(verticalPaths,
-					horizontalPaths, diagonalPaths
-			);
-			PathResult writeQuorum = selectWriteQuorum(verticalPaths,
-					horizontalPaths, diagonalPaths
-			);
-
-			if(readQuorum.validPath == ValidPath.yes) {
-				//writefln("read  %b %b", readQuorum.minPath.store, perm);
-				this.read.insert(readQuorum.minPath, bitset!uint(perm));
-			}
-
-			if(writeQuorum.validPath == ValidPath.yes) {
-				//writefln("write %b %b", writeQuorum.minPath.store, perm);
-				this.write.insert(writeQuorum.minPath, bitset!uint(perm));
-			}
+		bool test;
+		debug {
+			test = true;
+		}
+		version(unittest) {
+			test = true;
 		}
 
-		/*const uint upto = to!uint(1 << (this.width * this.height));
-		auto ret = calcACforPathBased(paths, this.graph, bottom, top, left, right,
-			diagonalPairs, this.read, this.write, upto
-		);*/
-		auto ret = calcAvailForTree(to!int(this.width * this.height), this.read, this.write);
-
-		version(unittest) {
+		if(test) {
 			testQuorumIntersection(this.read, this.write);
 			testAllSubsetsSmaller(this.read, this.write);
 		}
 
 		return ret;
-
-		//writefln("%s", this.read.toString());
-
-		//return calcAvailForTree(to!int(this.width * this.height), this.read, this.write);
 	}
 
 	string name() const pure {
