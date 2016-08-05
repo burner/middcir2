@@ -1,7 +1,10 @@
 module graph;
 
+import std.math;
 import std.traits : isIntegral;
+import std.experimental.logger;
 import gfm.math.vector;
+import math;
 
 void populate(A,V)(ref A arr, size_t size, V defaultValue) {
 	arr.reserve(size);
@@ -43,6 +46,10 @@ struct Graph(int Size) {
 		this.nodePositions[nodeId] = newPos;
 	}
 
+	@property size_t length() pure const {
+		return this.numNodes;
+	}
+
 	void setEdge(int f, int t) pure {
 		assert(f < this.numNodes);
 		assert(t < this.numNodes);
@@ -58,8 +65,73 @@ struct Graph(int Size) {
 		return this.nodes[f][t];
 	}
 
-	@property size_t length() pure const {
-		return this.numNodes;
+	int getLeftMostNode() const {
+		int ret;
+		bool first = true;
+		vec3d vec;
+		for(int i = 0; i < this.length; ++i) {
+			if(first || this.nodePositions[i].x < vec.x) {
+				ret = i;
+				vec = this.nodePositions[i];
+				first = false;
+			}
+		}
+		return ret;
+	}
+
+	vec3d startEdgeStartNode(vec3d leftMost) const {
+		return vec3d(leftMost.x - 1.0, leftMost.y, leftMost.z);
+	}
+
+	/** This function sets the nextNodeId to id of the next node, additionally
+	the curEdgeDir will be a vector pointing from the node edgeEnd to the node 
+	nextNodeId
+	*/
+	void nextNode(int edgeStart, int edgeEnd, ref vec3d curEdgeDir, 
+			out int nextNodeId) const
+	{
+		double maxAngle;
+		for(int i = 0; i < this.numNodes; ++i) {
+			if(i != edgeStart && this.testEdge(edgeEnd, i)) {
+				vec3d dir = dirOfEdge(this.nodePositions[edgeEnd],
+						this.nodePositions[i]
+				);
+				double angle = angleFunc(curEdgeDir, dir);
+				if(isNaN(maxAngle) || angle > maxAngle) {
+					maxAngle = angle;
+					nextNodeId = i;
+				}
+			}
+		}
+
+		if(isNaN(maxAngle)) {
+			nextNodeId = edgeStart;
+		}
+
+		curEdgeDir = dirOfEdge(this.nodePositions[edgeEnd],
+			this.nodePositions[nextNodeId]
+		);
+	}
+
+	Array!int computeBorder() const {
+		Array!int ret;
+
+		// compute fake start edge
+		int startNode = this.getLeftMostNode();
+		vec3d startNodeVec = startEdgeStartNode(this.nodePositions[startNode]);
+		vec3d curEdgeDir = dirOfEdge(startNodeVec, this.nodePositions[startNode]);
+
+		int lastNode = int.min;
+		int curNode = startNode;
+		do {
+			int nextNode;
+			ret.insertBack(curNode);
+			this.nextNode(lastNode, curNode, curEdgeDir, nextNode);
+			lastNode = curNode;
+			curNode = nextNode;
+		} while(curNode != startNode);
+
+		return ret;
 	}
 
 	string toTikz() const {
@@ -164,7 +236,14 @@ unittest {
 
 unittest {
 	import std.stdio : File, writeln;
-	auto g = Graph!16(16);
+
+	auto g = genTestGraph!16();
+	auto f = File("tikztest.tex", "w");
+	f.write(g.toTikz());
+}
+
+Graph!Size genTestGraph(int Size)() {
+	auto g = Graph!Size(16);
 	g.setNodePos(0, vec3d(0.5,2,0.0));
 	g.setNodePos(1, vec3d(1.5,1,0.0));
 	g.setNodePos(2, vec3d(1.5,3.5,0.0));
@@ -217,14 +296,20 @@ unittest {
 	g.setEdge(11,  7);
 	g.setEdge(10,  3);
 	g.setEdge(10,  7);	
-/*for(int i = 0; i < 4; ++i) {
-		for(int j = 0; j < 4; ++j) {
-			auto v = vec3d(i, j, 0.0);
-			writeln(i*4+j, " ", v);
-			g.setNodePos(i*4+j, v);
-		}
-	}*/
+	
+	return g;
+}
 
-	auto f = File("tikztest.tex", "w");
-	f.write(g.toTikz());
+unittest {
+	auto g = genTestGraph!32();
+
+	auto id = g.getLeftMostNode();
+	assert(id == 0);
+
+	auto border = g.computeBorder();
+	auto test = [0, 2, 15, 9, 3, 6, 5, 8, 12, 1];
+	assert(border.length == test.length);
+	for(size_t i = 0; i < border.length; ++i) {
+		assert(border[i] == test[i]);
+	}
 }

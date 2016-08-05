@@ -1,8 +1,10 @@
 module math;
 
-import bitsetmodule;
-
 import std.math;
+
+import gfm.math.vector;
+
+import bitsetmodule;
 
 ulong factorial(const ulong fac) {
 	assert(fac < 23);
@@ -168,4 +170,51 @@ unittest {
 			assert(binomialFunc(n, k) == binomial(n, k));
 		}
 	}
+}
+
+vec3d dirOfEdge(vec3d begin, vec3d end) {
+	return end - begin;
+}
+
+double angleFunc(const vec3d a, const vec3d o) {
+	static double SafeAcos(double x) {
+		if (x < -1.0) x = -1.0 ;
+		else if (x > 1.0) x = 1.0 ;
+		return acos(x) ;
+	}
+
+	double divident = a.x * o.x + a.y * o.y;
+	assert(!isNaN(divident));
+	double divisor = sqrt(pow(a.x, 2) + pow(a.y, 2)) * 
+		sqrt(pow(o.x, 2) + pow(o.y, 2));
+	assert(!isNaN(divisor));
+	assert(!isNaN(divident / divisor));
+	assert(!isNaN(SafeAcos(divident / divisor)));
+	double tmp = SafeAcos(divident / divisor) * (180 / PI);
+
+	if(a.x*o.y - a.y*o.x < 0) {
+		tmp = -tmp;
+	}
+	assert(!isNaN(tmp));
+	return tmp;
+}
+
+unittest {
+	auto zero = vec3d( 0.0, 0.0, 0.0);
+	auto left = vec3d(-1.0, 0.0, 0.0);
+	auto right = vec3d(1.0, 0.0, 0.0);
+	auto top = vec3d(0.0, 1.0, 0.0);
+	auto bottom = vec3d(0.0, -1.0, 0.0);
+
+	double a = angleFunc(dirOfEdge(left, zero), dirOfEdge(zero, right));
+	assert(approxEqual(a, 0.0));
+
+	a = angleFunc(dirOfEdge(left, zero), dirOfEdge(zero, top));
+	assert(approxEqual(a, 90.0));
+
+	a = angleFunc(dirOfEdge(left, zero), dirOfEdge(zero, bottom));
+	assert(approxEqual(a, -90.0));
+
+	a = angleFunc(dirOfEdge(left, zero), dirOfEdge(zero, left));
+	assert(approxEqual(abs(a), 180.0));
 }
