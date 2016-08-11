@@ -185,6 +185,29 @@ struct Graph(int Size) {
 
 		app.put(bottomMatter);
 	}
+
+	bool testEdgeIntersection(int aFrom, int aTo, int bFrom, int bTo) const {
+		auto tStart = this.nodePositions[aFrom];
+		auto tEnd = this.nodePositions[aTo];
+	
+		auto oStart = this.nodePositions[bFrom];
+		auto oEnd = this.nodePositions[bTo];
+	
+	    auto s1_x = tEnd.x - tStart.x; 
+		auto s1_y = tEnd.y - tStart.y; 
+		auto s2_x = oEnd.x - oStart.x;
+		auto s2_y = oEnd.y - oStart.y;
+	
+	    double s = (-s1_y * (tStart.x - oStart.x) + s1_x * (tStart.y - oStart.y)) / (-s2_x * s1_y + s1_x * s2_y);
+	    double t = ( s2_x * (tStart.y - oStart.y) - s2_y * (tStart.x - oStart.x)) / (-s2_x * s1_y + s1_x * s2_y);
+	
+	    if(s >= 0 && s <= 1 && t >= 0 && t <= 1) {
+	        // Collision detected
+	        return true;
+	    }
+	
+	    return false; // No collision
+	}
 }
 
 unittest {
@@ -312,4 +335,21 @@ unittest {
 	for(size_t i = 0; i < border.length; ++i) {
 		assert(border[i] == test[i]);
 	}
+}
+
+Graph!16 makeTwoTimesTwo() {
+	auto ret = Graph!16(4);
+	ret.setNodePos(0, vec3d(0.0, 0.0, 0.0));
+	ret.setNodePos(1, vec3d(1.0, 0.0, 0.0));
+	ret.setNodePos(2, vec3d(0.0, 1.0, 0.0));
+	ret.setNodePos(3, vec3d(1.0, 1.0, 0.0));
+
+	ret.setEdge(0, 1);
+	ret.setEdge(0, 2);
+	ret.setEdge(0, 3);
+	ret.setEdge(1, 3);
+	ret.setEdge(1, 2);
+	ret.setEdge(2, 3);
+
+	return ret;
 }
