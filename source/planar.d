@@ -59,7 +59,7 @@ IsPlanar isPlanar(Graph)(const ref Graph graph) {
 	const int nn = to!int(graph.length);
 	for(int ai = 0; ai < nn; ++ai) {
 		for(int aj = 0; aj < nn; ++aj) {
-			if(!graph.testEdge(ai, aj)) {
+			if(ai == aj || !graph.testEdge(ai, aj)) {
 				continue;
 			}
 
@@ -68,11 +68,12 @@ IsPlanar isPlanar(Graph)(const ref Graph graph) {
 					continue;
 				}
 				for(int bj = 0; bj < nn; ++bj) {
-					if(bj == ai || bj == aj) {
+					if(bj == ai || bj == aj || !graph.testEdge(bi, bj)) {
 						continue;
 					}
 
 					if(graph.testEdgeIntersection(ai, aj, bi, bj)) {
+						//logf("%s -> %s XX %s -> %s", ai, aj, bi, bj);
 						return IsPlanar(Planar.no, ai, aj, bi, bj);
 					}
 				}

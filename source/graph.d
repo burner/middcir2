@@ -232,15 +232,21 @@ struct Graph(int Size) {
 	    return false; // No collision
 	}
 
-	string toString() const pure {
+	string toString() const {
 		auto app = appender!string();
 		toString(app);
 		return app.data;
 	}
 
-	void toString(A)(ref A app) const pure {
+	void toString(A)(ref A app) const {
 		for(int i = 0; i < this.length; ++i) {
-			formattedWrite(app, "%2s:", i);
+			if(i < this.nodePositions.length) {
+				formattedWrite(app, "%2s(%3.1f,%3.1f):", i,
+						this.nodePositions[i].x, this.nodePositions[i].y
+				);
+			} else {
+				formattedWrite(app, "%2s:", i);
+			}
 			for(int j = 0; j < this.length; ++j) {
 				if(j != i && testEdge(i, j)) {
 					formattedWrite(app, "%2s ", j);
