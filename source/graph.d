@@ -16,6 +16,8 @@ void populate(A,V)(ref A arr, size_t size, V defaultValue) {
 struct Graph(int Size) {
 	import bitsetmodule;
 	import std.container.array;
+	import std.array : appender;
+	import std.format : formattedWrite;
 
 	static if(Size <= 8) {
 		alias Node = Bitset!ubyte;
@@ -36,6 +38,18 @@ struct Graph(int Size) {
 	Node[Size] nodes;
 
 	Array!vec3d nodePositions;
+
+	Graph!Size dup() const {
+		auto ret = Graph!Size(this.numNodes);
+		for(size_t i = 0; i < this.numNodes; ++i) {
+			ret.nodes[i] = this.nodes[i];
+		}
+
+		for(size_t i = 0; i < this.nodePositions.length; ++i) {
+			ret.nodePositions.insertBack(this.nodePositions[i]);
+		}
+		return ret;
+	}
 
 	void setNodePos(size_t nodeId, vec3d newPos) {
 		assert(nodeId < this.numNodes);
@@ -58,12 +72,21 @@ struct Graph(int Size) {
 		nodes[t].set(f);
 	}
 
+	void unsetEdge(int f, int t) pure {
+		assert(f < this.numNodes);
+		assert(t < this.numNodes);
+
+		nodes[f].reset(t);
+		nodes[t].reset(f);
+	}
+
 	bool testEdge(int f, int t) pure const {
 		assert(f < this.numNodes);
 		assert(t < this.numNodes);
 
 		return this.nodes[f][t];
 	}
+
 
 	int getLeftMostNode() const {
 		int ret;
@@ -135,7 +158,6 @@ struct Graph(int Size) {
 	}
 
 	string toTikz() const {
-		import std.array : appender;
 		auto app = appender!string();
 		toTikz(app);
 		return app.data;
@@ -143,7 +165,6 @@ struct Graph(int Size) {
 
 	void toTikz(T)(auto ref T app) const {
 		import std.exception : enforce;
-		import std.format : formattedWrite;
 		string topMatter =
 `\documentclass[tikz]{standalone}
 \usepackage{tikz}
@@ -186,7 +207,9 @@ struct Graph(int Size) {
 		app.put(bottomMatter);
 	}
 
-	bool testEdgeIntersection(int aFrom, int aTo, int bFrom, int bTo) const {
+	bool testEdgeIntersection(int aFrom, int aTo, int bFrom, int bTo) const
+			pure 
+	{
 		auto tStart = this.nodePositions[aFrom];
 		auto tEnd = this.nodePositions[aTo];
 	
@@ -207,6 +230,24 @@ struct Graph(int Size) {
 	    }
 	
 	    return false; // No collision
+	}
+
+	string toString() const pure {
+		auto app = appender!string();
+		toString(app);
+		return app.data;
+	}
+
+	void toString(A)(ref A app) const pure {
+		for(int i = 0; i < this.length; ++i) {
+			formattedWrite(app, "%2s:", i);
+			for(int j = 0; j < this.length; ++j) {
+				if(j != i && testEdge(i, j)) {
+					formattedWrite(app, "%2s ", j);
+				}
+			}
+			formattedWrite(app, "\n");
+		}
 	}
 }
 
