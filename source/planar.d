@@ -8,7 +8,7 @@ import exceptionhandling;
 
 import graph;
 
-void makePlanar(Graph)(Graph orignal, Array!Graph result) {
+void makePlanar(Graph)(Graph orignal, ref Array!Graph result) {
 	Array!Graph stack;
 	stack.insertBack(orignal);
 	const numNodes = assertNotEqual(orignal.nodePositions.length, 0);
@@ -91,4 +91,23 @@ unittest {
 	makePlanar(g, planarGraphs);
 
 	assert(g.testEdgeIntersection(0, 3, 1, 2));
+}
+
+unittest {
+	import std.stdio : File;
+	import std.format : format;
+	auto g =  genTestGraph!16();
+	g.setEdge(2, 13);
+
+	auto f = File("testGraph_Orig.tex", "w");
+	g.toTikz(f.lockingTextWriter());
+
+	Array!(Graph!16) planarGraphs;
+	makePlanar(g, planarGraphs);
+
+	logf("%s", planarGraphs.length);
+	for(size_t i = 0; i < planarGraphs.length; ++i) {
+		auto o = File(format("testGraph_planar_%d.tex", i), "w");
+		planarGraphs[i].toTikz(o.lockingTextWriter());
+	}
 }

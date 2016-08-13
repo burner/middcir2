@@ -12,3 +12,15 @@ test:
 
 genAvailLookup:
 	rdmd availlookupgen.d > source/availabilitylookuptable.d
+
+clean:
+	rm -rf .*.lst
+	rm -rf *.lst
+	rm -rf callgrind.out.*
+	rm -rf *.aux
+	rm -rf *.pdf
+	rm -rf *.log
+	rm -rf .*.pdf
+	rm -rf .*.eps
+	rm -rf .*.rslt
+	rm -rf .*.gp
