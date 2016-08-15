@@ -119,12 +119,10 @@ void testAllSubsetsSmallerImpl(ref BitsetStore!uint store) {
 	}
 }
 
-auto chain(ET = Exception, F, int line = __LINE__, string file = __FILE__, Args...)
-		(lazy F exp, string msg, lazy Args args)
-{
-	try {
-		return exp();
-	} catch(Throwable e) {
-		throw new ET(format(msg, args), file, line, e);
+void testSorted(T)(const ref BitsetStore!T store) {
+	for(int i = 0; i < store.length - 1; ++i) {
+
 	}
+
+	return true;
 }

@@ -7,6 +7,7 @@ import std.experimental.logger;
 
 import protocols;
 import config;
+import exceptionhandling;
 
 struct Grid {
 	import bitsetrbtree;
@@ -243,29 +244,29 @@ unittest {
 				}
 			}
 
-			chain(testQuorumIntersection(grid.read, grid.write),
+			expect(testQuorumIntersection(grid.read, grid.write),
 				"numColumn %s, numRows %s", numColumn, numRows
 			);
 
-			/*chain(testSemetry(gridFRslt), TODO: talk to Oliver about the
+			/*expect(testSemetry(gridFRslt), TODO: talk to Oliver about the
 			  semetry property
 				"numColumn %s, numRows %s", numColumn, numRows
 			);
 
-			chain(testSemetry(gridRslt),
+			expect(testSemetry(gridRslt),
 				"numColumn %s, numRows %s", numColumn, numRows
 			);*/
 
-			chain(compare(gridFRslt.readAvail, gridRslt.readAvail, &equal),
+			expect(compare(gridFRslt.readAvail, gridRslt.readAvail, &equal),
 				"numColumn %s, numRows %s", numColumn, numRows
 			);
-			chain(compare(gridFRslt.writeAvail, gridRslt.writeAvail, &equal),
+			expect(compare(gridFRslt.writeAvail, gridRslt.writeAvail, &equal),
 				"numColumn %s, numRows %s", numColumn, numRows
 			);
-			chain(compare(gridFRslt.readCosts, gridRslt.readCosts, &equal),
+			expect(compare(gridFRslt.readCosts, gridRslt.readCosts, &equal),
 				"numColumn %s, numRows %s", numColumn, numRows
 			);
-			chain(compare(gridFRslt.writeCosts, gridRslt.writeCosts, &equal),
+			expect(compare(gridFRslt.writeCosts, gridRslt.writeCosts, &equal),
 				"numColumn %s, numRows %s", numColumn, numRows
 			);
 		//}

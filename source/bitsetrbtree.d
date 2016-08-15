@@ -249,6 +249,10 @@ struct BitsetArrayArray(T) {
 		return BitsetArrayArrayIterator!T(&this, this.length);
 	}
 
+	auto opSlice() const {
+		return this.array[];
+	}
+
 	@property size_t length() const {
 		return this.array.length;
 	}

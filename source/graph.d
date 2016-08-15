@@ -400,3 +400,17 @@ Graph!16 makeTwoTimesTwo() {
 
 	return ret;
 }
+
+Graph!16 makeLineOfFour() {
+	auto ret = Graph!16(4);
+	ret.setNodePos(0, vec3d(0.0, 0.0, 0.0));
+	ret.setNodePos(1, vec3d(1.0, 0.0, 0.0));
+	ret.setNodePos(2, vec3d(2.0, 0.0, 0.0));
+	ret.setNodePos(3, vec3d(3.0, 0.0, 0.0));
+
+	ret.setEdge(0, 1);
+	ret.setEdge(1, 2);
+	ret.setEdge(2, 3);
+
+	return ret;
+}

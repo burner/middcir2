@@ -6,6 +6,8 @@ import std.math;
 import std.format;
 import std.experimental.logger;
 
+import exceptionhandling;
+
 import protocols;
 import math;
 import utils;
@@ -62,11 +64,11 @@ unittest {
 		auto mcs = MCS(mcsN);
 		auto mcsRslt = mcs.calcAC();
 		testQuorumIntersection(mcs.read, mcs.write);
-		chain(testSemetry(mcsRslt), "mcsN %s", mcsN);
+		expect(testSemetry(mcsRslt), "mcsN %s", mcsN);
 
 		auto mcsF = MCSFormula(mcsN);
 		auto mcsFRslt = mcsF.calcAC();
-		chain(testSemetry(mcsFRslt), "mcsN %s", mcsN);
+		expect(testSemetry(mcsFRslt), "mcsN %s", mcsN);
 
 		compare(mcsFRslt.readAvail, mcsRslt.readAvail, &equal);
 		compare(mcsFRslt.writeAvail, mcsRslt.writeAvail, &equal);

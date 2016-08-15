@@ -8,6 +8,9 @@ debug:
 	dub --compiler=ldc --build=debug
 
 test:
+	dub test -debug --compiler=dmd 
+
+testcoverage:
 	dub test -debug --coverage --compiler=dmd 
 
 genAvailLookup:

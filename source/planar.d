@@ -16,7 +16,6 @@ void makePlanar(Graph)(Graph orignal, ref Array!Graph result) {
 	while(!stack.empty()) {
 		Graph cur = stack.back();
 		stack.removeBack();
-		logf("\n%s", cur.toString());
 
 		IsPlanar testRslt = isPlanar(cur);
 		if(testRslt.planar == Planar.yes) {
@@ -24,14 +23,12 @@ void makePlanar(Graph)(Graph orignal, ref Array!Graph result) {
 		} else {
 			Graph a = cur.dup;
 			Graph b = cur.dup;
-			logf("\na:\n%sb:\n%s", a.toString(), b.toString());
 
 			assert(a.testEdge(testRslt.aBegin, testRslt.aEnd));
 			assert(b.testEdge(testRslt.bBegin, testRslt.bEnd));
 
 			a.unsetEdge(testRslt.aBegin, testRslt.aEnd);
 			b.unsetEdge(testRslt.bBegin, testRslt.bEnd);
-			logf("\na:\n%sb:\n%s", a.toString(), b.toString());
 
 			assert(!a.testEdge(testRslt.aBegin, testRslt.aEnd));
 			assert(!b.testEdge(testRslt.bBegin, testRslt.bEnd));
@@ -105,7 +102,6 @@ unittest {
 	Array!(Graph!16) planarGraphs;
 	makePlanar(g, planarGraphs);
 
-	logf("%s", planarGraphs.length);
 	for(size_t i = 0; i < planarGraphs.length; ++i) {
 		auto o = File(format("testGraph_planar_%d.tex", i), "w");
 		planarGraphs[i].toTikz(o.lockingTextWriter());

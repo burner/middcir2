@@ -15,6 +15,7 @@ struct Lattice {
 	import floydmodule;
 	import bitfiddle;
 	import utils : removeAll, testQuorumIntersection, testAllSubsetsSmaller;
+	import gfm.math.vector;
 
 	BitsetStore!uint read;
 	BitsetStore!uint write;
@@ -32,6 +33,8 @@ struct Lattice {
 	}
 
 	void createNodeAndEdges() {
+		int x = 0;
+		int y = 0;
 		const int numNodes = cast(int)(this.width * this.height);
 		for(int i = 0; i < numNodes; ++i) {
 			bool right;
@@ -54,6 +57,13 @@ struct Lattice {
 				//logf("%s %s", i, i + this.width + 1);
 				this.graph.setEdge(i, cast(int)(i + this.width + 1));
 				top = true;
+			}
+
+			this.graph.setNodePos(i, vec3d(x, y, 0.0));
+			++x;
+			if(x == this.width) {
+				x = 0;
+				++y;
 			}
 		}
 	}
