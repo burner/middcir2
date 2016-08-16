@@ -36,6 +36,34 @@ pure size_t countImpl(const ulong n) {
 		bits_in_uint8[(n >> 48) & 0xFFU] + bits_in_uint8[(n >> 56) & 0xFFU];
 }
 
+void getBitsSet(B,A)(const auto ref B bitset, ref A store) {
+	for(int i = 0; i < B.StoreType.sizeof * 8; ++i) {
+		if(bitset.test(i)) {
+			store.insertBack(i);
+		}
+	}
+}
+
+unittest {
+	import fixedsizearray;
+	import exceptionhandling;
+
+	auto toTest = [0,5,10,31];
+	Bitset!uint bs;
+	foreach(it; toTest) {
+		bs.set(it);
+	}
+
+	FixedSizeArray!(int,32) fsa;
+	getBitsSet(bs, fsa);
+
+	size_t i = 0;
+	foreach(it; fsa[]) {
+		assertEqual(it, toTest[i]);
+		++i;
+	}
+}
+
 Bitset!T bitset(T)(T t) if(isIntegral!T) {
 	return Bitset!T(t);
 }

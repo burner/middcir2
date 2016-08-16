@@ -10,6 +10,7 @@ import bitsetrbtree;
 import bitsetmodule;
 import protocols;
 import floydmodule;
+import fixedsizearray;
 
 /** Mapping will be passed a BitsetStore. It will take this BitsetStore and
 for each element it will try to reconnect the element for every permutation.
@@ -35,8 +36,22 @@ struct Mapping(int SizeLnt, int SizePnt) {
 	void reconnectQuorum(ref const(Bitset!uint) quorum, 
 			ref BitsetStore!uint rsltQuorumSet)
 	{
-		for(uint perm = 0; perm < upTo; ++perm) {
-			floyd.initArrays(*this.pnt, bitset(perm));
+		FixedSizeArray!(int,32) whichNodesToReconnect;
+		getBitsSet(quorum, whichNodesToReconnect);
+
+		outer:for(uint perm = 0; perm < upTo; ++perm) {
+			floyd.execute(*this.pnt, bitset(perm));
+
+			foreach(from; whichNodesToReconnect[]) {
+				foreach(to; whichNodesToReconnect[]) {
+					if(!floyd.pathExists(mapping[from], mapping[to])) {
+						continue outer;
+					}
+				}
+			}
+
+			rsltQuorumSet.insertUnique(bitset(perm));
+			break outer;
 		}
 	}
 
@@ -61,6 +76,11 @@ struct Mapping(int SizeLnt, int SizePnt) {
 
 		return calcAvailForTree(to!int(this.lnt.length), this.read, this.write);
 	}
+
+	string name(string protocolName) const pure {
+		import std.format : format;
+		return format("%s-Mapped", protocolName);
+	}
 }
 
 unittest {
@@ -70,9 +90,21 @@ unittest {
 }
 
 unittest {
+	import std.stdio;
+
 	import protocols.lattice;
-	auto lnt = Lattice(2,2);
+	import plot.gnuplot;
+	import plot;
+
+	auto lattice = Lattice(2,2);
+	auto latticeRslt = lattice.calcAC();
 	auto pnt = makeLineOfFour();
 
-	auto map = Mapping!(32,16)(lnt.graph, pnt, [1,2,3,0]);
+	auto map = Mapping!(32,16)(lattice.graph, pnt, [1,2,3,0]);
+	auto mapRslt = map.calcAC(lattice.read, lattice.write);
+	writefln("%(%s\n%)", map.read[]);
+
+	gnuPlot(ResultPlot(lattice.name(), latticeRslt),
+			ResultPlot(map.name(lattice.name()), mapRslt)
+	);
 }

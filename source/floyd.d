@@ -137,6 +137,10 @@ struct Floyd {
 		rslt.insertBack(to);
 		return next == to;
 	}
+
+	bool pathExists(const uint from, const uint to) const {
+		return this.distance[from][to] != INF;
+	}
 }
 
 unittest {
@@ -148,6 +152,7 @@ unittest {
 
 	auto fr = floyd!(16)(g);
 	assert(fr.distance[4][6] == 2);
+	assert(fr.pathExists(4,6));
 	assert(fr.first[4][6] == 5, fr.toString());
 }
 
@@ -204,6 +209,7 @@ unittest {
 							&& (j == jt[0] || j == jt[1])) 
 					{
 						bool pathFound = f.path(i, j, rslt);
+						assert(f.pathExists(i,j));
 						assert(pathFound, f.toString() ~ " " ~ to!string(rslt[]));
 						assert(rslt.front == i && rslt.back == j);
 						continue inner;

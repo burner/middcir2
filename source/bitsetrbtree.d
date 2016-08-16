@@ -213,6 +213,25 @@ struct BitsetArrayArray(T) {
 		}
 	}
 
+	void insertUnique(Bitset!T key) {
+		auto it = this.search(key);
+		if(!it.isNull()) {
+			if(key == (*it).bitset) {
+				return;
+			}
+
+			foreach(ss; (*it).subsets) {
+				if(key == ss) {
+					return;
+				}
+			}
+
+			(*it).subsets ~= key;
+		} else {
+			this.array.insert(bitsetArray(key));
+		}
+	}
+
 	void insert(T t) {
 		auto bs = Bitset!T(t);
 		this.insert(bs);
