@@ -76,10 +76,10 @@ void main() {
 	//reverse(writeAvailReverse);
 	//compare(gridRslt.readAvail, writeAvailReverse, &pointFive);
 
-	auto lattice = Lattice(4,4);
+	auto lattice = Lattice(3,3);
 	auto latticeRslt = lattice.calcAC();
 	logf("LatticeRslt done");
-	auto pnt = genTestGraph!16();
+	auto pnt = makeNine!16();
 	
 	auto map = Mappings!(32,16)(lattice.graph, pnt);
 	auto mapRslt = map.calcAC(lattice.read, lattice.write);

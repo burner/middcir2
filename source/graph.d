@@ -415,8 +415,8 @@ Graph!16 makeLineOfFour() {
 	return ret;
 }
 
-Graph!16 makeNine() {
-	auto g = Graph!16(9);
+Graph!Size makeNine(int Size)() {
+	auto g = Graph!Size(9);
 	g.setNodePos(2, vec3d(2,2.5,0.0));
 	g.setNodePos(6, vec3d(4.5,2,0.0));
 	g.setNodePos(8, vec3d(5,3,0.0));
@@ -447,7 +447,7 @@ Graph!16 makeNine() {
 
 unittest {
 	import std.stdio : File;
-	auto g = makeNine();
+	auto g = makeNine!16();
 	auto f = File("tikztest9x9.tex", "w");
 	f.write(g.toTikz());
 }

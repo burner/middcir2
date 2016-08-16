@@ -15,7 +15,7 @@ import fixedsizearray;
 import protocols.lattice;
 import plot.gnuplot;
 import plot;
-import utils : sum;
+import utils;
 
 /** Mapping will be passed a BitsetStore. It will take this BitsetStore and
 for each element it will try to reconnect the element for every permutation.
@@ -64,8 +64,8 @@ class Mapping(int SizeLnt, int SizePnt) {
 	{
 		import core.bitop : popcnt;
 		for(uint perm = 0; perm < upTo; ++perm) {
-			//logf(perm == (upTo / 1000), "%5.4f", cast(double)(perm)/upTo);
-			logf("%5.4f", cast(double)(perm)/upTo);
+			//logf(perm == (upTo / 100), "%5.4f", cast(double)(perm)/upTo);
+			//logf("%5.4f", cast(double)(perm)/upTo);
 			int numBitsInPerm = popcnt(perm);
 			floyd.execute(*this.pnt, bitset(perm));
 
@@ -119,10 +119,16 @@ struct Mappings(int SizeLnt, int SizePnt) {
 		import std.array : array;
 		import std.range : iota;
 		import std.algorithm.sorting : nextPermutation;
+		import math;
 		int[] permutation = to!(int[])(iota(0, (*lnt).length).array);
 
+		auto numPerm = factorial(permutation.length);
+
+		size_t cnt = 0;
 		do {
-			writefln("%(%2d, %)", permutation);
+			writefln("%(%2d, %) %7d of %7d %3.2f", permutation,
+				cnt, numPerm, cast(double)cnt/numPerm);
+			++cnt;
 			auto cur = new Mapping!(SizeLnt,SizePnt)(*lnt, *pnt, permutation);
 			Result curRslt = cur.calcAC(oRead, oWrite);
 			double sumRslt = sum(curRslt.writeAvail) + sum(curRslt.readAvail);
@@ -176,4 +182,18 @@ unittest {
 	gnuPlot(ResultPlot(lattice.name(), latticeRslt),
 			ResultPlot(map.name(lattice.name()), mapRslt)
 	);
+}
+
+unittest {
+	auto lattice = Lattice(2,2);
+	auto latticeRslt = lattice.calcAC();
+
+	auto map = Mappings!(32,32)(lattice.graph, lattice.graph);
+	auto mapRslt = map.calcAC(lattice.read, lattice.write);
+
+	compare(latticeRslt.readAvail, mapRslt.readAvail, &equal);
+	compare(latticeRslt.writeAvail, mapRslt.writeAvail, &equal);
+
+	compare(latticeRslt.readCosts, mapRslt.readCosts, &equal);
+	compare(latticeRslt.writeCosts, mapRslt.writeCosts, &equal);
 }
