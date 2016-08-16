@@ -15,6 +15,7 @@ import planar;
 import plot.gnuplot;
 import utils;
 import graph;
+import mapping;
 
 void main() {
 	/*int mcsN = 16;
@@ -47,10 +48,12 @@ void main() {
 	auto rsltTL = ResultPlot(tl.name(), tlRslt);
 	*/
 
+	/+
 	auto g = genTestGraph!32();
 	g.setEdge(2, 13);
 	Array!(Graph!32) planarGraphs;
 	makePlanar(g, planarGraphs);
+	logf("%s planar graphs", planarGraphs.length);
 
 	/*logf("Crossing");
 	auto c = Crossing(g);
@@ -67,11 +70,21 @@ void main() {
 
 	logf("Gen Plot");
 	//gnuPlot(rsltMCSF, rsltTL, rsltGrid, rsltC);
-	gnuPlot(rsltC);
+	gnuPlot(rsltC);+/
 
 	//auto writeAvailReverse = gridRslt.writeAvail.dup;
 	//reverse(writeAvailReverse);
 	//compare(gridRslt.readAvail, writeAvailReverse, &pointFive);
 
+	auto lattice = Lattice(4,4);
+	auto latticeRslt = lattice.calcAC();
+	auto pnt = genTestGraph!16();
+	
+	auto map = Mappings!(32,16)(lattice.graph, pnt);
+	auto mapRslt = map.calcAC(lattice.read, lattice.write);
+
+	gnuPlot(ResultPlot(lattice.name(), latticeRslt),
+			ResultPlot(map.name(lattice.name()), mapRslt)
+	);
 
 }

@@ -5,41 +5,50 @@ import std.experimental.logger;
 
 import exceptionhandling;
 
-struct FixedSizeArraySlice(T, size_t Size) {
-	FixedSizeArray!(T,Size)* fsa;
+struct FixedSizeArraySlice(FSA,T, size_t Size) {
+	//FixedSizeArray!(T,Size)* fsa;
+	FSA* fsa;
 	short low;
 	short high;
 
-	this(FixedSizeArray!(T,Size)* fsa, short low, short high) {
+	pragma(inline, true);
+	this(FSA* fsa, short low, short high) {
 		this.fsa = fsa;
 		this.low = low;
 		this.high = high;
 	}
 
+	pragma(inline, true);
 	@property bool empty() pure @safe nothrow @nogc {
 		return this.low == this.high;
 	}
 
+	pragma(inline, true);
 	@property size_t length() pure @safe nothrow @nogc {
 		return this.high - this.low;
 	}
 
+	pragma(inline, true);
 	@property ref T front() {
 		return (*this.fsa)[this.low];
 	}
 
+	pragma(inline, true);
 	@property ref T back() {
 		return (*this.fsa)[this.high - 1];
 	}
 
+	pragma(inline, true);
 	ref T opIndex(const size_t idx) {
 		return (*this.fsa)[this.low + idx];
 	}
 
+	pragma(inline, true);
 	void popFront() pure @safe nothrow @nogc {
 		++this.low;
 	}
 
+	pragma(inline, true);
 	void popBack() pure @safe nothrow @nogc {
 		--this.high;
 	}
@@ -50,10 +59,14 @@ struct FixedSizeArray(T,size_t Size = 32) {
 	size_t len;
 	byte[T.sizeof * Size] store;
 
+	pragma(inline, true);
 	~this() {
-		this.removeAll();
+		static if(hasElaborateDestructor!T) {
+			this.removeAll();
+		}
 	}
 
+	pragma(inline, true);
 	void insertBack(S)(auto ref S t) @trusted {
 		import std.conv : emplace;
 		static assert(isImplicitlyConvertible!(S,T));
@@ -63,6 +76,7 @@ struct FixedSizeArray(T,size_t Size = 32) {
 		++this.len;
 	}
 
+	pragma(inline, true);
 	void emplaceBack(Args...)(auto ref Args args) {
 		import std.conv : emplace;
 		assert(this.len + 1 < Size);
@@ -71,6 +85,7 @@ struct FixedSizeArray(T,size_t Size = 32) {
 		++this.len;
 	}
 
+	pragma(inline, true);
 	void removeBack() {
 		assert(this.len > 0);
 
@@ -81,45 +96,73 @@ struct FixedSizeArray(T,size_t Size = 32) {
 		--this.len;
 	}
 
+	pragma(inline, true);
 	void removeAll() {
 		while(!this.empty) {
 			this.removeBack();
 		}
 	}
 
+	pragma(inline, true);
 	@property ref T back() @trusted {
 		assert(this.len > 0);
 		return *(cast(T*)(&this.store[(this.len - 1) * T.sizeof]));
 	}
 
+	pragma(inline, true);
 	@property ref T front() @trusted {
 		assert(this.len > 0);
 		return *(cast(T*)(this.store.ptr));
 	}
 
+	pragma(inline, true);
 	ref T opIndex(const size_t idx) @trusted {
 		assert(idx <= this.len);
 		return *(cast(T*)(&this.store[idx * T.sizeof]));
 	}
 
+	pragma(inline, true);
+	ref const(T) opIndex(const size_t idx) @trusted const {
+		assert(idx <= this.len);
+		return *(cast(const(T)*)(&this.store[idx * T.sizeof]));
+	}
+
+	pragma(inline, true);
 	@property size_t length() const pure @nogc nothrow {
 		return this.len;
 	}
 
+	pragma(inline, true);
 	@property size_t empty() const pure @nogc nothrow {
 		return this.len == 0UL;
 	}
 
+	pragma(inline, true);
 	auto opSlice() pure @nogc @safe nothrow {
-		return FixedSizeArraySlice!(T,Size)(&this, cast(short)0, 
+		return FixedSizeArraySlice!(typeof(this),T,Size)(&this, cast(short)0, 
 				cast(short)this.len
 		);
 	}
 	
+	pragma(inline, true);
 	auto opSlice(const size_t low, const size_t high) pure @nogc @safe nothrow {
-		return FixedSizeArraySlice!(T,Size)(&this, cast(short)low, 
+		return FixedSizeArraySlice!(typeof(this),T,Size)(&this, cast(short)low, 
 				cast(short)high
 		);
+	}
+
+	pragma(inline, true);
+	auto opSlice() pure @nogc @safe nothrow const {
+		return FixedSizeArraySlice!(typeof(this),const(T),Size)
+			(&this, cast(short)0, cast(short)this.len);
+	}
+	
+	pragma(inline, true);
+	auto opSlice(const size_t low, const size_t high) pure @nogc @safe nothrow
+			const 
+	{
+		return FixedSizeArraySlice!(typeof(this),const(T),Size)
+			(&this, cast(short)low, cast(short)high);
 	}
 }
 
@@ -169,41 +212,83 @@ unittest {
 				assertEqual(fsa[kdx], kt);
 			}
 
-			auto forward = fsa[];
-			auto forward2 = forward;
-			cast(void)assertEqual(forward.length, jdx + 1);
-			for(size_t i = 0; i < forward.length; ++i) {
-				cast(void)assertEqual(forward[i], it[i]);
-				cast(void)assertEqual(forward2.front, it[i]);
-				forward2.popFront();
-			}
-			assert(forward2.empty);
+			{
+				auto forward = fsa[];
+				auto forward2 = forward;
+				cast(void)assertEqual(forward.length, jdx + 1);
+				for(size_t i = 0; i < forward.length; ++i) {
+					cast(void)assertEqual(forward[i], it[i]);
+					cast(void)assertEqual(forward2.front, it[i]);
+					forward2.popFront();
+				}
+				assert(forward2.empty);
 
-			auto backward = fsa[];
-			auto backward2 = backward;
-			cast(void)assertEqual(backward.length, jdx + 1);
-			for(size_t i = 0; i < backward.length; ++i) {
-				cast(void)assertEqual(backward[backward.length - i - 1],
-						it[jdx - i]
-				);
+				auto backward = fsa[];
+				auto backward2 = backward;
+				cast(void)assertEqual(backward.length, jdx + 1);
+				for(size_t i = 0; i < backward.length; ++i) {
+					cast(void)assertEqual(backward[backward.length - i - 1],
+							it[jdx - i]
+					);
 
-				cast(void)assertEqual(backward2.back, 
-						it[0 .. jdx + 1 - i].back
-				);
-				backward2.popBack();
-			}
-			assert(backward2.empty);
-			auto forward3 = fsa[];
-			auto forward4 = fsa[0 .. jdx + 1];
+					cast(void)assertEqual(backward2.back, 
+							it[0 .. jdx + 1 - i].back
+					);
+					backward2.popBack();
+				}
+				assert(backward2.empty);
+				auto forward3 = fsa[];
+				auto forward4 = fsa[0 .. jdx + 1];
 
-			while(!forward3.empty && !forward4.empty) {
-				cast(void)assertEqual(forward3.front, forward4.front);
-				cast(void)assertEqual(forward3.back, forward4.back);
-				forward3.popFront();
-				forward4.popFront();
+				while(!forward3.empty && !forward4.empty) {
+					cast(void)assertEqual(forward3.front, forward4.front);
+					cast(void)assertEqual(forward3.back, forward4.back);
+					forward3.popFront();
+					forward4.popFront();
+				}
+				assert(forward3.empty);
+				assert(forward4.empty);
 			}
-			assert(forward3.empty);
-			assert(forward4.empty);
+
+			{
+				const(FixedSizeArray!(int,16))* constFsa;
+				constFsa = &fsa;
+				auto forward = (*constFsa)[];
+				auto forward2 = forward;
+				cast(void)assertEqual(forward.length, jdx + 1);
+				for(size_t i = 0; i < forward.length; ++i) {
+					cast(void)assertEqual(cast(int)forward[i], it[i]);
+					cast(void)assertEqual(cast(int)forward2.front, it[i]);
+					forward2.popFront();
+				}
+				assert(forward2.empty);
+
+				auto backward = (*constFsa)[];
+				auto backward2 = backward;
+				cast(void)assertEqual(backward.length, jdx + 1);
+				for(size_t i = 0; i < backward.length; ++i) {
+					cast(void)assertEqual(cast(int)backward[backward.length - i - 1],
+							it[jdx - i]
+					);
+
+					cast(void)assertEqual(cast(int)backward2.back, 
+							it[0 .. jdx + 1 - i].back
+					);
+					backward2.popBack();
+				}
+				assert(backward2.empty);
+				auto forward3 = (*constFsa)[];
+				auto forward4 = (*constFsa)[0 .. jdx + 1];
+
+				while(!forward3.empty && !forward4.empty) {
+					cast(void)assertEqual(cast(int)forward3.front, cast(int)forward4.front);
+					cast(void)assertEqual(cast(int)forward3.back, cast(int)forward4.back);
+					forward3.popFront();
+					forward4.popFront();
+				}
+				assert(forward3.empty);
+				assert(forward4.empty);
+			}
 		}
 		fsa.removeAll();
 	}

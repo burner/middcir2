@@ -18,6 +18,7 @@ void removeAll(T)(ref Array!T arr) {
 bool equal(double a, double b) {
 	return equal(a, b, 0.05);
 }
+
 bool equal(double a, double b, const double diff) {
 	if(isNaN(a) || isNaN(b)) {
 		return true;
@@ -125,4 +126,17 @@ void testSorted(T)(const ref BitsetStore!T store) {
 	}
 
 	return true;
+}
+
+double sum(const(double[101]) arr) {
+	import std.math : isNaN;
+
+	double rslt = 0.0;
+	foreach(it; arr) {
+		if(!isNaN(it)) {
+			rslt += it;
+		}
+	}
+
+	return rslt;
 }

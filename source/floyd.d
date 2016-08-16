@@ -4,6 +4,7 @@ import std.experimental.logger;
 
 import graph;
 import bitsetmodule;
+import fixedsizearray;
 
 auto floyd(int Size)(const ref Graph!(Size) graph) {
 	Floyd rslt;
@@ -17,8 +18,13 @@ struct Floyd {
 
 	enum INF = ubyte.max;
 
-	Array!(Array!(ubyte)) distance;
-	Array!(Array!(ubyte)) first;
+	alias ArrayArrayType = FixedSizeArray!(FixedSizeArray!(ubyte,32),32);
+	alias ArrayType = FixedSizeArray!(ubyte,32);
+
+	ArrayArrayType distance;
+	ArrayArrayType first;
+	//Array!(Array!(ubyte)) distance;
+	//Array!(Array!(ubyte)) first;
 
 	void init(G)(const ref G graph) {
 		this.reserveArrays(graph.numNodes);
@@ -48,9 +54,9 @@ struct Floyd {
 
 		formattedWrite(sink, "Distance:\n");
 		int idx = 0;
-		foreach(ref row; this.distance) {
+		foreach(ref row; this.distance[]) {
 			formattedWrite(sink, "%2d: ", idx++);
-			foreach(column; row) {
+			foreach(column; row[]) {
 				formattedWrite(sink, "%3d ", column);
 			}
 			formattedWrite(sink, "\n");
@@ -58,9 +64,9 @@ struct Floyd {
 
 		idx = 0;
 		formattedWrite(sink, "\nFirst:\n");
-		foreach(ref row; this.first) {
+		foreach(ref row; this.first[]) {
 			formattedWrite(sink, "%2d: ", idx++);
-			foreach(column; row) {
+			foreach(column; row[]) {
 				formattedWrite(sink, "%3d ", column);
 			}
 			formattedWrite(sink, "\n");
@@ -88,19 +94,19 @@ struct Floyd {
 	}
 
 	void reserveArrays(const int numNodes) {
-		this.distance.reserve(numNodes);
+		//this.distance.reserve(numNodes);
 		for(int i = 0; i < numNodes; ++i) {
-			this.distance.insertBack(Array!ubyte());
-			this.distance.back.reserve(numNodes);
+			this.distance.insertBack(ArrayType());
+			//this.distance.back.reserve(numNodes);
 			for(int j = 0; j < numNodes; ++j) {
 				this.distance[i].insertBack(INF);
 			}
 		}
 
-		this.first.reserve(numNodes);
+		//this.first.reserve(numNodes);
 		for(int i = 0; i < numNodes; ++i) {
-			this.first.insertBack(Array!ubyte());
-			this.first.back.reserve(numNodes);
+			this.first.insertBack(ArrayType());
+			//this.first.back.reserve(numNodes);
 			for(int j = 0; j < numNodes; ++j) {
 				this.first[i].insertBack(INF);
 			}
