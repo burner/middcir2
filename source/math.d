@@ -1,6 +1,7 @@
 module math;
 
 import std.math;
+import std.stdio;
 
 import gfm.math.vector;
 

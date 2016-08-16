@@ -39,34 +39,43 @@ class Mapping(int SizeLnt, int SizePnt) {
 	}
 
 	void reconnectQuorum(ref const(Bitset!uint) quorum, 
-			ref BitsetStore!uint rsltQuorumSet)
+			ref BitsetStore!uint rsltQuorumSet, uint perm)
 	{
 		FixedSizeArray!(int,32) whichNodesToReconnect;
 		getBitsSet(quorum, whichNodesToReconnect);
+		const int numNodesToReconnect = to!int(whichNodesToReconnect.length);
 
-		outer:for(uint perm = 0; perm < upTo; ++perm) {
-			floyd.execute(*this.pnt, bitset(perm));
-
-			foreach(from; whichNodesToReconnect[]) {
-				foreach(to; whichNodesToReconnect[]) {
-					if(!floyd.pathExists(mapping[from], mapping[to])) {
-						continue outer;
-					}
+		for(int fidx = 0; fidx < numNodesToReconnect; ++fidx) {
+			for(int tidx = 0; tidx < numNodesToReconnect; ++tidx) {
+				if(!floyd.pathExists(
+						mapping[whichNodesToReconnect[fidx]], 
+						mapping[whichNodesToReconnect[tidx]])) 
+				{
+					return;
 				}
 			}
-
-			rsltQuorumSet.insertUnique(bitset(perm));
-			break outer;
 		}
+
+		rsltQuorumSet.insertUnique(bitset(perm));
 	}
 
 	void reconnectQuorums(const ref BitsetStore!uint quorumSet, 
 			ref BitsetStore!uint rsltQuorumSet)
 	{
-		foreach(const ref it; quorumSet[]) {
-			this.reconnectQuorum(it.bitset, rsltQuorumSet);
-			foreach(sub; it.subsets[]) {
-				this.reconnectQuorum(sub, rsltQuorumSet);
+		import core.bitop : popcnt;
+		for(uint perm = 0; perm < upTo; ++perm) {
+			//logf(perm == (upTo / 1000), "%5.4f", cast(double)(perm)/upTo);
+			logf("%5.4f", cast(double)(perm)/upTo);
+			int numBitsInPerm = popcnt(perm);
+			floyd.execute(*this.pnt, bitset(perm));
+
+			foreach(const ref it; quorumSet[]) {
+				if(numBitsInPerm >= popcnt(it.bitset.store)) {
+					this.reconnectQuorum(it.bitset, rsltQuorumSet, perm);
+					foreach(sub; it.subsets[]) {
+						this.reconnectQuorum(sub, rsltQuorumSet, perm);
+					}
+				}
 			}
 		}
 	}

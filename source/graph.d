@@ -414,3 +414,40 @@ Graph!16 makeLineOfFour() {
 
 	return ret;
 }
+
+Graph!16 makeNine() {
+	auto g = Graph!16(9);
+	g.setNodePos(2, vec3d(2,2.5,0.0));
+	g.setNodePos(6, vec3d(4.5,2,0.0));
+	g.setNodePos(8, vec3d(5,3,0.0));
+	g.setNodePos(7, vec3d(4,3,0.0));
+	g.setNodePos(3, vec3d(4,1.4,0.0));
+	g.setNodePos(4, vec3d(3.3,2.2,0.0));
+	g.setNodePos(0, vec3d(3,0.5,0.0));
+	g.setNodePos(5, vec3d(3,3,0.0));
+	g.setNodePos(1, vec3d(2.5,1.5,0.0));
+
+	g.setEdge(0, 1);
+	g.setEdge(0, 3);
+	g.setEdge(1, 3);
+	g.setEdge(1, 2);
+	g.setEdge(1, 4);
+	g.setEdge(2, 5);
+	g.setEdge(2, 4);
+	g.setEdge(5, 7);
+	g.setEdge(7, 8);
+	g.setEdge(6, 8);
+	g.setEdge(6, 7);
+	g.setEdge(4, 6);
+	g.setEdge(4, 7);
+	g.setEdge(3, 6);
+
+	return g;
+}
+
+unittest {
+	import std.stdio : File;
+	auto g = makeNine();
+	auto f = File("tikztest9x9.tex", "w");
+	f.write(g.toTikz());
+}

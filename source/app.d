@@ -78,10 +78,12 @@ void main() {
 
 	auto lattice = Lattice(4,4);
 	auto latticeRslt = lattice.calcAC();
+	logf("LatticeRslt done");
 	auto pnt = genTestGraph!16();
 	
 	auto map = Mappings!(32,16)(lattice.graph, pnt);
 	auto mapRslt = map.calcAC(lattice.read, lattice.write);
+	logf("Mapping done");
 
 	gnuPlot(ResultPlot(lattice.name(), latticeRslt),
 			ResultPlot(map.name(lattice.name()), mapRslt)
