@@ -3,11 +3,9 @@ module permutation;
 import bitsetmodule;
 
 struct Permutation {
-	import fixedsizearray;
 	int N;
    	int R;
-	FixedSizeArray!(int,32) curr;
-	//int[] curr;
+	int[] curr;
 
 	/** nN how many total, nR how many to select */
 	this(int nN, int nR) {
@@ -17,10 +15,9 @@ struct Permutation {
 		this.N = nN;
 		this.R = nR;
 
-		//this.curr = new int[nR];
+		this.curr = new int[nR];
 		for(int c = 0; c < nR; ++c) {
-	 		this.curr.insertBack(c);
-	 		//this.curr[c] = c;
+	 		this.curr[c] = c;
 		}
 	}
 
@@ -36,7 +33,7 @@ struct Permutation {
 
 	@property Bitset!uint front() const {
 		Bitset!uint ret;
-		foreach(it; this.curr[]) {
+		foreach(it; this.curr) {
 			ret.set(it);
 		}
 		return ret;
