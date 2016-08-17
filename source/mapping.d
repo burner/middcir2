@@ -181,6 +181,9 @@ struct Mappings(int SizeLnt, int SizePnt) {
 				this.bestAvail = sumRslt;
 				this.bestResult = curRslt;
 			}
+			/*if(cnt == 800) {
+				break;
+			}*/
 		} while(nextPermutation(permutation));
 
 		return this.bestResult;
@@ -222,9 +225,9 @@ unittest {
 	auto map = Mappings!(32,16)(lattice.graph, pnt);
 	auto mapRslt = map.calcAC(lattice.read, lattice.write);
 
-	mappingPlot("Results/Lattice4_Line4", ResultPlot(lattice.name(), latticeRslt),
+	mappingPlot("Results/Lattice4_Line4", map, 
+			ResultPlot(lattice.name(), latticeRslt),
 			ResultPlot(map.name(lattice.name()), mapRslt),
-			map
 	);
 }
 

@@ -54,14 +54,18 @@ void latticeMapped() {
 	auto lattice = Lattice(3,3);
 	auto latticeRslt = lattice.calcAC();
 	logf("LatticeRslt done");
-	auto pnt = makeNine!16();
+	auto pnt = makeNine!32();
+
+	auto crossing = Crossing(pnt);
+	auto crossingRslt = crossing.calcAC();
 	
-	auto map = Mappings!(32,32)(lattice.graph, lattice.graph);
+	auto map = Mappings!(32,32)(lattice.graph, pnt);
 	auto mapRslt = map.calcAC(lattice.read, lattice.write);
 	logf("Mapping done");
 
-	gnuPlot("Results/Lattice3x3Mapped", 
+	mappingPlot("Results/Lattice3x3Mapped", map,
 			ResultPlot(lattice.name(), latticeRslt),
+			ResultPlot(crossing.name(), crossingRslt),
 			ResultPlot(map.name(lattice.name()), mapRslt)
 	);
 }
@@ -70,14 +74,13 @@ void latticeMapped2() {
 	auto lattice = Lattice(2,3);
 	auto latticeRslt = lattice.calcAC();
 	auto pnt = makeSix!16();
-	
+
 	auto map = Mappings!(32,16)(lattice.graph, pnt, 0.5);
 	auto mapRslt = map.calcAC(lattice.read, lattice.write);
 
-	mappingPlot("Results/Lattice2x3Mapped", 
+	mappingPlot("Results/Lattice2x3Mapped", map,
 			ResultPlot(lattice.name(), latticeRslt),
-			ResultPlot(map.name(lattice.name()), mapRslt),
-			map
+			ResultPlot(map.name(lattice.name()), mapRslt)
 	);
 }
 
@@ -85,5 +88,6 @@ void main() {
 	//lattice(4,4);
 	//gridAgainstGrid(4,4);
 	//MCSAgainstMCS(15);
-	latticeMapped2();
+	latticeMapped();
+	//latticeMapped2();
 }

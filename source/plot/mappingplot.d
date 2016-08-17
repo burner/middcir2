@@ -4,8 +4,7 @@ import plot : ResultPlot;
 import plot.gnuplot;
 import mapping;
 
-void mappingPlot(M)(string path, ResultPlot unmapped, ResultPlot mapped, 
-		const ref M mapping) 
+void mappingPlot(M)(string path, const ref M mapping, ResultPlot[] results...) 
 {
 	import std.file : mkdirRecurse, chdir, getcwd;
 	import std.stdio : File;
@@ -19,7 +18,7 @@ void mappingPlot(M)(string path, ResultPlot unmapped, ResultPlot mapped,
 	mkdirRecurse(path);
 	chdir(path);
 
-	gnuPlot(unmapped, mapped);
+	gnuPlot(results);
 
 	{
 		auto tex = File("mapping.tex", "w");
