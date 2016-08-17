@@ -117,13 +117,13 @@ struct FixedSizeArray(T,size_t Size = 32) {
 
 	pragma(inline, true);
 	ref T opIndex(const size_t idx) @trusted {
-		assert(idx <= this.len);
+		cast(void)assertLess(idx,  this.len);
 		return *(cast(T*)(&this.store[idx * T.sizeof]));
 	}
 
 	pragma(inline, true);
 	ref const(T) opIndex(const size_t idx) @trusted const {
-		assert(idx <= this.len);
+		cast(void)assertLess(idx,  this.len);
 		return *(cast(const(T)*)(&this.store[idx * T.sizeof]));
 	}
 
@@ -267,11 +267,11 @@ unittest {
 				auto backward2 = backward;
 				cast(void)assertEqual(backward.length, jdx + 1);
 				for(size_t i = 0; i < backward.length; ++i) {
-					cast(void)assertEqual(cast(int)backward[backward.length - i - 1],
+					cast(void)assertEqual(backward[backward.length - i - 1],
 							it[jdx - i]
 					);
 
-					cast(void)assertEqual(cast(int)backward2.back, 
+					cast(void)assertEqual(backward2.back, 
 							it[0 .. jdx + 1 - i].back
 					);
 					backward2.popBack();
@@ -281,8 +281,8 @@ unittest {
 				auto forward4 = (*constFsa)[0 .. jdx + 1];
 
 				while(!forward3.empty && !forward4.empty) {
-					cast(void)assertEqual(cast(int)forward3.front, cast(int)forward4.front);
-					cast(void)assertEqual(cast(int)forward3.back, cast(int)forward4.back);
+					cast(void)assertEqual(forward3.front, forward4.front);
+					cast(void)assertEqual(forward3.back, forward4.back);
 					forward3.popFront();
 					forward4.popFront();
 				}
