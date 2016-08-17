@@ -109,9 +109,6 @@ struct Lattice {
 			diagonalPairs, this.read, this.write, numNodes
 		);
 
-		sortBitsetStore!uint(this.read);
-		sortBitsetStore!uint(this.write);
-
 		bool test;
 		debug {
 			test = true;

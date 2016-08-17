@@ -111,15 +111,17 @@ Result calcACforPathBased(ref Floyd paths, ref const(Graph!32) graph,
 {
 	import std.conv : to;
 	import std.stdio : writefln;
+	import permutation;
+
 	Array!uint tmpPathStore;
 
 	Array!(Bitset!uint) verticalPaths;
 	Array!(Bitset!uint) horizontalPaths;
 	Array!(Bitset!uint) diagonalPaths;
 
-	const uint upto = to!uint(1 << (numNodes));
-	for(uint perm = 0; perm < upto; ++perm) {
-		paths.execute(graph, bitset(perm));
+	auto permu = Permutations(numNodes);
+	foreach(perm; permu) {
+		paths.execute(graph, perm);
 
 		verticalPaths.removeAll();
 		horizontalPaths.removeAll();
@@ -146,11 +148,11 @@ Result calcACforPathBased(ref Floyd paths, ref const(Graph!32) graph,
 		);
 
 		if(readQuorum.validPath == ValidPath.yes) {
-			read.insert(readQuorum.minPath, bitset!uint(perm));
+			read.insert(readQuorum.minPath, perm);
 		}
 
 		if(writeQuorum.validPath == ValidPath.yes) {
-			write.insert(writeQuorum.minPath, bitset!uint(perm));
+			write.insert(writeQuorum.minPath, perm);
 		}
 	}
 

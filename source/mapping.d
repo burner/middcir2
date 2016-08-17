@@ -34,12 +34,12 @@ class Mapping(int SizeLnt, int SizePnt) {
 		this.lnt = &lnt;
 		this.pnt = &pnt;
 		this.mapping = mapping;
-		this.upTo = to!uint(1 << this.lnt.length);
+		this.upTo = to!uint(this.lnt.length);
 		this.floyd.init(*this.pnt);
 	}
 
 	void reconnectQuorum(ref const(Bitset!uint) quorum, 
-			ref BitsetStore!uint rsltQuorumSet, uint perm)
+			ref BitsetStore!uint rsltQuorumSet, Bitset!uint perm)
 	{
 		FixedSizeArray!(int,32) whichNodesToReconnect;
 		getBitsSet(quorum, whichNodesToReconnect);
@@ -56,18 +56,21 @@ class Mapping(int SizeLnt, int SizePnt) {
 			}
 		}
 
-		rsltQuorumSet.insertUnique(bitset(perm));
+		rsltQuorumSet.insertUnique(perm);
 	}
 
 	void reconnectQuorums(const ref BitsetStore!uint quorumSet, 
 			ref BitsetStore!uint rsltQuorumSet)
 	{
 		import core.bitop : popcnt;
-		for(uint perm = 0; perm < upTo; ++perm) {
+		import permutation;
+		//for(uint perm = 0; perm < upTo; ++perm) {
+		auto permu = Permutations(upTo);
+		foreach(perm; permu) {
 			//logf(perm == (upTo / 100), "%5.4f", cast(double)(perm)/upTo);
 			//logf("%5.4f", cast(double)(perm)/upTo);
-			int numBitsInPerm = popcnt(perm);
-			floyd.execute(*this.pnt, bitset(perm));
+			int numBitsInPerm = popcnt(perm.store);
+			floyd.execute(*this.pnt, perm);
 
 			foreach(const ref it; quorumSet[]) {
 				if(numBitsInPerm >= popcnt(it.bitset.store)) {
@@ -194,9 +197,6 @@ unittest {
 	gnuPlot(ResultPlot(lattice.name(), latticeRslt),
 			ResultPlot(map.name(lattice.name()), mapRslt)
 	);
-
-	writefln("%(%s\n%)\n", lattice.write[]);
-	writefln("%(%s\n%)", map.bestMapping.write[]);
 
 	compare(latticeRslt.readAvail, mapRslt.readAvail, &equal);
 	compare(latticeRslt.writeAvail, mapRslt.writeAvail, &equal);

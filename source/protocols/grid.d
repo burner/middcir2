@@ -8,6 +8,7 @@ import std.experimental.logger;
 import protocols;
 import config;
 import exceptionhandling;
+import bitsetmodule;
 
 struct Grid {
 	import bitsetrbtree;
@@ -41,12 +42,12 @@ struct Grid {
 	one. If you find a one you have completeColumn.
 	*/
 	void testGrid(ref ubyte columnCover, ref ubyte completeColumn,
-		   	const uint permutation)
+		   	const Bitset!uint permutation)
 	{
 		columnCover = 0;
 		completeColumn = ubyte.max;
 
-		uint rowPermutation = permutation;
+		uint rowPermutation = permutation.store;
 		for(size_t i = 0; i < this.height; ++i) {
 			uint row = (rowPermutation & this.rowMask);
 			columnCover |= row;
@@ -58,12 +59,15 @@ struct Grid {
 	Result calcAC() {
 		import utils : removeAll, testQuorumIntersection,
 			testAllSubsetsSmaller, testSemetry;
+		import permutation;
 		
 		ubyte columnCover;
 		ubyte completeColumn;
 
-		const uint upto = to!uint(1 << (this.width * this.height));
-		for(uint perm = 0; perm < upto; ++perm) {
+		//const uint upto = to!uint(1 << (this.width * this.height));
+		//for(uint perm = 0; perm < upto; ++perm) {
+		auto permu = Permutations(to!int(this.width * this.height));
+		foreach(perm; permu) {
 			testGrid(columnCover, completeColumn, perm);		
 
 			if(columnCover == this.rowMask) {
@@ -102,19 +106,19 @@ unittest {
 	ubyte columnCover;
 	ubyte completeColumn;
 
-	g.testGrid(columnCover, completeColumn, 0b1100_1000_1010_1001);
+	g.testGrid(columnCover, completeColumn, bitset!uint(0b1100_1000_1010_1001));
 	assert(columnCover == 0b1111, format("%b", columnCover));
 	assert(completeColumn == 0b1000, format("%b", completeColumn));
 
-	g.testGrid(columnCover, completeColumn, 0b1100_1000_1010_0001);
+	g.testGrid(columnCover, completeColumn, bitset!uint(0b1100_1000_1010_0001));
 	assert(columnCover == 0b1111, format("%b", columnCover));
 	assert(completeColumn == 0b0000, format("%b", completeColumn));
 
-	g.testGrid(columnCover, completeColumn, 0b1100_1000_1010_0000);
+	g.testGrid(columnCover, completeColumn, bitset!uint(0b1100_1000_1010_0000));
 	assert(columnCover == 0b1110, format("%b", columnCover));
 	assert(completeColumn == 0b0000, format("%b", completeColumn));
 
-	g.testGrid(columnCover, completeColumn, 0b1000_1000_1000_1000);
+	g.testGrid(columnCover, completeColumn, bitset!uint(0b1000_1000_1000_1000));
 	assert(columnCover == 0b1000, format("%b", columnCover));
 	assert(completeColumn == 0b1000, format("%b", completeColumn));
 }
