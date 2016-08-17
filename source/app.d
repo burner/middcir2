@@ -13,6 +13,7 @@ import protocols.crossing;
 import plot;
 import planar;
 import plot.gnuplot;
+import plot.mappingplot;
 import utils;
 import graph;
 import mapping;
@@ -29,8 +30,8 @@ void MCSAgainstMCS(int mcsN = 16) {
 	gnuPlot(format("Results/MCS%s", mcsN), rsltMCS, rsltMCSF);
 }
 
-void gridAgainstGrid(int nr, int nc) {
-	auto grid = Grid(nr, nc);
+void gridAgainstGrid(int nc, int nr) {
+	auto grid = Grid(nc, nr);
 	auto gridRslt = grid.calcAC();
 	auto rsltGrid = ResultPlot(grid.name(), gridRslt);
 
@@ -41,8 +42,8 @@ void gridAgainstGrid(int nr, int nc) {
 	gnuPlot(format("Results/Grid%sX%s", nr, nc), rsltGrid, rsltFGrid);
 }
 
-void lattice(int nr, int nc) {
-	auto tl = Lattice(nr, nc);
+void lattice(int nc, int nr) {
+	auto tl = Lattice(nc, nr);
 	auto tlRslt = tl.calcAC();
 	auto rsltTL = ResultPlot(tl.name(), tlRslt);
 
@@ -59,14 +60,30 @@ void latticeMapped() {
 	auto mapRslt = map.calcAC(lattice.read, lattice.write);
 	logf("Mapping done");
 
-	gnuPlot("Results/TLMapped", 
+	gnuPlot("Results/Lattice3x3Mapped", 
 			ResultPlot(lattice.name(), latticeRslt),
 			ResultPlot(map.name(lattice.name()), mapRslt)
+	);
+}
+
+void latticeMapped2() {
+	auto lattice = Lattice(2,3);
+	auto latticeRslt = lattice.calcAC();
+	auto pnt = makeSix!16();
+	
+	auto map = Mappings!(32,16)(lattice.graph, pnt, 0.5);
+	auto mapRslt = map.calcAC(lattice.read, lattice.write);
+
+	mappingPlot("Results/Lattice2x3Mapped", 
+			ResultPlot(lattice.name(), latticeRslt),
+			ResultPlot(map.name(lattice.name()), mapRslt),
+			map
 	);
 }
 
 void main() {
 	//lattice(4,4);
 	//gridAgainstGrid(4,4);
-	MCSAgainstMCS(15);
+	//MCSAgainstMCS(15);
+	latticeMapped2();
 }

@@ -415,6 +415,26 @@ Graph!16 makeLineOfFour() {
 	return ret;
 }
 
+Graph!Size makeSix(int Size)() {
+	auto g = Graph!Size(6);
+	g.setNodePos(2, vec3d(2,2.5,0.0));
+	g.setNodePos(3, vec3d(4.5,2,0.0));
+	g.setNodePos(5, vec3d(4,3,0.0));
+	g.setNodePos(4, vec3d(3.3,2.2,0.0));
+	g.setNodePos(0, vec3d(3,0.5,0.0));
+	g.setNodePos(1, vec3d(2.5,1.5,0.0));
+
+	g.setEdge(0, 1);
+	g.setEdge(1, 2);
+	g.setEdge(2, 4);
+	g.setEdge(1, 4);
+	g.setEdge(4, 5);
+	g.setEdge(4, 3);
+	g.setEdge(1, 3);
+
+	return g;
+}
+
 Graph!Size makeNine(int Size)() {
 	auto g = Graph!Size(9);
 	g.setNodePos(2, vec3d(2,2.5,0.0));
@@ -446,8 +466,17 @@ Graph!Size makeNine(int Size)() {
 }
 
 unittest {
+	{
 	import std.stdio : File;
 	auto g = makeNine!16();
-	auto f = File("tikztest9x9.tex", "w");
+	auto f = File("tikztest9.tex", "w");
 	f.write(g.toTikz());
+	}
+
+	{
+	import std.stdio : File;
+	auto g = makeSix!16();
+	auto f = File("tikztest6.tex", "w");
+	f.write(g.toTikz());
+	}
 }

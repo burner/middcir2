@@ -30,10 +30,17 @@ class Mapping(int SizeLnt, int SizePnt) {
 	BitsetStore!uint read;
 	BitsetStore!uint write;
 
-	this(ref const Graph!SizeLnt lnt, ref const Graph!SizePnt pnt, int[] mapping) {
+	/** 
+	params:
+		readWriteBalance = A value between 0.0 and 1.0. The high the value the
+			more reading will be favored during the mapping comparison.
+	*/
+	this(ref const Graph!SizeLnt lnt, ref const Graph!SizePnt pnt, 
+			int[] mapping) 
+	{
 		this.lnt = &lnt;
 		this.pnt = &pnt;
-		this.mapping = mapping;
+		this.mapping = mapping.dup;
 		this.upTo = to!uint(this.lnt.length);
 		this.floyd.init(*this.pnt);
 	}
@@ -113,15 +120,22 @@ class Mapping(int SizeLnt, int SizePnt) {
 struct Mappings(int SizeLnt, int SizePnt) {
 	Mapping!(SizeLnt,SizePnt) bestMapping;
 	Result bestResult;
+	const(double) readBalance;
+	const(double) writeBalance;
+
 	double bestAvail;
 
 	const(Graph!SizeLnt)* lnt;	
 	const(Graph!SizePnt)* pnt;	
 
-	this(ref Graph!SizeLnt lnt, ref Graph!SizePnt pnt) {
+	this(ref Graph!SizeLnt lnt, ref Graph!SizePnt pnt, 
+			double readWriteBalance = 0.5) 
+	{
 		this.lnt = &lnt;
 		this.pnt = &pnt;
 		this.bestAvail = 0.0;
+		this.readBalance = readWriteBalance;
+		this.writeBalance = 1.0 - readWriteBalance;
 	}
 
 	Result calcAC(const ref BitsetStore!uint oRead, 
@@ -142,7 +156,10 @@ struct Mappings(int SizeLnt, int SizePnt) {
 			++cnt;
 			auto cur = new Mapping!(SizeLnt,SizePnt)(*lnt, *pnt, permutation);
 			Result curRslt = cur.calcAC(oRead, oWrite);
-			double sumRslt = sum(curRslt.writeAvail) + sum(curRslt.readAvail);
+			double sumRslt = 
+				sum(curRslt.writeAvail)  * this.writeBalance + 
+				sum(curRslt.readAvail) * this.readBalance;
+
 			if(sumRslt > this.bestAvail) {
 				if(this.bestMapping !is null) {
 					destroy(this.bestMapping);
@@ -177,10 +194,28 @@ unittest {
 	auto map = new Mapping!(32,16)(lattice.graph, pnt, [1,2,3,0]);
 	auto mapRslt = map.calcAC(lattice.read, lattice.write);
 
-	gnuPlot("Results/Lattice4_Line4", ResultPlot(lattice.name(), latticeRslt),
+	gnuPlot("Results/Lattice4_Line4_1_2_3_0", 
+			ResultPlot(lattice.name(), latticeRslt),
 			ResultPlot(map.name(lattice.name()), mapRslt)
 	);
 }
+
+unittest {
+	import plot.mappingplot;
+
+	auto lattice = Lattice(2,2);
+	auto latticeRslt = lattice.calcAC();
+	auto pnt = makeLineOfFour();
+
+	auto map = Mappings!(32,16)(lattice.graph, pnt);
+	auto mapRslt = map.calcAC(lattice.read, lattice.write);
+
+	mappingPlot("Results/Lattice4_Line4", ResultPlot(lattice.name(), latticeRslt),
+			ResultPlot(map.name(lattice.name()), mapRslt),
+			map
+	);
+}
+
 
 unittest {
 	auto lattice = Lattice(2,2);
