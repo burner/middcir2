@@ -96,6 +96,18 @@ class Mapping(int SizeLnt, int SizePnt) {
 				}
 			}
 		}
+
+		bool test;
+		debug {
+			test = true;
+		}
+		version(unittest) {
+			test = true;
+		}
+		if(test) {
+			testQuorumIntersection(this.read, this.write);
+			testAllSubsetsSmaller(this.read, this.write);
+		}
 	}
 
 	/**
