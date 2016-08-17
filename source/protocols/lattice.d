@@ -14,7 +14,8 @@ struct Lattice {
 	import bitsetrbtree;
 	import floydmodule;
 	import bitfiddle;
-	import utils : removeAll, testQuorumIntersection, testAllSubsetsSmaller;
+	import utils : removeAll, testQuorumIntersection, testAllSubsetsSmaller,
+		   sortBitsetStore;
 	import gfm.math.vector;
 
 	BitsetStore!uint read;
@@ -107,6 +108,9 @@ struct Lattice {
 		auto ret = calcACforPathBased(paths, this.graph, bottom, top, left, right,
 			diagonalPairs, this.read, this.write, numNodes
 		);
+
+		sortBitsetStore!uint(this.read);
+		sortBitsetStore!uint(this.write);
 
 		bool test;
 		debug {

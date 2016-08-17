@@ -120,12 +120,17 @@ void testAllSubsetsSmallerImpl(ref BitsetStore!uint store) {
 	}
 }
 
-void testSorted(T)(const ref BitsetStore!T store) {
-	for(int i = 0; i < store.length - 1; ++i) {
+bool less(T)(ref BitsetArray!T a, ref BitsetArray!T b) {
+	import core.bitop : popcnt;
+	return popcnt(a.bitset.store) < popcnt(b.bitset.store);
+}
 
-	}
+void sortBitsetStore(T)(ref BitsetStore!T store) {
+	import sorting;
 
-	return true;
+	alias lessImpl = less!uint;
+
+	sort(store, &lessImpl);
 }
 
 double sum(const(double[101]) arr) {

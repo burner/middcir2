@@ -191,6 +191,13 @@ unittest {
 	auto map = Mappings!(32,32)(lattice.graph, lattice.graph);
 	auto mapRslt = map.calcAC(lattice.read, lattice.write);
 
+	gnuPlot(ResultPlot(lattice.name(), latticeRslt),
+			ResultPlot(map.name(lattice.name()), mapRslt)
+	);
+
+	writefln("%(%s\n%)\n", lattice.write[]);
+	writefln("%(%s\n%)", map.bestMapping.write[]);
+
 	compare(latticeRslt.readAvail, mapRslt.readAvail, &equal);
 	compare(latticeRslt.writeAvail, mapRslt.writeAvail, &equal);
 
