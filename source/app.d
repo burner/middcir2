@@ -17,76 +17,56 @@ import utils;
 import graph;
 import mapping;
 
-void main() {
-	/*int mcsN = 16;
+void MCSAgainstMCS(int mcsN = 16) {
 	auto mcs = MCS(mcsN);
 	auto mcsRslt = mcs.calcAC();
 	auto rsltMCS = ResultPlot(mcs.name(), mcsRslt);
-	*/
 
-	/*logf("MCS");
-	auto mcsF = MCSFormula(16);
+	auto mcsF = MCSFormula(mcsN);
 	auto mcsFRslt = mcsF.calcAC();
 	auto rsltMCSF = ResultPlot(mcsF.name(), mcsFRslt);
-	*/
 
-	//gnuPlot(rsltMCS, rsltMCSF);
+	gnuPlot(format("Results/MCS%s", mcsN), rsltMCS, rsltMCSF);
+}
 
-	/*auto grid = Grid(4,3);
+void gridAgainstGrid(int nr, int nc) {
+	auto grid = Grid(nr, nc);
 	auto gridRslt = grid.calcAC();
 	auto rsltGrid = ResultPlot(grid.name(), gridRslt);
-	*/
-	//gnuPlot(rsltMCS, rsltGrid);
-	/*logf("Grid");
-	auto grid = GridFormula(4,4);
-	auto gridRslt = grid.calcAC();
-	auto rsltGrid = ResultPlot(grid.name(), gridRslt);*/
 
-	/*logf("Lattice");
-	auto tl = Lattice(4,4);
+	auto gridF = GridFormula(nr, nc);
+	auto gridFRslt = gridF.calcAC();
+	auto rsltFGrid = ResultPlot(gridF.name(), gridFRslt);
+
+	gnuPlot(format("Results/Grid%sX%s", nr, nc), rsltGrid, rsltFGrid);
+}
+
+void lattice(int nr, int nc) {
+	auto tl = Lattice(nr, nc);
 	auto tlRslt = tl.calcAC();
 	auto rsltTL = ResultPlot(tl.name(), tlRslt);
-	*/
 
-	/+
-	auto g = genTestGraph!32();
-	g.setEdge(2, 13);
-	Array!(Graph!32) planarGraphs;
-	makePlanar(g, planarGraphs);
-	logf("%s planar graphs", planarGraphs.length);
+	gnuPlot(format("Results/Lattice%sX%s", nr, nc), rsltTL);
+}
 
-	/*logf("Crossing");
-	auto c = Crossing(g);
-	auto cRslt = c.calcAC();
-	auto rsltC = ResultPlot(c.name(), cRslt);
-	*/
-
-	ResultPlot[] rsltC;
-	for(int i = 0; i < planarGraphs.length; ++i) {
-		auto c = Crossing(planarGraphs[i]);
-		auto cRslt = c.calcAC();
-		rsltC ~= ResultPlot(format("%s-%s",c.name(), i), cRslt);
-	}
-
-	logf("Gen Plot");
-	//gnuPlot(rsltMCSF, rsltTL, rsltGrid, rsltC);
-	gnuPlot(rsltC);+/
-
-	//auto writeAvailReverse = gridRslt.writeAvail.dup;
-	//reverse(writeAvailReverse);
-	//compare(gridRslt.readAvail, writeAvailReverse, &pointFive);
-
+void latticeMapped() {
 	auto lattice = Lattice(3,3);
 	auto latticeRslt = lattice.calcAC();
 	logf("LatticeRslt done");
 	auto pnt = makeNine!16();
 	
-	auto map = Mappings!(32,16)(lattice.graph, pnt);
+	auto map = Mappings!(32,32)(lattice.graph, lattice.graph);
 	auto mapRslt = map.calcAC(lattice.read, lattice.write);
 	logf("Mapping done");
 
-	gnuPlot(ResultPlot(lattice.name(), latticeRslt),
+	gnuPlot("Results/TLMapped", 
+			ResultPlot(lattice.name(), latticeRslt),
 			ResultPlot(map.name(lattice.name()), mapRslt)
 	);
+}
 
+void main() {
+	//lattice(4,4);
+	//gridAgainstGrid(4,4);
+	MCSAgainstMCS(15);
 }

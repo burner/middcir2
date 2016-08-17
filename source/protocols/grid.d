@@ -252,15 +252,6 @@ unittest {
 				"numColumn %s, numRows %s", numColumn, numRows
 			);
 
-			/*expect(testSemetry(gridFRslt), TODO: talk to Oliver about the
-			  semetry property
-				"numColumn %s, numRows %s", numColumn, numRows
-			);
-
-			expect(testSemetry(gridRslt),
-				"numColumn %s, numRows %s", numColumn, numRows
-			);*/
-
 			expect(compare(gridFRslt.readAvail, gridRslt.readAvail, &equal),
 				"numColumn %s, numRows %s", numColumn, numRows
 			);

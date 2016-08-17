@@ -31,11 +31,14 @@ struct MCS {
 
 	void testAll(ref BitsetStore!uint tree, int atLeast) {
 		import core.bitop : popcnt;
+		import permutation;
 
-		const upTo = 1 << numNodes;
-		for(uint it = 0; it < upTo; ++it) {
-			if(popcnt(it) >= atLeast) {
-				tree.insert(it);
+		//const upTo = 1 << numNodes;
+		//for(uint it = 0; it < upTo; ++it) {
+		auto permu = Permutations(numNodes);
+		foreach(perm; permu) {
+			if(popcnt(perm.store) >= atLeast) {
+				tree.insert(perm);
 			}
 		}
 	}

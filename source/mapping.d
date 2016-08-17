@@ -59,24 +59,32 @@ class Mapping(int SizeLnt, int SizePnt) {
 		rsltQuorumSet.insertUnique(perm);
 	}
 
-	void reconnectQuorums(const ref BitsetStore!uint quorumSet, 
-			ref BitsetStore!uint rsltQuorumSet)
+	void reconnectQuorums(const ref BitsetStore!uint quorumSetA, 
+			ref BitsetStore!uint rsltQuorumSetA, 
+			const ref BitsetStore!uint quorumSetB, 
+			ref BitsetStore!uint rsltQuorumSetB)
 	{
 		import core.bitop : popcnt;
 		import permutation;
-		//for(uint perm = 0; perm < upTo; ++perm) {
 		auto permu = Permutations(upTo);
 		foreach(perm; permu) {
-			//logf(perm == (upTo / 100), "%5.4f", cast(double)(perm)/upTo);
-			//logf("%5.4f", cast(double)(perm)/upTo);
 			int numBitsInPerm = popcnt(perm.store);
 			floyd.execute(*this.pnt, perm);
 
-			foreach(const ref it; quorumSet[]) {
+			foreach(const ref it; quorumSetA[]) {
 				if(numBitsInPerm >= popcnt(it.bitset.store)) {
-					this.reconnectQuorum(it.bitset, rsltQuorumSet, perm);
+					this.reconnectQuorum(it.bitset, rsltQuorumSetA, perm);
 					foreach(sub; it.subsets[]) {
-						this.reconnectQuorum(sub, rsltQuorumSet, perm);
+						this.reconnectQuorum(sub, rsltQuorumSetA, perm);
+					}
+				}
+			}
+
+			foreach(const ref it; quorumSetB[]) {
+				if(numBitsInPerm >= popcnt(it.bitset.store)) {
+					this.reconnectQuorum(it.bitset, rsltQuorumSetB, perm);
+					foreach(sub; it.subsets[]) {
+						this.reconnectQuorum(sub, rsltQuorumSetB, perm);
 					}
 				}
 			}
@@ -90,8 +98,8 @@ class Mapping(int SizeLnt, int SizePnt) {
 	Result calcAC(const ref BitsetStore!uint oRead, 
 			const ref BitsetStore!uint oWrite) 
 	{
-		this.reconnectQuorums(oRead, this.read);
-		this.reconnectQuorums(oWrite, this.write);
+		this.reconnectQuorums(oRead, this.read, oWrite, this.write);
+		//this.reconnectQuorums(oWrite, this.write);
 
 		return calcAvailForTree(to!int(this.lnt.length), this.read, this.write);
 	}
@@ -129,8 +137,8 @@ struct Mappings(int SizeLnt, int SizePnt) {
 
 		size_t cnt = 0;
 		do {
-			writefln("%(%2d, %) %7d of %7d %3.2f", permutation,
-				cnt, numPerm, cast(double)cnt/numPerm);
+			writefln("%(%2d, %) %7d of %7d %6.2f%%", permutation,
+				cnt, numPerm, (cast(double)cnt/numPerm) * 100.0);
 			++cnt;
 			auto cur = new Mapping!(SizeLnt,SizePnt)(*lnt, *pnt, permutation);
 			Result curRslt = cur.calcAC(oRead, oWrite);
@@ -169,20 +177,7 @@ unittest {
 	auto map = new Mapping!(32,16)(lattice.graph, pnt, [1,2,3,0]);
 	auto mapRslt = map.calcAC(lattice.read, lattice.write);
 
-	gnuPlot(ResultPlot(lattice.name(), latticeRslt),
-			ResultPlot(map.name(lattice.name()), mapRslt)
-	);
-}
-
-unittest {
-	auto lattice = Lattice(2,2);
-	auto latticeRslt = lattice.calcAC();
-	auto pnt = makeLineOfFour();
-	
-	auto map = Mappings!(32,16)(lattice.graph, pnt);
-	auto mapRslt = map.calcAC(lattice.read, lattice.write);
-
-	gnuPlot(ResultPlot(lattice.name(), latticeRslt),
+	gnuPlot("Results/Lattice4_Line4", ResultPlot(lattice.name(), latticeRslt),
 			ResultPlot(map.name(lattice.name()), mapRslt)
 	);
 }
@@ -194,7 +189,8 @@ unittest {
 	auto map = Mappings!(32,32)(lattice.graph, lattice.graph);
 	auto mapRslt = map.calcAC(lattice.read, lattice.write);
 
-	gnuPlot(ResultPlot(lattice.name(), latticeRslt),
+	gnuPlot("Results/Lattice4_Lattice_Graph",
+			ResultPlot(lattice.name(), latticeRslt),
 			ResultPlot(map.name(lattice.name()), mapRslt)
 	);
 

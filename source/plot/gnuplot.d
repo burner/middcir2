@@ -7,15 +7,28 @@ import std.stdio : File;
 
 import plot : ResultPlot;
 
-private immutable dataFilenameAvail = ".datafileavail.rslt";
-private immutable dataFilenameCost = ".datafilecost.rslt";
-private immutable gnuplotFilenameAvail = ".gnuplotavail.gp";
-private immutable gnuplotFilenameCost = ".gnuplotcost.gp";
-private immutable resultFilenameAvail = ".resultavail.eps";
-private immutable resultFilenameCost = ".resultcost.eps";
+private immutable dataFilenameAvail = "datafileavail.rslt";
+private immutable dataFilenameCost = "datafilecost.rslt";
+private immutable gnuplotFilenameAvail = "gnuplotavail.gp";
+private immutable gnuplotFilenameCost = "gnuplotcost.gp";
+private immutable resultFilenameAvail = "resultavail.eps";
+private immutable resultFilenameCost = "resultcost.eps";
 
 void gnuPlot(ResultPlot[] results ...) {
+	gnuPlot(".", results);
+}
+
+void gnuPlot(string path, ResultPlot[] results ...) {
 	import std.process : execute;
+	import std.file : mkdirRecurse, chdir, getcwd;
+	string oldcwd = getcwd();
+	scope(exit) {
+		chdir(oldcwd);
+	}
+
+	mkdirRecurse(path);
+	chdir(path);
+
 	createDataFiles(results);
 	createGnuplotFiles(results);
 
