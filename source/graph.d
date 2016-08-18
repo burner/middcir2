@@ -482,3 +482,29 @@ unittest {
 	f.write(g.toTikz());
 	}
 }
+
+Graph!Size makeCircle(int Size)(const int nn) {
+	// http://stackoverflow.com/questions/5300938/calculating-the-position-of-points-in-a-circle
+	import std.math;
+	auto ret = Graph!Size(nn);
+
+	const(double) radius = 3.0;
+
+	double slice = 2.0 * PI / nn;
+	for(int i = 0; i < nn; ++i) {
+		double angle = slice * i;
+        double newX = 0.0 + radius * cos(angle);
+        double newY = 0.0 + radius * sin(angle);
+		ret.setNodePos(i, vec3d(newX, newY, 0.0));
+	}
+
+	return ret;
+}
+
+void completeConnectGraph(G)(ref G graph) {
+	for(int i = 0; i < graph.numNodes; ++i) {
+		for(int j = i; j < graph.numNodes; ++j) {
+			graph.setEdge(i, j);
+		}
+	}
+}

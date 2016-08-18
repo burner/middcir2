@@ -92,6 +92,34 @@ void latticeMCSMapped6() {
 	mappingPlot2("Results/LatticeMCS6", pnt, lattice, mcs);
 }
 
+void mcsMapped() {
+	auto mcs = MCS(6);
+	auto mcsRslt = mcs.calcAC();
+	auto pnt = makeSix!16();
+
+	auto map = Mappings!(32,16)(mcs.graph, pnt, 0.5);
+	auto mapRslt = map.calcAC(mcs.read, mcs.write);
+
+	mappingPlot("Results/MCS6_Mapped", map,
+			ResultPlot(mcs.name(), mcsRslt),
+			ResultPlot(map.name(mcs.name()), mapRslt)
+	);
+}
+
+void gridMapped() {
+	auto grid = Grid(2,3);
+	auto gridRslt = grid.calcAC();
+	auto pnt = makeSix!16();
+
+	auto map = Mappings!(32,16)(grid.graph, pnt, 0.5);
+	auto mapRslt = map.calcAC(grid.read, grid.write);
+
+	mappingPlot("Results/Grid2x3_Mapped", map,
+			ResultPlot(grid.name(), gridRslt),
+			ResultPlot(map.name(grid.name()), mapRslt)
+	);
+}
+
 void main() {
 	//lattice(4,4);
 	//gridAgainstGrid(4,4);
@@ -99,4 +127,7 @@ void main() {
 	//latticeMapped();
 	latticeMapped2();
 	latticeMCSMapped6();
+	//latticeMapped2();
+	//mcsMapped();
+	//gridMapped();
 }

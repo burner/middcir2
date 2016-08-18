@@ -9,6 +9,7 @@ import protocols;
 import config;
 import exceptionhandling;
 import bitsetmodule;
+import graph;
 
 struct Grid {
 	import bitsetrbtree;
@@ -19,6 +20,8 @@ struct Grid {
 	size_t width;
 	size_t height;
 	uint rowMask;
+	
+	Graph!32 graph;
 
 	this(size_t width, size_t height) {
 		this.width = width;
@@ -26,6 +29,9 @@ struct Grid {
 		this.rowMask = (1 << this.width) - 1;
 		this.read.array.reserve(32);
 		this.write.array.reserve(32);
+
+		this.graph = makeCircle!32(to!int(this.width * this.height));
+		completeConnectGraph(this.graph);
 	}
 
 	/*

@@ -16,7 +16,6 @@ import graph;
 struct MCS {
 	import bitsetrbtree;
 	import gfm.math.vector;
-	Graph!32 g;
 
 	const int numNodes;
 	const int majority;
@@ -24,13 +23,16 @@ struct MCS {
 	BitsetStore!uint read;
 	BitsetStore!uint write;
 
+	Graph!32 graph;
+
 	this(int nn) {
 		this.numNodes = nn;
 		this.majority = this.numNodes / 2 + 1;
 		this.half = to!int((this.numNodes / 2.0)+0.51);
 		this.read.array.reserve(32);
 		this.write.array.reserve(32);
-		this.g = Graph!32(this.numNodes);
+		this.graph = makeCircle!32(this.numNodes);
+		completeConnectGraph(this.graph);
 	}
 
 	void testAll(ref BitsetStore!uint tree, int atLeast) {
@@ -48,8 +50,7 @@ struct MCS {
 	}
 
 	ref auto getGraph() {
-		this.g.setNodePos(0, vec3d(0.0,0.0,0.0));
-		return this.g;
+		return this.graph;
 	}
 
 	Result calcAC() {
