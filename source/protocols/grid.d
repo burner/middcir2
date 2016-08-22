@@ -96,7 +96,7 @@ struct Grid {
 	}
 
 	string name() const pure {
-		return format("Grid %sx%s", this.width, this.height);
+		return format("Grid-%sx%s", this.width, this.height);
 	}
 }
 
@@ -156,7 +156,7 @@ struct GridFormula {
 	}
 
 	string name() const pure {
-		return format("Grid Formula %sx%s", this.width, this.height);
+		return format("Grid-Formula-%sx%s", this.width, this.height);
 	}
 }
 

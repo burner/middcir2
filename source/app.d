@@ -27,7 +27,7 @@ void MCSAgainstMCS(int mcsN = 16) {
 	auto mcsFRslt = mcsF.calcAC();
 	auto rsltMCSF = ResultPlot(mcsF.name(), mcsFRslt);
 
-	gnuPlot(format("Results/MCS%s", mcsN), rsltMCS, rsltMCSF);
+	gnuPlot(format("Results/MCS%s", mcsN), "", rsltMCS, rsltMCSF);
 }
 
 void gridAgainstGrid(int nc, int nr) {
@@ -39,7 +39,7 @@ void gridAgainstGrid(int nc, int nr) {
 	auto gridFRslt = gridF.calcAC();
 	auto rsltFGrid = ResultPlot(gridF.name(), gridFRslt);
 
-	gnuPlot(format("Results/Grid%sX%s", nr, nc), rsltGrid, rsltFGrid);
+	gnuPlot(format("Results/Grid%sX%s", nr, nc), "", rsltGrid, rsltFGrid);
 }
 
 void lattice(int nc, int nr) {
@@ -47,7 +47,7 @@ void lattice(int nc, int nr) {
 	auto tlRslt = tl.calcAC();
 	auto rsltTL = ResultPlot(tl.name(), tlRslt);
 
-	gnuPlot(format("Results/Lattice%sX%s", nr, nc), rsltTL);
+	gnuPlot(format("Results/Lattice%sX%s", nr, nc), "", rsltTL);
 }
 
 void latticeMapped() {
@@ -84,10 +84,19 @@ void latticeMapped2() {
 	);
 }
 
+void latticeMCSMapped6() {
+	auto lattice = Lattice(2,3);
+	auto mcs = MCS(6);
+	auto pnt = makeSix!32();
+
+	mappingPlot2("Results/LatticeMCS6", pnt, lattice, mcs);
+}
+
 void main() {
 	//lattice(4,4);
 	//gridAgainstGrid(4,4);
 	//MCSAgainstMCS(15);
-	latticeMapped();
-	//latticeMapped2();
+	//latticeMapped();
+	latticeMapped2();
+	latticeMCSMapped6();
 }

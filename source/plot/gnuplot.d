@@ -5,6 +5,8 @@ import std.exception : enforce;
 import std.format : formattedWrite;
 import std.stdio : File;
 
+import exceptionhandling;
+
 import plot : ResultPlot;
 
 private immutable dataFilenameAvail = "datafileavail.rslt";
@@ -15,10 +17,10 @@ private immutable resultFilenameAvail = "resultavail.eps";
 private immutable resultFilenameCost = "resultcost.eps";
 
 void gnuPlot(ResultPlot[] results ...) {
-	gnuPlot(".", results);
+	gnuPlot(".", "", results);
 }
 
-void gnuPlot(string path, ResultPlot[] results ...) {
+void gnuPlot(string path, string prefix, ResultPlot[] results ...) {
 	import std.process : execute;
 	import std.file : mkdirRecurse, chdir, getcwd;
 	string oldcwd = getcwd();
@@ -29,31 +31,31 @@ void gnuPlot(string path, ResultPlot[] results ...) {
 	mkdirRecurse(path);
 	chdir(path);
 
-	createDataFiles(results);
-	createGnuplotFiles(results);
+	createDataFiles(prefix, results);
+	createGnuplotFiles(prefix, results);
 
-	auto gnuplot = execute(["gnuplot", "-c", gnuplotFilenameAvail]);
-	enforce(gnuplot.status == 0);
+	auto gnuplot = execute(["gnuplot", "-c", prefix ~ gnuplotFilenameAvail]);
+	ensure(gnuplot.status == 0, prefix ~ gnuplotFilenameAvail);
 
-	gnuplot = execute(["gnuplot", "-c", gnuplotFilenameCost]);
-	enforce(gnuplot.status == 0);
+	gnuplot = execute(["gnuplot", "-c", prefix ~ gnuplotFilenameCost]);
+	ensure(gnuplot.status == 0, prefix ~ gnuplotFilenameCost);
 
-	auto epstopdf = execute(["epstopdf", resultFilenameAvail]);
-	enforce(epstopdf.status == 0);
+	auto epstopdf = execute(["epstopdf", prefix ~ resultFilenameAvail]);
+	ensure(epstopdf.status == 0, prefix ~ resultFilenameAvail);
 
-	epstopdf = execute(["epstopdf", resultFilenameCost]);
-	enforce(epstopdf.status == 0);
+	epstopdf = execute(["epstopdf", prefix ~ resultFilenameCost]);
+	ensure(epstopdf.status == 0, prefix ~ resultFilenameCost);
 }
 
-void createDataFiles(ResultPlot[] results ...) {
+void createDataFiles(string prefix, ResultPlot[] results ...) {
 	import std.algorithm.iteration : joiner;
 	import std.range;
 	import std.conv : to;
 
-	auto datafileAvail = File(dataFilenameAvail, "w");
+	auto datafileAvail = File(prefix ~ dataFilenameAvail, "w");
 	auto ltwAvail = datafileAvail.lockingTextWriter();
 
-	auto datafileCost = File(dataFilenameCost, "w");
+	auto datafileCost = File(prefix ~ dataFilenameCost, "w");
 	auto ltwCost = datafileCost.lockingTextWriter();
 
 	for(size_t i = 0; i < 101; ++i) {
@@ -71,15 +73,15 @@ void createDataFiles(ResultPlot[] results ...) {
 	}
 }
 
-void createGnuplotFiles(ResultPlot[] results ...) {
-	createGnuplotFile(resultFilenameAvail, dataFilenameAvail,
+void createGnuplotFiles(string prefix, ResultPlot[] results ...) {
+	createGnuplotFile(prefix, resultFilenameAvail, dataFilenameAvail,
 			gnuplotFilenameAvail, "Protocol Availability", results);
 
-	createGnuplotFile(resultFilenameCost, dataFilenameCost,
+	createGnuplotFile(prefix, resultFilenameCost, dataFilenameCost,
 			gnuplotFilenameCost, "Protocol Costs", results);
 }
 
-void createGnuplotFile(string rsltFN, string dataFN, string gpFN, 
+void createGnuplotFile(string prefix, string rsltFN, string dataFN, string gpFN, 
 		string ylabel, ResultPlot[] results ...) {
 	import std.array : appender;
 
@@ -99,7 +101,7 @@ set style data linespoints
 set xlabel 'Node Avaiability'
 set ylabel '%s' offset 1,0
 set tics scale 0.75
-plot `, rsltFN, ylabel);
+plot `, prefix ~ rsltFN, ylabel);
 
 	bool first = true;
 	size_t idx = 2;
@@ -108,14 +110,14 @@ plot `, rsltFN, ylabel);
 			app.put(", ");
 		}
 		first = false;
-		formattedWrite(app, "\"%s\" using 1:%s lw 4 ps 0.4 title \"%s R\", ",
-				dataFN, idx++, result.name);
-		formattedWrite(app, "\"%s\" using 1:%s lw 4 ps 0.4 title \"%s W\"",
-				dataFN, idx++, result.name);
+		formattedWrite(app, "\"%s%s\" using 1:%s lw 4 ps 0.4 title \"%s R\", ",
+				prefix, dataFN, idx++, result.name);
+		formattedWrite(app, "\"%s%s\" using 1:%s lw 4 ps 0.4 title \"%s W\"",
+				prefix, dataFN, idx++, result.name);
 	}
 	app.put(";");
 
-	auto datafile = File(gpFN, "w");
+	auto datafile = File(prefix ~ gpFN, "w");
 	datafile.write(app.data);
 }
 

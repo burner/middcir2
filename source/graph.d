@@ -19,6 +19,8 @@ struct Graph(int Size) {
 	import std.array : appender;
 	import std.format : formattedWrite;
 
+	enum Length = Size;
+
 	static if(Size <= 8) {
 		alias Node = Bitset!ubyte;
 	} else static if(Size <= 16) {

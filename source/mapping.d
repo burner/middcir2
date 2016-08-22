@@ -209,7 +209,7 @@ unittest {
 	auto map = new Mapping!(32,16)(lattice.graph, pnt, [1,2,3,0]);
 	auto mapRslt = map.calcAC(lattice.read, lattice.write);
 
-	gnuPlot("Results/Lattice4_Line4_1_2_3_0", 
+	gnuPlot("Results/Lattice4_Line4_1_2_3_0", "",
 			ResultPlot(lattice.name(), latticeRslt),
 			ResultPlot(map.name(lattice.name()), mapRslt)
 	);
@@ -239,7 +239,7 @@ unittest {
 	auto map = Mappings!(32,32)(lattice.graph, lattice.graph);
 	auto mapRslt = map.calcAC(lattice.read, lattice.write);
 
-	gnuPlot("Results/Lattice4_Lattice_Graph",
+	gnuPlot("Results/Lattice4_Lattice_Graph", "",
 			ResultPlot(lattice.name(), latticeRslt),
 			ResultPlot(map.name(lattice.name()), mapRslt)
 	);

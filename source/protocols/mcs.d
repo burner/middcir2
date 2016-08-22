@@ -11,9 +11,12 @@ import exceptionhandling;
 import protocols;
 import math;
 import utils;
+import graph;
 
 struct MCS {
 	import bitsetrbtree;
+	import gfm.math.vector;
+	Graph!32 g;
 
 	const int numNodes;
 	const int majority;
@@ -27,6 +30,7 @@ struct MCS {
 		this.half = to!int((this.numNodes / 2.0)+0.51);
 		this.read.array.reserve(32);
 		this.write.array.reserve(32);
+		this.g = Graph!32(this.numNodes);
 	}
 
 	void testAll(ref BitsetStore!uint tree, int atLeast) {
@@ -41,6 +45,11 @@ struct MCS {
 				tree.insert(perm);
 			}
 		}
+	}
+
+	ref auto getGraph() {
+		this.g.setNodePos(0, vec3d(0.0,0.0,0.0));
+		return this.g;
 	}
 
 	Result calcAC() {
@@ -58,7 +67,7 @@ struct MCS {
 	}
 
 	string name() const pure {
-		return format("MCS %s", this.numNodes);
+		return format("MCS-%s", this.numNodes);
 	}
 }
 
@@ -120,7 +129,7 @@ struct MCSFormula {
 	}
 
 	string name() const pure {
-		return format("MCSFormula %s", this.numNodes);
+		return format("MCSFormula-%s", this.numNodes);
 	}
 }
 

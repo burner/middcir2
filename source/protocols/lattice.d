@@ -127,7 +127,11 @@ struct Lattice {
 
 	string name() const pure {
 		import std.format : format;
-		return format("Tri Lattice %sx%s", this.width, this.height);
+		return format("Tri-Lattice-%sx%s", this.width, this.height);
+	}
+
+	ref auto getGraph() {
+		return this.graph;
 	}
 }
 
