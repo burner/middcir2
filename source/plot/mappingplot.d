@@ -121,6 +121,7 @@ void mappingPlot2(Graph,P...)(string path, auto ref Graph pnt, auto ref P ps) {
 
 	Mappings!(32,32)[] mappings;
 	ResultPlot[ps.length] results;
+	ResultPlot[ps.length] resultsMapping;
 
 	auto tex = File("mapping.tex", "w");
 	tex.write(topString2);
@@ -145,11 +146,34 @@ void mappingPlot2(Graph,P...)(string path, auto ref Graph pnt, auto ref P ps) {
 		formattedWrite(ltw, "\\clearpage\n");
 
 		mappings ~= Mappings!(32,32)(p.getGraph(), pnt);
-		mappings.back.calcAC(p.read, p.write);
+		resultsMapping[idx] = ResultPlot(
+				mappings.back.name(p.name()),
+				mappings.back.calcAC(p.read, p.write)
+		);
+
+		string mapFigName = p.name() ~ "mapped";
+		gnuPlot(".", mapFigName, results[idx], resultsMapping[idx]);
 
 		formattedWrite(ltw, "\n\\subsection{Best mapping for %s}\n", p.name());
 		writeMapping(p.name(), tex, mappings.back);
+
+		formattedWrite(ltw, figureInclude, mapFigName, mapFigName, mapFigName,
+				mapFigName);
+
 	}
+	string mapFigNameAll = "allmapped";
+	gnuPlot(".", mapFigNameAll, results[]);
+	formattedWrite(ltw, "\n\\clearpage\n");
+	formattedWrite(ltw, "\n\\section{Protocols on LNT}\n");
+	formattedWrite(ltw, figureInclude, mapFigNameAll, mapFigNameAll,
+			mapFigNameAll, mapFigNameAll);
+
+	string mapFigNameAllM = "allmappedmap";
+	gnuPlot(".", mapFigNameAllM, resultsMapping[]);
+	formattedWrite(ltw, "\n\\clearpage\n");
+	formattedWrite(ltw, "\n\\section{Protocols on PNT}\n");
+	formattedWrite(ltw, figureInclude, mapFigNameAllM, mapFigNameAllM,
+			mapFigNameAllM, mapFigNameAllM);
 	formattedWrite(ltw, "\\end{document}\n");
 }
 

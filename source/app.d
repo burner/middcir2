@@ -125,7 +125,7 @@ void main() {
 	//gridAgainstGrid(4,4);
 	//MCSAgainstMCS(15);
 	//latticeMapped();
-	latticeMapped2();
+	//latticeMapped2();
 	latticeMCSMapped6();
 	//latticeMapped2();
 	//mcsMapped();
