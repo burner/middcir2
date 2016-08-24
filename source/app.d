@@ -18,6 +18,10 @@ import utils;
 import graph;
 import mapping;
 
+//version(release) {
+	//version = exceptionhandling_release_asserts;
+//}
+
 void MCSAgainstMCS(int mcsN = 16) {
 	auto mcs = MCS(mcsN);
 	auto mcsRslt = mcs.calcAC();
@@ -92,6 +96,26 @@ void latticeMCSMapped6() {
 	mappingPlot2("Results/LatticeMCS6", pnt, lattice, mcs);
 }
 
+void latticeMCSMappedCrossing6() {
+	auto pnt = makeSix!32();
+
+	auto lattice = Lattice(2,3);
+	auto mcs = MCS(6);
+	auto crossing = Crossing(pnt);
+
+	mappingPlot2("Results/LatticeMCSCrossing6", pnt, lattice, mcs, crossing);
+}
+
+void latticeMCSMappedCrossing9() {
+	auto pnt = makeNine!32();
+
+	auto lattice = Lattice(3,3);
+	auto mcs = MCS(9);
+	auto crossing = Crossing(pnt);
+
+	mappingPlot2("Results/LatticeMCSCrossing9", pnt, lattice, mcs, crossing);
+}
+
 void mcsMapped() {
 	auto mcs = MCS(6);
 	auto mcsRslt = mcs.calcAC();
@@ -126,7 +150,9 @@ void main() {
 	//MCSAgainstMCS(15);
 	//latticeMapped();
 	//latticeMapped2();
-	latticeMCSMapped6();
+	//latticeMCSMapped6();
+	//latticeMCSMappedCrossing6();
+	latticeMCSMappedCrossing9();
 	//latticeMapped2();
 	//mcsMapped();
 	//gridMapped();

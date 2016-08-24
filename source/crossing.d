@@ -129,12 +129,13 @@ struct Crossing {
 		import std.conv : to;
 		import protocols.pathbased;
 
-		Array!int bottom;
-		Array!int top;
-		Array!int left;
-		Array!int right;
-		Array!(int[2]) diagonalPairs;
-		this.splitBorderIntoTBLR(bottom, top, left, right, diagonalPairs);
+		//Array!int bottom;
+		//Array!int top;
+		//Array!int left;
+		//Array!int right;
+		//Array!(int[2]) diagonalPairs;
+		this.splitBorderIntoTBLR(this.bottom, this.top, this.left, this.right,
+				this.diagonalPairs);
 
 		auto paths = floyd!32(this.graph);
 
@@ -160,7 +161,11 @@ struct Crossing {
 
 	string name() const pure {
 		import std.format : format;
-		return format("Crossing %s", this.graph.length);
+		return format("Crossing-%s", this.graph.length);
+	}
+
+	auto ref getGraph() {
+		return this.graph;
 	}
 }
 

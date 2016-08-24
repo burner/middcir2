@@ -4,6 +4,7 @@ import std.experimental.logger;
 import std.exception : enforce;
 import std.format : formattedWrite;
 import std.stdio : File;
+import std.conv : to;
 
 import exceptionhandling;
 
@@ -34,17 +35,23 @@ void gnuPlot(string path, string prefix, ResultPlot[] results ...) {
 	createDataFiles(prefix, results);
 	createGnuplotFiles(prefix, results);
 
-	auto gnuplot = execute(["gnuplot", "-c", prefix ~ gnuplotFilenameAvail]);
-	ensure(gnuplot.status == 0, prefix ~ gnuplotFilenameAvail);
+	auto gnuplot = execute(["gnuplot", "-c", prefix ~ to!string(1) ~ gnuplotFilenameAvail]);
+	ensure(gnuplot.status == 0, prefix ~ to!string(1) ~ gnuplotFilenameAvail);
 
-	gnuplot = execute(["gnuplot", "-c", prefix ~ gnuplotFilenameCost]);
-	ensure(gnuplot.status == 0, prefix ~ gnuplotFilenameCost);
+	gnuplot = execute(["gnuplot", "-c", prefix ~ to!string(80) ~ gnuplotFilenameAvail]);
+	ensure(gnuplot.status == 0, prefix ~ to!string(80) ~ gnuplotFilenameAvail);
 
-	auto epstopdf = execute(["epstopdf", prefix ~ resultFilenameAvail]);
-	ensure(epstopdf.status == 0, prefix ~ resultFilenameAvail);
+	gnuplot = execute(["gnuplot", "-c", prefix ~ to!string(1) ~gnuplotFilenameCost]);
+	ensure(gnuplot.status == 0, prefix ~ to!string(1) ~gnuplotFilenameCost);
 
-	epstopdf = execute(["epstopdf", prefix ~ resultFilenameCost]);
-	ensure(epstopdf.status == 0, prefix ~ resultFilenameCost);
+	auto epstopdf = execute(["epstopdf", prefix ~ to!string(1) ~ resultFilenameAvail]);
+	ensure(epstopdf.status == 0, prefix ~ to!string(1) ~ resultFilenameAvail);
+
+	epstopdf = execute(["epstopdf", prefix ~ to!string(80) ~ resultFilenameAvail]);
+	ensure(epstopdf.status == 0, prefix ~ to!string(80) ~ resultFilenameAvail);
+
+	epstopdf = execute(["epstopdf", prefix ~ to!string(1) ~resultFilenameCost]);
+	ensure(epstopdf.status == 0, prefix ~ to!string(1) ~resultFilenameCost);
 }
 
 void createDataFiles(string prefix, ResultPlot[] results ...) {
@@ -75,21 +82,24 @@ void createDataFiles(string prefix, ResultPlot[] results ...) {
 
 void createGnuplotFiles(string prefix, ResultPlot[] results ...) {
 	createGnuplotFile(prefix, resultFilenameAvail, dataFilenameAvail,
-			gnuplotFilenameAvail, "Protocol Availability", results);
+			gnuplotFilenameAvail, "Protocol Availability", 1, results);
+
+	createGnuplotFile(prefix, resultFilenameAvail, dataFilenameAvail,
+			gnuplotFilenameAvail, "Protocol Availability", 80, results);
 
 	createGnuplotFile(prefix, resultFilenameCost, dataFilenameCost,
-			gnuplotFilenameCost, "Protocol Costs", results);
+			gnuplotFilenameCost, "Protocol Costs", 1, results);
 }
 
 void createGnuplotFile(string prefix, string rsltFN, string dataFN, string gpFN, 
-		string ylabel, ResultPlot[] results ...) {
+		string ylabel, int xmin, ResultPlot[] results ...) {
 	import std.array : appender;
 
 	auto app = appender!string();
 	formattedWrite(app, `set size ratio 0.71
 print GPVAL_TERMINALS
 set terminal eps color
-set xrange [0.01:1.0]
+set xrange [%f:1.0]
 set output '%s'
 set border linewidth 1.5
 # Grid
@@ -101,7 +111,7 @@ set style data linespoints
 set xlabel 'Node Avaiability'
 set ylabel '%s' offset 1,0
 set tics scale 0.75
-plot `, prefix ~ rsltFN, ylabel);
+plot `, xmin / 100.0, prefix ~ to!string(xmin) ~ rsltFN, ylabel);
 
 	bool first = true;
 	size_t idx = 2;
@@ -117,7 +127,7 @@ plot `, prefix ~ rsltFN, ylabel);
 	}
 	app.put(";");
 
-	auto datafile = File(prefix ~ gpFN, "w");
+	auto datafile = File(prefix ~ to!string(xmin) ~ gpFN, "w");
 	datafile.write(app.data);
 }
 

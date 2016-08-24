@@ -151,7 +151,8 @@ struct Mappings(int SizeLnt, int SizePnt) {
 	}
 
 	Result calcAC(const ref BitsetStore!uint oRead, 
-			const ref BitsetStore!uint oWrite) 
+			const ref BitsetStore!uint oWrite, 
+			const bool stopAfterFirst = false) 
 	{
 		import std.array : array;
 		import std.range : iota;
@@ -181,12 +182,19 @@ struct Mappings(int SizeLnt, int SizePnt) {
 				this.bestAvail = sumRslt;
 				this.bestResult = curRslt;
 			}
-			/*if(cnt == 800) {
+			if(stopAfterFirst) {
 				break;
-			}*/
+			}
 		} while(nextPermutation(permutation));
 
 		return this.bestResult;
+	}
+
+	void createDummyBestMapping() {
+		import std.range : iota;
+		import std.array : array;
+		this.bestMapping = new Mapping!(SizeLnt,SizePnt)(*lnt, *pnt, 
+				iota(pnt.length).array().to!(int[]));
 	}
 
 	string name(string protocolName) const pure {

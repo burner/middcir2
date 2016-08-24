@@ -2,9 +2,13 @@ module plot.mappingplot;
 
 import plot : ResultPlot;
 import plot.gnuplot;
+import protocols.crossing;
+import protocols.mcs;
 import mapping;
 import graph;
 import std.stdio : File;
+import std.experimental.logger;
+import std.format : formattedWrite;
 
 void writeMapping(M)(string prefix, ref File tex, const ref M mapping) {
 	tex.write("\\begin{tabular}{l ");
@@ -94,22 +98,33 @@ string topString =
 string bottomString = 
 `\section{Availability}
 \begin{figure}[h]
-	\includegraphics[width=\linewidth]{resultavail.pdf}
+	\includegraphics[width=\linewidth]{1resultavail.pdf}
 \end{figure}
 
 \section{Costs}
 \begin{figure}[h]
-	\includegraphics[width=\linewidth]{resultcost.pdf}
+	\includegraphics[width=\linewidth]{1resultcost.pdf}
 \end{figure}
 \end{document}
 `;
+
+void writeTBLRSetsImpl(string setName,A,Out)(A a, ref Out ltw) {
+	formattedWrite(ltw, "\\paragraph{%s Set}\n", setName);
+	formattedWrite(ltw, "%(%s, %)\n", a);
+}
+
+void writeTBLRSets(C,Out)(ref C crossing, ref Out ltw) {
+	writeTBLRSetsImpl!"Top"(crossing.top[], ltw);
+	writeTBLRSetsImpl!"Bottom"(crossing.bottom[], ltw);
+	writeTBLRSetsImpl!"Left"(crossing.left[], ltw);
+	writeTBLRSetsImpl!"Right"(crossing.right[], ltw);
+}
 
 void mappingPlot2(Graph,P...)(string path, auto ref Graph pnt, auto ref P ps) {
 	import std.file : mkdirRecurse, chdir, getcwd;
 	import std.stdio : File;
 	import std.process : execute;
 	import std.exception : enforce;
-	import std.format : formattedWrite;
 	import std.array : back;
 	string oldcwd = getcwd();
 	scope(exit) {
@@ -137,19 +152,36 @@ void mappingPlot2(Graph,P...)(string path, auto ref Graph pnt, auto ref P ps) {
 		p.getGraph.toTikz(tf.lockingTextWriter());
 		formattedWrite(ltw, graphInclude, p.name(), p.name());
 		gnuPlot(".", p.name(), results[idx]);
+		static if(is(typeof(p) == Crossing)) {
+			writeTBLRSets(p, ltw);
+		}
 
 		formattedWrite(ltw, 
 				"\\subsection{%s Availability and Costs on LNT}\n", 
 				p.name());
 		formattedWrite(ltw, figureInclude, p.name(), p.name(), p.name(), 
-				p.name());
+				p.name(), p.name(), p.name());
 		formattedWrite(ltw, "\\clearpage\n");
 
 		mappings ~= Mappings!(32,32)(p.getGraph(), pnt);
-		resultsMapping[idx] = ResultPlot(
-				mappings.back.name(p.name()),
-				mappings.back.calcAC(p.read, p.write)
-		);
+		static if(is(typeof(p) == Crossing)) {
+			// HACK to not make it segfault we create a dummy best mapping for
+			// the crossing protocol, as it does not require a mapping
+			mappings.back.createDummyBestMapping();
+
+			// for the crossing protocol the original results is equal to the
+			// mapped results as there is no mapping required.
+			resultsMapping[idx] = results[idx];
+		} else {
+			// As MCS is using a totally connected LNT we only have to look at
+			// one mapping
+			const bool isMCS = is(typeof(p) == MCS);
+
+			resultsMapping[idx] = ResultPlot(
+					mappings.back.name(p.name()),
+					mappings.back.calcAC(p.read, p.write, isMCS)
+			);
+		}
 
 		string mapFigName = p.name() ~ "mapped";
 		gnuPlot(".", mapFigName, results[idx], resultsMapping[idx]);
@@ -158,7 +190,7 @@ void mappingPlot2(Graph,P...)(string path, auto ref Graph pnt, auto ref P ps) {
 		writeMapping(p.name(), tex, mappings.back);
 
 		formattedWrite(ltw, figureInclude, mapFigName, mapFigName, mapFigName,
-				mapFigName);
+				mapFigName, mapFigName, mapFigName);
 
 	}
 	string mapFigNameAll = "allmapped";
@@ -166,14 +198,14 @@ void mappingPlot2(Graph,P...)(string path, auto ref Graph pnt, auto ref P ps) {
 	formattedWrite(ltw, "\n\\clearpage\n");
 	formattedWrite(ltw, "\n\\section{Protocols on LNT}\n");
 	formattedWrite(ltw, figureInclude, mapFigNameAll, mapFigNameAll,
-			mapFigNameAll, mapFigNameAll);
+			mapFigNameAll, mapFigNameAll, mapFigNameAll, mapFigNameAll);
 
 	string mapFigNameAllM = "allmappedmap";
 	gnuPlot(".", mapFigNameAllM, resultsMapping[]);
 	formattedWrite(ltw, "\n\\clearpage\n");
 	formattedWrite(ltw, "\n\\section{Protocols on PNT}\n");
 	formattedWrite(ltw, figureInclude, mapFigNameAllM, mapFigNameAllM,
-			mapFigNameAllM, mapFigNameAllM);
+			mapFigNameAllM, mapFigNameAllM, mapFigNameAllM, mapFigNameAllM);
 	formattedWrite(ltw, "\\end{document}\n");
 }
 
@@ -183,6 +215,7 @@ string topString2 =
 \usepackage[english]{babel}
 \usepackage{graphicx}
 \usepackage{standalone}
+\usepackage{float}
 \usepackage{subcaption}
 \usepackage[cm]{fullpage}
 \usepackage{tikz}
@@ -199,7 +232,7 @@ string topString2 =
 
 \begin{document}
 \section{Physical Network Topology}
-\begin{figure}[h]
+\begin{figure}[H]
 	\centering
 	\includestandalone{mappinggraph}
 	\caption{PNT used.}
@@ -208,7 +241,7 @@ string topString2 =
 `;
 
 string graphInclude = 
-`\begin{figure}[h]
+`\begin{figure}[H]
 	\centering
 	\includestandalone{%sgraph}
 	\caption{LNT used by %s}
@@ -216,10 +249,14 @@ string graphInclude =
 `;
 
 string figureInclude = 
-`\begin{figure}[h]
-	\includegraphics[width=0.9\linewidth]{%sresultavail.pdf}
+`\begin{figure}[H]
+	\includegraphics[width=0.9\linewidth]{%s1resultavail.pdf}
 	\caption{Availability of %s"}
-	\includegraphics[width=0.9\linewidth]{%sresultcost.pdf}
+	\includegraphics[width=0.9\linewidth]{%s80resultavail.pdf}
+	\caption{Availability of %s p \(\ge\) 0.8"}
+\end{figure}
+\begin{figure}[H]
+	\includegraphics[width=0.9\linewidth]{%s1resultcost.pdf}
 	\caption{Costs of %s"}
 \end{figure}
 `;
