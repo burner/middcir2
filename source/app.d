@@ -106,6 +106,15 @@ void latticeMCSMappedCrossing6() {
 	mappingPlot2("Results/LatticeMCSCrossing6", pnt, lattice, mcs, crossing);
 }
 
+void latticeMCSMapped9() {
+	auto pnt = makeNine!32();
+
+	auto lattice = Lattice(3,3);
+	auto mcs = MCS(9);
+
+	mappingPlot2("Results/LatticeMCS9", pnt, lattice, mcs);
+}
+
 void latticeMCSMappedCrossing9() {
 	auto pnt = makeNine!32();
 
@@ -151,8 +160,9 @@ void main() {
 	//latticeMapped();
 	//latticeMapped2();
 	//latticeMCSMapped6();
+	latticeMCSMapped9();
 	//latticeMCSMappedCrossing6();
-	latticeMCSMappedCrossing9();
+	//latticeMCSMappedCrossing9();
 	//latticeMapped2();
 	//mcsMapped();
 	//gridMapped();
