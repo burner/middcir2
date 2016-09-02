@@ -88,6 +88,32 @@ void latticeMapped2() {
 	);
 }
 
+void crossings6() {
+	auto pnt = makeSix!32();
+
+	auto crs = Crossings(pnt);
+	auto crsRslt = crs.calcAC();
+	auto cr = Crossing(pnt);
+	auto crRslt = cr.calcAC();
+
+	gnuPlot("Results/Crossings6", "", ResultPlot(crs.name(), crsRslt),
+			ResultPlot(cr.name(), crRslt)
+	);
+}
+
+void crossings9() {
+	auto pnt = makeNine!32();
+
+	auto crs = Crossings(pnt);
+	auto crsRslt = crs.calcAC();
+	auto cr = Crossing(pnt);
+	auto crRslt = cr.calcAC();
+
+	gnuPlot("Results/Crossings9", "", ResultPlot(crs.name(), crsRslt),
+			ResultPlot(cr.name(), crRslt)
+	);
+}
+
 void latticeMCSMapped6() {
 	auto lattice = Lattice(2,3);
 	auto mcs = MCS(6);
@@ -160,10 +186,11 @@ void main() {
 	//latticeMapped();
 	//latticeMapped2();
 	//latticeMCSMapped6();
-	latticeMCSMapped9();
+	//latticeMCSMapped9();
 	//latticeMCSMappedCrossing6();
 	//latticeMCSMappedCrossing9();
 	//latticeMapped2();
 	//mcsMapped();
 	//gridMapped();
+	crossings9();
 }

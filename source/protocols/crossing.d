@@ -12,6 +12,68 @@ import bitsetmodule;
 import graph;
 import protocols;
 
+struct Crossings {
+	Crossing bestCrossing;
+	Result bestResult;
+	double bestSum;
+
+	Graph!32 graph;
+
+	this(ref Graph!32 graph) {
+		this.graph = graph;
+		this.bestSum = 0.0;
+	}
+
+	static double sumResult(ref Result curRslt, const double writeBalance = 0.5) {
+		import utils : sum;
+
+		return sum(curRslt.writeAvail)  * writeBalance + 
+			sum(curRslt.readAvail) * 1.0 - writeBalance;
+	}
+
+	Result calcAC() {
+		import std.algorithm.mutation : bringToFront;
+		Array!int border = this.graph.computeBorder();
+		Array!int uniqueBorder;
+		makeArrayUnique(border, uniqueBorder);
+		bringToFront(uniqueBorder[0 .. 1], uniqueBorder[1 .. $]);
+
+		for(int i = 0; i < uniqueBorder.length; ++i) {
+			logf("[%(%s, %)]", uniqueBorder[]);
+			if(i == 0) {
+				this.bestCrossing = Crossing(this.graph);
+				this.bestResult = this.bestCrossing.calcAC(uniqueBorder);
+				this.bestSum = sumResult(this.bestResult);
+				logf("%f", this.bestSum);
+			} else {
+				auto tmp = Crossing(this.graph);
+				auto tmpRslt = tmp.calcAC(uniqueBorder);
+				double tmpSum = sumResult(tmpRslt);
+
+				logf("%f %f", this.bestSum, tmpSum);
+
+				if(tmpSum > this.bestSum) {
+					this.bestCrossing = tmp;
+					this.bestResult = tmpRslt;
+					this.bestSum = tmpSum;
+				}
+			}
+			bringToFront(uniqueBorder[0 .. 1], uniqueBorder[1 .. $]);
+		}
+
+		return this.bestResult;
+	}
+
+	string name() const pure {
+		import std.format : format;
+		return format("Crossings-%s", this.graph.length);
+	}
+
+	auto ref getGraph() {
+		return this.graph;
+	}
+}
+
 struct Crossing {
 	import core.bitop : popcnt;
 	import bitsetrbtree;
@@ -32,16 +94,6 @@ struct Crossing {
 
 	this(ref Graph!32 graph) {
 		this.graph = graph;
-	}
-
-	static void makeArrayUnique(ref Array!int notUnique, ref Array!int unique) {
-		Bitset!uint set;
-		foreach(it; notUnique) {
-			if(!set.test(it)) {
-				unique.insertBack(it);
-				set.set(it);
-			}
-		}
 	}
 
 	static void calcDiagonalPairs(ref Array!int bottom, ref Array!int top,
@@ -78,23 +130,18 @@ struct Crossing {
 		}
 	}
 
-	void splitBorderIntoTBLR(ref Array!int bottom, ref Array!int top,
-		ref Array!int left, ref Array!int right, 
+	void splitBorderIntoTBLR(ref Array!int uniqueBorder, ref Array!int bottom, 
+		ref Array!int top, ref Array!int left, ref Array!int right, 
 		ref Array!(int[2]) diagonalPairs)
 	{
 		import std.algorithm.iteration : sum;
 		import std.math;
-		Array!int border = this.graph.computeBorder();
-		auto borderSet = bitset!uint(border);
-
 		Array!(int)*[4] store;
 		store[0] = &left;
 		store[1] = &top;
 		store[2] = &right;
 		store[3] = &bottom;
 
-		Array!int uniqueBorder;
-		makeArrayUnique(border, uniqueBorder);
 		const len = uniqueBorder.length + 4;
 		//logf("[%(%s, %)] len(%s) %s", uniqueBorder[], len, len / 4.0);
 
@@ -120,22 +167,17 @@ struct Crossing {
 		}
 
 		calcDiagonalPairs(bottom, top, left, right, diagonalPairs);
-		//logf("lft [%(%s %)] tp [%(%s %)] rght[%(%s %)] btm [%(%s %)] dia [%(%s, %)]",
-		//	left[], top[], right[], bottom[], diagonalPairs[]
-		//);
+		logf("lft [%(%s %)] tp [%(%s %)] rght[%(%s %)] btm [%(%s %)] dia [%(%s, %)]",
+			left[], top[], right[], bottom[], diagonalPairs[]
+		);
 	}
 
-	Result calcAC() {
+	Result calcAC(ref Array!int uniqueBorder) {
 		import std.conv : to;
 		import protocols.pathbased;
 
-		//Array!int bottom;
-		//Array!int top;
-		//Array!int left;
-		//Array!int right;
-		//Array!(int[2]) diagonalPairs;
-		this.splitBorderIntoTBLR(this.bottom, this.top, this.left, this.right,
-				this.diagonalPairs);
+		this.splitBorderIntoTBLR(uniqueBorder, this.bottom, this.top, this.left, 
+				this.right, this.diagonalPairs);
 
 		auto paths = floyd!32(this.graph);
 
@@ -159,6 +201,13 @@ struct Crossing {
 		return ret;
 	}
 
+	Result calcAC() {
+		Array!int border = this.graph.computeBorder();
+		Array!int uniqueBorder;
+		makeArrayUnique(border, uniqueBorder);
+		return this.calcAC(uniqueBorder);
+	}
+
 	string name() const pure {
 		import std.format : format;
 		return format("Crossing-%s", this.graph.length);
@@ -166,6 +215,16 @@ struct Crossing {
 
 	auto ref getGraph() {
 		return this.graph;
+	}
+}
+
+void makeArrayUnique(ref Array!int notUnique, ref Array!int unique) {
+	Bitset!uint set;
+	foreach(it; notUnique) {
+		if(!set.test(it)) {
+			unique.insertBack(it);
+			set.set(it);
+		}
 	}
 }
 
@@ -178,6 +237,18 @@ unittest {
 	Array!int left;
 	Array!int right;
 	Array!(int[2]) diagonal;
+	auto border = g.computeBorder();
 
-	c.splitBorderIntoTBLR(bottom, top, left, right, diagonal);
+	c.splitBorderIntoTBLR(border, bottom, top, left, right, 
+			diagonal
+	);
+}
+
+unittest {
+	import std.algorithm.mutation : bringToFront;
+	import exceptionhandling;
+
+	auto arr = Array!int([0,1,2,3]);
+	bringToFront(arr[0 .. 1], arr[1 .. $]);
+	assertEqual(arr[], [1,2,3,0]);
 }
