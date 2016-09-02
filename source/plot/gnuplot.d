@@ -59,24 +59,24 @@ void createDataFiles(string prefix, ResultPlot[] results ...) {
 	import std.range;
 	import std.conv : to;
 
-	auto datafileAvail = File(prefix ~ dataFilenameAvail, "w");
-	auto ltwAvail = datafileAvail.lockingTextWriter();
+	foreach(rslt; results) {
+		auto datafileAvail = File(prefix ~ rslt.name ~ dataFilenameAvail, "w");
+		auto ltwAvail = datafileAvail.lockingTextWriter();
 
-	auto datafileCost = File(prefix ~ dataFilenameCost, "w");
-	auto ltwCost = datafileCost.lockingTextWriter();
+		auto datafileCost = File(prefix ~ rslt.name ~ dataFilenameCost, "w");
+		auto ltwCost = datafileCost.lockingTextWriter();
 
-	for(size_t i = 0; i < 101; ++i) {
-		formattedWrite(ltwAvail, "%.5f ", i/100.0);
-		formattedWrite(ltwCost, "%.5f ", i/100.0);
-		foreach(rslt; results) {
+		for(size_t i = 0; i < 101; ++i) {
+			formattedWrite(ltwAvail, "%.5f ", i/100.0);
+			formattedWrite(ltwCost, "%.5f ", i/100.0);
 			formattedWrite(ltwAvail, "%.15f ", rslt.result.readAvail[i]);
 			formattedWrite(ltwAvail, "%.15f ", rslt.result.writeAvail[i]);
 
 			formattedWrite(ltwCost, "%.15f ", rslt.result.readCosts[i]);
 			formattedWrite(ltwCost, "%.15f ", rslt.result.writeCosts[i]);
+			formattedWrite(ltwAvail, "\n");
+			formattedWrite(ltwCost, "\n");
 		}
-		formattedWrite(ltwAvail, "\n");
-		formattedWrite(ltwCost, "\n");
 	}
 }
 
@@ -120,10 +120,10 @@ plot `, xmin / 100.0, prefix ~ to!string(xmin) ~ rsltFN, ylabel);
 			app.put(", ");
 		}
 		first = false;
-		formattedWrite(app, "\"%s%s\" using 1:%s lw 4 ps 0.4 title \"%s R\", ",
-				prefix, dataFN, idx++, result.name);
-		formattedWrite(app, "\"%s%s\" using 1:%s lw 4 ps 0.4 title \"%s W\"",
-				prefix, dataFN, idx++, result.name);
+		formattedWrite(app, "\"%s%s%s\" using 1:%s lw 4 ps 0.4 title \"%s R\", ",
+				prefix, result.name, dataFN, idx++, result.name);
+		formattedWrite(app, "\"%s%s%s\" using 1:%s lw 4 ps 0.4 title \"%s W\"",
+				prefix, result.name, dataFN, idx++, result.name);
 	}
 	app.put(";");
 
