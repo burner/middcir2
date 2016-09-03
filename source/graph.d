@@ -5,6 +5,7 @@ import std.traits : isIntegral;
 import std.experimental.logger;
 import gfm.math.vector;
 import math;
+import exceptionhandling;
 
 void populate(A,V)(ref A arr, size_t size, V defaultValue) {
 	arr.reserve(size);
@@ -54,7 +55,7 @@ struct Graph(int Size) {
 	}
 
 	void setNodePos(size_t nodeId, vec3d newPos) {
-		assert(nodeId < this.numNodes);
+		assertLess(nodeId, cast(size_t)this.numNodes);
 		while(this.nodePositions.length < this.numNodes) {
 			this.nodePositions.insertBack(vec3d(0.0, 0.0, 0.0));
 		}
