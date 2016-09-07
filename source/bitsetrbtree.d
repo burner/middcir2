@@ -272,6 +272,10 @@ struct BitsetArrayArray(T) {
 		return this.array[];
 	}
 
+	auto opSlice(const ulong low, const ulong high) const {
+		return this.array[low .. high];
+	}
+
 	@property size_t length() const {
 		return this.array.length;
 	}

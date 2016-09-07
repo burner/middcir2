@@ -17,6 +17,11 @@ import plot.gnuplot;
 import plot;
 import utils;
 
+struct MappingParameter {
+	const double row;
+	const double quorumTestFraction;
+}
+
 /** Mapping will be passed a BitsetStore. It will take this BitsetStore and
 for each element it will try to reconnect the element for every permutation.
 */
@@ -30,19 +35,22 @@ class Mapping(int SizeLnt, int SizePnt) {
 	BitsetStore!uint read;
 	BitsetStore!uint write;
 
+	const double quorumTestFraction;
+
 	/** 
 	params:
 		readWriteBalance = A value between 0.0 and 1.0. The high the value the
 			more reading will be favored during the mapping comparison.
 	*/
 	this(ref const Graph!SizeLnt lnt, ref const Graph!SizePnt pnt, 
-			int[] mapping) 
+			int[] mapping, double quorumTestFraction = 1.0) 
 	{
 		this.lnt = &lnt;
 		this.pnt = &pnt;
 		this.mapping = mapping.dup;
 		this.upTo = to!uint(this.lnt.length);
 		this.floyd.init(*this.pnt);
+		this.quorumTestFraction = quorumTestFraction;
 	}
 
 	void reconnectQuorum(ref const(Bitset!uint) quorum, 
@@ -72,13 +80,26 @@ class Mapping(int SizeLnt, int SizePnt) {
 			ref BitsetStore!uint rsltQuorumSetB)
 	{
 		import core.bitop : popcnt;
+		import std.algorithm.comparison : min, max;
+		import std.math : lround;
 		import permutation;
 		auto permu = Permutations(upTo);
+		const size_t quorumSetALen = min(quorumSetA.length, 
+				max(1, lround(quorumSetA.length * this.quorumTestFraction))
+		);
+		const size_t quorumSetBLen = min(quorumSetB.length, 
+				max(1, lround(quorumSetB.length * this.quorumTestFraction))
+		);
+		logf(false, "%5.6f %s <= %s || %s <= %s", 
+				this.quorumTestFraction,
+				quorumSetALen, quorumSetA.length, 
+				quorumSetBLen, quorumSetB.length
+		);
 		foreach(perm; permu) {
 			int numBitsInPerm = popcnt(perm.store);
 			floyd.execute(*this.pnt, perm);
 
-			foreach(const ref it; quorumSetA[]) {
+			foreach(const ref it; quorumSetA[0UL .. quorumSetALen]) {
 				if(numBitsInPerm >= popcnt(it.bitset.store)) {
 					this.reconnectQuorum(it.bitset, rsltQuorumSetA, perm);
 					foreach(sub; it.subsets[]) {
@@ -87,7 +108,7 @@ class Mapping(int SizeLnt, int SizePnt) {
 				}
 			}
 
-			foreach(const ref it; quorumSetB[]) {
+			foreach(const ref it; quorumSetB[0UL .. quorumSetBLen]) {
 				if(numBitsInPerm >= popcnt(it.bitset.store)) {
 					this.reconnectQuorum(it.bitset, rsltQuorumSetB, perm);
 					foreach(sub; it.subsets[]) {
@@ -140,14 +161,17 @@ struct Mappings(int SizeLnt, int SizePnt) {
 	const(Graph!SizeLnt)* lnt;	
 	const(Graph!SizePnt)* pnt;	
 
+	const double quorumTestFraction;
+
 	this(ref Graph!SizeLnt lnt, ref Graph!SizePnt pnt, 
-			double readWriteBalance = 0.5) 
+			double quorumTestFraction = 1.0, double readWriteBalance = 0.5) 
 	{
 		this.lnt = &lnt;
 		this.pnt = &pnt;
 		this.bestAvail = 0.0;
 		this.readBalance = readWriteBalance;
 		this.writeBalance = 1.0 - readWriteBalance;
+		this.quorumTestFraction = quorumTestFraction;
 	}
 
 	Result calcAC(const ref BitsetStore!uint oRead, 
@@ -160,14 +184,19 @@ struct Mappings(int SizeLnt, int SizePnt) {
 		import math;
 		int[] permutation = to!(int[])(iota(0, (*lnt).length).array);
 
-		auto numPerm = factorial(permutation.length);
+		ulong numPerm = factorial(permutation.length);
+		ulong numPermPercent = numPerm / 100;
 
 		size_t cnt = 0;
 		do {
-			writefln("%(%2d, %) %7d of %7d %6.2f%%", permutation,
-				cnt, numPerm, (cast(double)cnt/numPerm) * 100.0);
+			//if(cnt != 0 && cnt % numPermPercent == 0) {
+				writefln("%(%2d, %) %7d of %7d %6.2f%%", permutation,
+					cnt, numPerm, (cast(double)cnt/numPerm) * 100.0);
+			//}
 			++cnt;
-			auto cur = new Mapping!(SizeLnt,SizePnt)(*lnt, *pnt, permutation);
+			auto cur = new Mapping!(SizeLnt,SizePnt)(*lnt, *pnt, permutation,
+					this.quorumTestFraction
+			);
 			Result curRslt = cur.calcAC(oRead, oWrite);
 			double sumRslt = 
 				sum(curRslt.writeAvail)  * this.writeBalance + 
@@ -182,10 +211,7 @@ struct Mappings(int SizeLnt, int SizePnt) {
 				this.bestAvail = sumRslt;
 				this.bestResult = curRslt;
 			}
-			if(stopAfterFirst) {
-				break;
-			}
-		} while(nextPermutation(permutation));
+		} while(nextPermutation(permutation) && !stopAfterFirst);
 
 		return this.bestResult;
 	}

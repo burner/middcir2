@@ -5,7 +5,9 @@ import std.range : lockstep;
 import std.format : format;
 import std.algorithm : permutations, Permutations;
 import std.experimental.logger;
+import std.datetime : StopWatch;
 
+import protocols;
 import protocols.mcs;
 import protocols.grid;
 import protocols.lattice;
@@ -63,7 +65,7 @@ void latticeMapped() {
 	auto crossing = Crossing(pnt);
 	auto crossingRslt = crossing.calcAC();
 	
-	auto map = Mappings!(32,32)(lattice.graph, pnt);
+	auto map = Mappings!(32,32)(lattice.graph, pnt, 1.0, 0.5);
 	auto mapRslt = map.calcAC(lattice.read, lattice.write);
 	logf("Mapping done");
 
@@ -79,7 +81,7 @@ void latticeMapped2() {
 	auto latticeRslt = lattice.calcAC();
 	auto pnt = makeSix!16();
 
-	auto map = Mappings!(32,16)(lattice.graph, pnt, 0.5);
+	auto map = Mappings!(32,16)(lattice.graph, pnt, 1.0, 0.5);
 	auto mapRslt = map.calcAC(lattice.read, lattice.write);
 
 	mappingPlot("Results/Lattice2x3Mapped", map,
@@ -156,7 +158,7 @@ void mcsMapped() {
 	auto mcsRslt = mcs.calcAC();
 	auto pnt = makeSix!16();
 
-	auto map = Mappings!(32,16)(mcs.graph, pnt, 0.5);
+	auto map = Mappings!(32,16)(mcs.graph, pnt, 1.0, 0.5);
 	auto mapRslt = map.calcAC(mcs.read, mcs.write);
 
 	mappingPlot("Results/MCS6_Mapped", map,
@@ -170,7 +172,7 @@ void gridMapped() {
 	auto gridRslt = grid.calcAC();
 	auto pnt = makeSix!16();
 
-	auto map = Mappings!(32,16)(grid.graph, pnt, 0.5);
+	auto map = Mappings!(32,16)(grid.graph, pnt, 1.0, 0.5);
 	auto mapRslt = map.calcAC(grid.read, grid.write);
 
 	mappingPlot("Results/Grid2x3_Mapped", map,
@@ -179,18 +181,42 @@ void gridMapped() {
 	);
 }
 
+void latticeMapped9quantil() {
+	auto pnt = makeNine!32();
+
+	//const quantils = [1.0, 0.7, 0.5, 0.2, 0.1, 0.01];
+	//const quantils = [0.1, 0.2, 0.5, 1.0];
+	const quantils = [0.1];
+	long[quantils.length] td;
+
+	foreach(idx, f; quantils) {
+		StopWatch sw;
+		sw.start();
+		auto rp = resultProtocol(
+			Lattice(3,3), 
+			MappingParameter(f, 0.5),
+			pnt
+		);
+		sw.stop();
+		td[idx] = sw.peek().msecs;
+	}
+
+	writefln("\n%(%5d\n %)", td);
+}
+
 void main() {
 	//lattice(4,4);
 	//gridAgainstGrid(4,4);
 	//MCSAgainstMCS(15);
 	//latticeMapped();
 	//latticeMapped2();
-	latticeMCSMapped6();
+	//latticeMCSMapped6();
 	//latticeMCSMapped9();
-	latticeMCSMappedCrossing6();
+	//latticeMCSMappedCrossing6();
 	//latticeMCSMappedCrossing9();
 	//latticeMapped2();
-	mcsMapped();
-	gridMapped();
-	crossings9();
+	//mcsMapped();
+	//gridMapped();
+	//crossings9();
+	latticeMapped9quantil();
 }
