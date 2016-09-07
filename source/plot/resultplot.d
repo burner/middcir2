@@ -110,8 +110,9 @@ void resultNTPlot(RPs...)(string path, ref RPs resultProtocols) {
 
 	foreach(idx, resultProtocol; resultProtocols) {
 		string unmappedName = resultProtocol.protocol.name();
-
 		string mappedName = genFolderPrefix(resultProtocol);
+		string nuName = unmappedName ~ mappedName;
+
 		lntResultPlots[idx] = printLNTResults(
 				mainFile.lockingTextWriter(), resultProtocol
 			);
@@ -120,7 +121,9 @@ void resultNTPlot(RPs...)(string path, ref RPs resultProtocols) {
 				mainFile.lockingTextWriter(), resultProtocol
 			);
 
-		mainFile.writefln("\\section{%s}\n", genFolderPrefix(resultProtocol));
+		gnuPlot(nuName, "", lntResultPlots[idx], pntResultPlots[idx]);
+
+		mainFile.writefln("\\section{%s}\n", unmappedName);
 		auto lntFile = File(unmappedName ~ "/lnt.tex", "w");
 		resultProtocol.protocol.graph.toTikz(lntFile.lockingTextWriter());
 		mainFile.writefln(
@@ -181,6 +184,29 @@ void resultNTPlot(RPs...)(string path, ref RPs resultProtocols) {
 	\caption{The Read and Write Costs of %1$s mapped.}
 \end{figure}
 `, mappedName);
+
+		mainFile.writefln(
+`\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\linewidth]{%1$s/1resultavail.pdf}
+	\caption{The Read and Write Availability of %1$s mapped.}
+\end{figure}
+`, nuName);
+
+		mainFile.writefln(
+`\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\linewidth]{%1$s/80resultavail.pdf}
+	\caption{The Read and Write Availability of %1$s mapped.}
+\end{figure}
+`, nuName);
+		mainFile.writefln(
+`\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\linewidth]{%1$s/1resultcost.pdf}
+	\caption{The Read and Write Costs of %1$s mapped.}
+\end{figure}
+`, nuName);
 	}
 
 	mainFile.writeln("\\section{LNT Comparision}\n");
