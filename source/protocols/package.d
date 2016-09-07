@@ -7,6 +7,8 @@ import bitsetrbtree;
 import mapping;
 import graph;
 
+import protocols.crossing;
+
 struct Result {
 	double[101] readAvail;
 	double[101] writeAvail;
@@ -53,15 +55,17 @@ struct ResultProtocol(P) {
 		this.lntResult = this.protocol.calcAC();
 
 		this.mappings = Mappings!(32,32)(this.protocol.graph, this.pnt,
-				this.mappingParameter.row,
-				this.mappingParameter.quorumTestFraction
+				this.mappingParameter.quorumTestFraction,
+				this.mappingParameter.row
 		);
 
 		// As MCS is using a totally connected LNT we only have to look at
 		// one mapping
 		const bool isMCS = is(typeof(p) == MCS);
 
-		static if(!is(typeof(p) == Crossings)) {
+		static if(is(typeof(proto) == Crossings)) {
+			this.pntResult = this.lntResult;
+		} else {
 			this.pntResult = this.mappings.calcAC(
 					this.protocol.read,
 					this.protocol.write,

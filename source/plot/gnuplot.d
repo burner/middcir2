@@ -114,8 +114,8 @@ set tics scale 0.75
 plot `, xmin / 100.0, prefix ~ to!string(xmin) ~ rsltFN, ylabel);
 
 	bool first = true;
-	size_t idx = 2;
 	foreach(result; results) {
+		size_t idx = 2;
 		if(!first) {
 			app.put(", ");
 		}

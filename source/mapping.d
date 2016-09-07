@@ -187,12 +187,13 @@ struct Mappings(int SizeLnt, int SizePnt) {
 		ulong numPerm = factorial(permutation.length);
 		ulong numPermPercent = numPerm / 100;
 
+		writefln("Start %.10f", this.quorumTestFraction);
 		size_t cnt = 0;
 		do {
-			//if(cnt != 0 && cnt % numPermPercent == 0) {
+			/*if(cnt != 0 && cnt % numPermPercent == 0) {
 				writefln("%(%2d, %) %7d of %7d %6.2f%%", permutation,
 					cnt, numPerm, (cast(double)cnt/numPerm) * 100.0);
-			//}
+			}*/
 			++cnt;
 			auto cur = new Mapping!(SizeLnt,SizePnt)(*lnt, *pnt, permutation,
 					this.quorumTestFraction
@@ -203,6 +204,7 @@ struct Mappings(int SizeLnt, int SizePnt) {
 				sum(curRslt.readAvail) * this.readBalance;
 
 			if(sumRslt > this.bestAvail) {
+				writefln("%(%s, %) %.10f", permutation, sumRslt);
 				if(this.bestMapping !is null) {
 					destroy(this.bestMapping);
 				}
@@ -212,6 +214,21 @@ struct Mappings(int SizeLnt, int SizePnt) {
 				this.bestResult = curRslt;
 			}
 		} while(nextPermutation(permutation) && !stopAfterFirst);
+
+		if(this.quorumTestFraction < 1.0) {
+			int[] mapCp = this.bestMapping.mapping.dup;
+			if(this.bestMapping !is null) {
+				destroy(this.bestMapping);
+			}
+			this.bestMapping = new Mapping!(SizeLnt,SizePnt)(*lnt, *pnt, mapCp,
+					1.0
+			);
+			this.bestResult = this.bestMapping.calcAC(oRead, oWrite);
+			this.bestAvail = 
+					sum(this.bestResult.writeAvail)  * this.writeBalance + 
+					sum(this.bestResult.readAvail) * this.readBalance;
+			writefln("%(%s, %) %.10f Final", mapCp, this.bestAvail);
+		}
 
 		return this.bestResult;
 	}

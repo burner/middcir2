@@ -182,24 +182,35 @@ void gridMapped() {
 }
 
 void latticeMapped9quantil() {
-	auto pnt = makeNine!32();
+	import plot.resultplot;
+
+	auto pnt = makeSix!32();
 
 	//const quantils = [1.0, 0.7, 0.5, 0.2, 0.1, 0.01];
 	//const quantils = [0.1, 0.2, 0.5, 1.0];
-	const quantils = [0.1];
+	const quantils = [0.1, 1.0];
 	long[quantils.length] td;
 
-	foreach(idx, f; quantils) {
-		StopWatch sw;
-		sw.start();
-		auto rp = resultProtocol(
-			Lattice(3,3), 
-			MappingParameter(f, 0.5),
-			pnt
-		);
-		sw.stop();
-		td[idx] = sw.peek().msecs;
-	}
+	StopWatch sw;
+	sw.start();
+	auto rp = resultProtocol(
+		Lattice(3,2), 
+		MappingParameter(0.5, 0.2),
+		pnt
+	);
+	sw.stop();
+	td[0] = sw.peek().msecs;
+
+	sw.start();
+	auto rp2 = resultProtocol(
+		Lattice(3,2), 
+		MappingParameter(0.5, 1.0),
+		pnt
+	);
+	sw.stop();
+	td[1] = sw.peek().msecs;
+	
+	resultNTPlot("Results/LatticeQuantil", rp, rp2);
 
 	writefln("\n%(%5d\n %)", td);
 }
