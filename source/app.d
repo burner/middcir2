@@ -187,7 +187,7 @@ void latticeMapped9quantil() {
 
 	auto pnt = makeSix!32();
 
-	const quantils = [0.1, 0.2, 0.5, 0.7, 0.9, 1.0];
+	const quantils = [0.01, 0.1, 0.2, 0.5, 0.7, 0.9, 1.0];
 	long[quantils.length] td;
 
 	Unique!(ResultProtocol!(Lattice))[quantils.length] rps;
