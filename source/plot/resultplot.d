@@ -33,6 +33,7 @@ string topString =
 	}
 
 \begin{document}
+\tableofcontents
 \section{Physical Network Topology}
 \begin{figure}[H]
 	\centering
@@ -82,6 +83,22 @@ ResultPlot printPNTResults(LTW, RP)(LTW ltw, ref RP resultProtocol) {
 	return ret;
 }
 
+ref auto Delay(alias arg, size_t idx)() { return *arg[idx].opDot(); }
+
+template expand(alias args, size_t idx = 0) {
+	import std.meta : AliasSeq;
+    alias Args = typeof(args);
+
+    static if (is(Args : C[N], C, size_t N)) {
+        static if (idx < (N - 1)) {
+            alias expand = AliasSeq!(Delay!(args, idx),
+                                      expand!(args, idx + 1));
+		} else {
+            alias expand = Delay!(args, N - 1);
+		}
+    }
+}
+
 /** We assume that all RPs have the same pnt.
 */
 void resultNTPlot(RPs...)(string path, ref RPs resultProtocols) {
@@ -123,7 +140,7 @@ void resultNTPlot(RPs...)(string path, ref RPs resultProtocols) {
 
 		gnuPlot(nuName, "", lntResultPlots[idx], pntResultPlots[idx]);
 
-		mainFile.writefln("\\section{%s}\n", unmappedName);
+		mainFile.writefln("\\section{%s}\n", mappedName);
 		auto lntFile = File(unmappedName ~ "/lnt.tex", "w");
 		resultProtocol.protocol.graph.toTikz(lntFile.lockingTextWriter());
 		mainFile.writefln(
@@ -135,7 +152,6 @@ void resultNTPlot(RPs...)(string path, ref RPs resultProtocols) {
 `, unmappedName);
 
 		static if(!is(typeof(resultProtocol.protocol) == Crossings)) {
-			log();
 			writeMapping("", mainFile, resultProtocol.mappings);
 		}
 		mainFile.writefln("\\subsection{Executed on its LNT}\n");
@@ -226,6 +242,14 @@ void resultNTPlot(RPs...)(string path, ref RPs resultProtocols) {
 
 	mainFile.writeln("\\section{PNT Comparision}\n");
 	gnuPlot("PNTComparision", "", pntResultPlots);
+	foreach(idx, resultProtocol; resultProtocols) {
+		static if(!is(typeof(resultProtocol.protocol) == Crossings)) {
+			string mappedName = genFolderPrefix(resultProtocol);
+			mainFile.writefln("%s\\\\", mappedName);
+			writeMapping("", mainFile, resultProtocol.mappings);
+			mainFile.writefln("\\\\");
+		}
+	}
 
 	mainFile.writefln(
 `\begin{figure}[H]

@@ -65,7 +65,7 @@ void latticeMapped() {
 	auto crossing = Crossing(pnt);
 	auto crossingRslt = crossing.calcAC();
 	
-	auto map = Mappings!(32,32)(lattice.graph, pnt, 1.0, ROW(0.5));
+	auto map = Mappings!(32,32)(lattice.graph, pnt, QTF(1.0), ROW(0.5));
 	auto mapRslt = map.calcAC(lattice.read, lattice.write);
 	logf("Mapping done");
 
@@ -81,7 +81,7 @@ void latticeMapped2() {
 	auto latticeRslt = lattice.calcAC();
 	auto pnt = makeSix!16();
 
-	auto map = Mappings!(32,16)(lattice.graph, pnt, 1.0, ROW(0.5));
+	auto map = Mappings!(32,16)(lattice.graph, pnt, QTF(1.0), ROW(0.5));
 	auto mapRslt = map.calcAC(lattice.read, lattice.write);
 
 	mappingPlot("Results/Lattice2x3Mapped", map,
@@ -158,7 +158,7 @@ void mcsMapped() {
 	auto mcsRslt = mcs.calcAC();
 	auto pnt = makeSix!16();
 
-	auto map = Mappings!(32,16)(mcs.graph, pnt, 1.0, ROW(0.5));
+	auto map = Mappings!(32,16)(mcs.graph, pnt, QTF(1.0), ROW(0.5));
 	auto mapRslt = map.calcAC(mcs.read, mcs.write);
 
 	mappingPlot("Results/MCS6_Mapped", map,
@@ -172,7 +172,7 @@ void gridMapped() {
 	auto gridRslt = grid.calcAC();
 	auto pnt = makeSix!16();
 
-	auto map = Mappings!(32,16)(grid.graph, pnt, 1.0, ROW(0.5));
+	auto map = Mappings!(32,16)(grid.graph, pnt, QTF(1.0), ROW(0.5));
 	auto mapRslt = map.calcAC(grid.read, grid.write);
 
 	mappingPlot("Results/Grid2x3_Mapped", map,
@@ -183,36 +183,31 @@ void gridMapped() {
 
 void latticeMapped9quantil() {
 	import plot.resultplot;
+	import std.typecons : Unique;
 
 	auto pnt = makeSix!32();
 
-	//const quantils = [1.0, 0.7, 0.5, 0.2, 0.1, 0.01];
-	//const quantils = [0.1, 0.2, 0.5, 1.0];
-	const quantils = [0.1, 1.0];
+	const quantils = [0.1, 0.2, 0.5, 0.7, 0.9, 1.0];
 	long[quantils.length] td;
 
-	StopWatch sw;
-	sw.start();
-	auto rp = resultProtocol(
-		Lattice(3,2), 
-		MappingParameter(ROW(0.5), 0.2),
-		pnt
-	);
-	sw.stop();
-	td[0] = sw.peek().msecs;
+	Unique!(ResultProtocol!(Lattice))[quantils.length] rps;
 
-	sw.start();
-	auto rp2 = resultProtocol(
-		Lattice(3,2), 
-		MappingParameter(ROW(0.5), 1.0),
-		pnt
-	);
-	sw.stop();
-	td[1] = sw.peek().msecs;
-	
-	resultNTPlot("Results/LatticeQuantil", rp, rp2);
+	foreach(idx, qtf; quantils) {
+		StopWatch sw;
+		sw.start();
 
-	writefln("\n%(%5d\n %)", td);
+		rps[idx] = resultProtocolUnique(
+				Lattice(3,2), 
+				MappingParameter(ROW(0.5), QTF(qtf)),
+				pnt
+			);
+
+		td[idx] = sw.peek().msecs;
+	}
+	//resultNTPlot("Results/LatticeQuantil", *rps[0].opDot(), *rps[1].opDot());
+	resultNTPlot("Results/LatticeQuantil", expand!rps);
+
+	writefln("\n%(%5d\n%)", td);
 }
 
 void main() {

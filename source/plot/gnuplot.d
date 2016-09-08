@@ -108,7 +108,7 @@ set border 3 back lc rgb "black"
 set key left top
 set style data linespoints
 #set key at 50,112
-set xlabel 'Node Avaiability'
+set xlabel 'Node Availability'
 set ylabel '%s' offset 1,0
 set tics scale 0.75
 plot `, xmin / 100.0, prefix ~ to!string(xmin) ~ rsltFN, ylabel);

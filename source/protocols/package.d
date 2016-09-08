@@ -81,6 +81,13 @@ ResultProtocol!P resultProtocol(P)(P proto, const(MappingParameter) mp,
 	return ResultProtocol!P(proto, mp, pnt);
 }
 
+auto resultProtocolUnique(P)(P proto, const(MappingParameter) mp,
+		Graph!32 pnt)
+{
+	import std.typecons : Unique;
+	return Unique!(ResultProtocol!P)(new ResultProtocol!P(proto, mp, pnt));
+}
+
 private void calcAvailForTreeImpl(const int numNodes,
 		ref BitsetStore!uint tree, ref double[101] avail,
 	   	ref double[101] costs)

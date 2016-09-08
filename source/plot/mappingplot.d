@@ -163,7 +163,7 @@ void mappingPlot2(Graph,P...)(string path, auto ref Graph pnt, auto ref P ps) {
 				p.name(), p.name(), p.name());
 		formattedWrite(ltw, "\\clearpage\n");
 
-		mappings ~= Mappings!(32,32)(p.getGraph(), pnt, 1.0, ROW(0.5));
+		mappings ~= Mappings!(32,32)(p.getGraph(), pnt, QTF(1.0), ROW(0.5));
 		static if(is(typeof(p) == Crossing)) {
 			// HACK to not make it segfault we create a dummy best mapping for
 			// the crossing protocol, as it does not require a mapping
@@ -217,6 +217,7 @@ string topString2 =
 \usepackage{standalone}
 \usepackage{float}
 \usepackage{subcaption}
+\usepackage{hyperref}
 \usepackage[cm]{fullpage}
 \usepackage{tikz}
 \usepackage{pgfplots}
@@ -231,6 +232,7 @@ string topString2 =
 	}
 
 \begin{document}
+\tableofcontents
 \section{Physical Network Topology}
 \begin{figure}[H]
 	\centering

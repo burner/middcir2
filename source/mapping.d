@@ -20,10 +20,23 @@ import utils;
 import units;
 
 alias ROW = Quantity!(double, "ReadOverWrite", 0.0, 1.0);
+alias QTF = Quantity!(double, "QuorumTestFraction", 0.0, 1.0);
 
 struct MappingParameter {
-	const ROW row;
-	const double quorumTestFraction;
+	const(ROW) row;
+	const(QTF) quorumTestFraction;
+
+	this(ROW row, QTF qtf) {
+		this.row = row;
+		this.quorumTestFraction = qtf;
+	}
+}
+
+unittest {
+	MappingParameter a;
+	MappingParameter b;
+
+	static assert(!__traits(compiles, a = b));
 }
 
 /** Mapping will be passed a BitsetStore. It will take this BitsetStore and
@@ -39,7 +52,7 @@ class Mapping(int SizeLnt, int SizePnt) {
 	BitsetStore!uint read;
 	BitsetStore!uint write;
 
-	const double quorumTestFraction;
+	const(QTF) quorumTestFraction;
 
 	/** 
 	params:
@@ -47,7 +60,7 @@ class Mapping(int SizeLnt, int SizePnt) {
 			more reading will be favored during the mapping comparison.
 	*/
 	this(ref const Graph!SizeLnt lnt, ref const Graph!SizePnt pnt, 
-			int[] mapping, double quorumTestFraction = 1.0) 
+			int[] mapping, QTF quorumTestFraction = QTF(1.0)) 
 	{
 		this.lnt = &lnt;
 		this.pnt = &pnt;
@@ -89,10 +102,10 @@ class Mapping(int SizeLnt, int SizePnt) {
 		import permutation;
 		auto permu = Permutations(upTo);
 		const size_t quorumSetALen = min(quorumSetA.length, 
-				max(1, lround(quorumSetA.length * this.quorumTestFraction))
+				max(1, lround(quorumSetA.length * this.quorumTestFraction.value))
 		);
 		const size_t quorumSetBLen = min(quorumSetB.length, 
-				max(1, lround(quorumSetB.length * this.quorumTestFraction))
+				max(1, lround(quorumSetB.length * this.quorumTestFraction.value))
 		);
 		logf(false, "%5.6f %s <= %s || %s <= %s", 
 				this.quorumTestFraction,
@@ -165,10 +178,10 @@ struct Mappings(int SizeLnt, int SizePnt) {
 	const(Graph!SizeLnt)* lnt;	
 	const(Graph!SizePnt)* pnt;	
 
-	const double quorumTestFraction;
+	const QTF quorumTestFraction;
 
 	this(ref Graph!SizeLnt lnt, ref Graph!SizePnt pnt, 
-			double quorumTestFraction = 1.0, ROW readWriteBalance = ROW(0.5)) 
+			QTF quorumTestFraction = QTF(1.0), ROW readWriteBalance = ROW(0.5)) 
 	{
 		this.lnt = &lnt;
 		this.pnt = &pnt;
@@ -219,13 +232,13 @@ struct Mappings(int SizeLnt, int SizePnt) {
 			}
 		} while(nextPermutation(permutation) && !stopAfterFirst);
 
-		if(this.quorumTestFraction < 1.0) {
+		if(this.quorumTestFraction.value < 1.0) {
 			int[] mapCp = this.bestMapping.mapping.dup;
 			if(this.bestMapping !is null) {
 				destroy(this.bestMapping);
 			}
 			this.bestMapping = new Mapping!(SizeLnt,SizePnt)(*lnt, *pnt, mapCp,
-					1.0
+					QTF(1.0)
 			);
 			this.bestResult = this.bestMapping.calcAC(oRead, oWrite);
 			this.bestAvail = 
