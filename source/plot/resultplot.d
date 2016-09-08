@@ -145,16 +145,14 @@ void resultNTPlot(RPs...)(string path, ref RPs resultProtocols) {
 	\includegraphics[width=0.9\linewidth]{%1$s/1resultavail.pdf}
 	\caption{The Read and Write Availability of %1$s.}
 \end{figure}
-`, unmappedName);
-		mainFile.writefln(
-`\begin{figure}[H]
+
+\begin{figure}[H]
 	\centering
 	\includegraphics[width=0.9\linewidth]{%1$s/80resultavail.pdf}
 	\caption{The Read and Write Availability of %1$s.}
 \end{figure}
-`, unmappedName);
-		mainFile.writefln(
-`\begin{figure}[H]
+
+\begin{figure}[H]
 	\centering
 	\includegraphics[width=0.9\linewidth]{%1$s/1resultcost.pdf}
 	\caption{The Read and Write Costs of %1$s.}
@@ -168,17 +166,14 @@ void resultNTPlot(RPs...)(string path, ref RPs resultProtocols) {
 	\includegraphics[width=0.9\linewidth]{%1$s/1resultavail.pdf}
 	\caption{The Read and Write Availability of %1$s mapped.}
 \end{figure}
-`, mappedName);
 
-		mainFile.writefln(
-`\begin{figure}[H]
+\begin{figure}[H]
 	\centering
 	\includegraphics[width=0.9\linewidth]{%1$s/80resultavail.pdf}
 	\caption{The Read and Write Availability of %1$s mapped.}
 \end{figure}
-`, mappedName);
-		mainFile.writefln(
-`\begin{figure}[H]
+
+\begin{figure}[H]
 	\centering
 	\includegraphics[width=0.9\linewidth]{%1$s/1resultcost.pdf}
 	\caption{The Read and Write Costs of %1$s mapped.}
@@ -191,17 +186,14 @@ void resultNTPlot(RPs...)(string path, ref RPs resultProtocols) {
 	\includegraphics[width=0.9\linewidth]{%1$s/1resultavail.pdf}
 	\caption{The Read and Write Availability of %1$s mapped.}
 \end{figure}
-`, nuName);
 
-		mainFile.writefln(
-`\begin{figure}[H]
+\begin{figure}[H]
 	\centering
 	\includegraphics[width=0.9\linewidth]{%1$s/80resultavail.pdf}
 	\caption{The Read and Write Availability of %1$s mapped.}
 \end{figure}
-`, nuName);
-		mainFile.writefln(
-`\begin{figure}[H]
+
+\begin{figure}[H]
 	\centering
 	\includegraphics[width=0.9\linewidth]{%1$s/1resultcost.pdf}
 	\caption{The Read and Write Costs of %1$s mapped.}
@@ -211,23 +203,21 @@ void resultNTPlot(RPs...)(string path, ref RPs resultProtocols) {
 
 	mainFile.writeln("\\section{LNT Comparision}\n");
 	gnuPlot("LNTComparision", "", lntResultPlots);
+
 	mainFile.writefln(
 `\begin{figure}[H]
 	\centering
 	\includegraphics[width=0.9\linewidth]{LNTComparision/1resultavail.pdf}
 	\caption{The Read and Write Availability of all Quorum Protocols.}
 \end{figure}
-`);
-	mainFile.writefln(
-`\begin{figure}[H]
+
+\begin{figure}[H]
 	\centering
 	\includegraphics[width=0.9\linewidth]{LNTComparision/80resultavail.pdf}
 	\caption{The Read and Write Availability of all Quorum Protocols.}
 \end{figure}
-`);
 
-	mainFile.writefln(
-`\begin{figure}[H]
+\begin{figure}[H]
 	\centering
 	\includegraphics[width=0.9\linewidth]{LNTComparision/1resultcost.pdf}
 	\caption{The Read and Write Costs of all Quorum Protocols.}
@@ -236,23 +226,21 @@ void resultNTPlot(RPs...)(string path, ref RPs resultProtocols) {
 
 	mainFile.writeln("\\section{PNT Comparision}\n");
 	gnuPlot("PNTComparision", "", pntResultPlots);
+
 	mainFile.writefln(
 `\begin{figure}[H]
 	\centering
 	\includegraphics[width=0.9\linewidth]{PNTComparision/1resultavail.pdf}
 	\caption{The Read and Write Availability of all mapped Quorum Protocols.}
 \end{figure}
-`);
-	mainFile.writefln(
-`\begin{figure}[H]
+
+\begin{figure}[H]
 	\centering
 	\includegraphics[width=0.9\linewidth]{PNTComparision/80resultavail.pdf}
 	\caption{The Read and Write Availability of all mapped Quorum Protocols.}
 \end{figure}
-`);
 
-	mainFile.writefln(
-`\begin{figure}[H]
+\begin{figure}[H]
 	\centering
 	\includegraphics[width=0.9\linewidth]{PNTComparision/1resultcost.pdf}
 	\caption{The Read and Write Costs of all mapped Quorum Protocols.}

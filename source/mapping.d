@@ -3,6 +3,7 @@ module mapping;
 import std.conv : to;
 import std.stdio;
 import std.experimental.logger;
+import std.meta;
 
 import gfm.math.vector;
 

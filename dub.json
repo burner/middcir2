@@ -9,6 +9,7 @@
 	"dependencies": {
 		"gfm:math": ">=6.1.1",
 		"bitfiddle": ">=0.0.5",
-		"exceptionhandling": ">=0.0.8"
+		"exceptionhandling": ">=0.0.8",
+		"units-d": "~>0.1.0"
 	}
 }
