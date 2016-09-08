@@ -65,7 +65,7 @@ void latticeMapped() {
 	auto crossing = Crossing(pnt);
 	auto crossingRslt = crossing.calcAC();
 	
-	auto map = Mappings!(32,32)(lattice.graph, pnt, 1.0, 0.5);
+	auto map = Mappings!(32,32)(lattice.graph, pnt, 1.0, ROW(0.5));
 	auto mapRslt = map.calcAC(lattice.read, lattice.write);
 	logf("Mapping done");
 
@@ -81,7 +81,7 @@ void latticeMapped2() {
 	auto latticeRslt = lattice.calcAC();
 	auto pnt = makeSix!16();
 
-	auto map = Mappings!(32,16)(lattice.graph, pnt, 1.0, 0.5);
+	auto map = Mappings!(32,16)(lattice.graph, pnt, 1.0, ROW(0.5));
 	auto mapRslt = map.calcAC(lattice.read, lattice.write);
 
 	mappingPlot("Results/Lattice2x3Mapped", map,
@@ -158,7 +158,7 @@ void mcsMapped() {
 	auto mcsRslt = mcs.calcAC();
 	auto pnt = makeSix!16();
 
-	auto map = Mappings!(32,16)(mcs.graph, pnt, 1.0, 0.5);
+	auto map = Mappings!(32,16)(mcs.graph, pnt, 1.0, ROW(0.5));
 	auto mapRslt = map.calcAC(mcs.read, mcs.write);
 
 	mappingPlot("Results/MCS6_Mapped", map,
@@ -172,7 +172,7 @@ void gridMapped() {
 	auto gridRslt = grid.calcAC();
 	auto pnt = makeSix!16();
 
-	auto map = Mappings!(32,16)(grid.graph, pnt, 1.0, 0.5);
+	auto map = Mappings!(32,16)(grid.graph, pnt, 1.0, ROW(0.5));
 	auto mapRslt = map.calcAC(grid.read, grid.write);
 
 	mappingPlot("Results/Grid2x3_Mapped", map,
@@ -195,7 +195,7 @@ void latticeMapped9quantil() {
 	sw.start();
 	auto rp = resultProtocol(
 		Lattice(3,2), 
-		MappingParameter(0.5, 0.2),
+		MappingParameter(ROW(0.5), 0.2),
 		pnt
 	);
 	sw.stop();
@@ -204,7 +204,7 @@ void latticeMapped9quantil() {
 	sw.start();
 	auto rp2 = resultProtocol(
 		Lattice(3,2), 
-		MappingParameter(0.5, 1.0),
+		MappingParameter(ROW(0.5), 1.0),
 		pnt
 	);
 	sw.stop();

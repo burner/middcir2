@@ -17,9 +17,12 @@ import protocols.lattice;
 import plot.gnuplot;
 import plot;
 import utils;
+import units;
+
+alias ROW = Quantity!(double, "ReadOverWrite", 0.0, 1.0);
 
 struct MappingParameter {
-	const double row;
+	const ROW row;
 	const double quorumTestFraction;
 }
 
@@ -154,8 +157,8 @@ class Mapping(int SizeLnt, int SizePnt) {
 struct Mappings(int SizeLnt, int SizePnt) {
 	Mapping!(SizeLnt,SizePnt) bestMapping;
 	Result bestResult;
-	const(double) readBalance;
-	const(double) writeBalance;
+	const(ROW) readBalance;
+	const(ROW) writeBalance;
 
 	double bestAvail;
 
@@ -165,13 +168,13 @@ struct Mappings(int SizeLnt, int SizePnt) {
 	const double quorumTestFraction;
 
 	this(ref Graph!SizeLnt lnt, ref Graph!SizePnt pnt, 
-			double quorumTestFraction = 1.0, double readWriteBalance = 0.5) 
+			double quorumTestFraction = 1.0, ROW readWriteBalance = ROW(0.5)) 
 	{
 		this.lnt = &lnt;
 		this.pnt = &pnt;
 		this.bestAvail = 0.0;
 		this.readBalance = readWriteBalance;
-		this.writeBalance = 1.0 - readWriteBalance;
+		this.writeBalance = ROW(1.0) - readWriteBalance;
 		this.quorumTestFraction = quorumTestFraction;
 	}
 
@@ -201,8 +204,8 @@ struct Mappings(int SizeLnt, int SizePnt) {
 			);
 			Result curRslt = cur.calcAC(oRead, oWrite);
 			double sumRslt = 
-				sum(curRslt.writeAvail)  * this.writeBalance + 
-				sum(curRslt.readAvail) * this.readBalance;
+				sum(curRslt.writeAvail)  * this.writeBalance.value + 
+				sum(curRslt.readAvail) * this.readBalance.value;
 
 			if(sumRslt > this.bestAvail) {
 				writefln("%(%s, %) %.10f", permutation, sumRslt);
@@ -226,8 +229,8 @@ struct Mappings(int SizeLnt, int SizePnt) {
 			);
 			this.bestResult = this.bestMapping.calcAC(oRead, oWrite);
 			this.bestAvail = 
-					sum(this.bestResult.writeAvail)  * this.writeBalance + 
-					sum(this.bestResult.readAvail) * this.readBalance;
+					sum(this.bestResult.writeAvail)  * this.writeBalance.value + 
+					sum(this.bestResult.readAvail) * this.readBalance.value;
 			writefln("%(%s, %) %.10f Final", mapCp, this.bestAvail);
 		}
 
