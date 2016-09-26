@@ -102,12 +102,12 @@ string topString =
 	f.write(topString);
 	f.writeln("\\section{New Section Because Latex Can not handle many floats}");
 
-	auto r = Random(1337);
+	auto r = Random(13);
 	GraphGenConfig config;
 	config.numNodes = 32;
 	config.minEdges = 2;
 	config.maxEdges = 4;
-	for(int i = 0; i < 10000; ++i) {
+	for(int i = 0; i < 50; ++i) {
 		auto g = genGraph!32(r, config);
 
 		string fn = format("graph%s.tex", i);
