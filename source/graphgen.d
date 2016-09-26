@@ -28,7 +28,13 @@ Graph!Size genGraph(int Size,R)(ref R random, const ref GraphGenConfig config) {
 	Array!int curPlaces = getPosition(random, config.numNodes);
 	randomShuffle(curPlaces[], random);
 	while(placedNodes < config.numNodes) {
-		const toPick = uniform(1, config.numNodes/3, random);
+		const upTo = config.numNodes - placedNodes;
+		int toPick;
+		if(upTo == 1) {
+			toPick = 1;
+		} else {
+			toPick = uniform(1, upTo, random);
+		}
 		const s = curPlaces[0 .. toPick];
 
 		for(int i = 0; i < s.length && placedNodes < config.numNodes; ++i) {

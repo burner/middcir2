@@ -207,7 +207,7 @@ struct Mappings(int SizeLnt, int SizePnt) {
 		writefln("Start %.10f", this.quorumTestFraction);
 		size_t cnt = 0;
 		do {
-			if(cnt != 0 && cnt % numPermPercent == 0) {
+			if(cnt != 0 && numPermPercent != 0 && cnt % numPermPercent == 0) {
 				writefln("%(%2d, %) %7d of %7d %6.2f%%", permutation,
 					cnt, numPerm, (cast(double)cnt/numPerm) * 100.0);
 			}
