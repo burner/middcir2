@@ -92,7 +92,6 @@ struct GraphGen(int Size, Rnd) {
 			for(int i = 0; i < this.ggc.numNodes; ++i) {
 				for(int j = i + 1; j < this.ggc.numNodes; ++j) {
 					if(!this.floyd.pathExists(i, j)) {
-						logf("discard");
 						continue outer;
 					}
 				}
