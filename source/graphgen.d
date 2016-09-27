@@ -2,6 +2,7 @@ module graphgen;
 
 import std.random;
 import std.container.array : Array;
+import std.experimental.logger;
 
 import graph;
 
@@ -33,7 +34,7 @@ Graph!Size genGraph(int Size,R)(ref R random, const ref GraphGenConfig config) {
 		if(upTo == 1) {
 			toPick = 1;
 		} else {
-			toPick = uniform(1, upTo, random);
+			toPick = uniform(0, upTo, random);
 		}
 		const s = curPlaces[0 .. toPick];
 
@@ -55,6 +56,62 @@ Graph!Size genGraph(int Size,R)(ref R random, const ref GraphGenConfig config) {
 
 	return ret;
 }
+
+auto graphGenerator(int Size, Rnd)(int upTo, const(GraphGenConfig) ggc,
+	   	ref Rnd rnd)
+{
+	return GraphGen!(Size,Rnd)(upTo, ggc, rnd);
+}
+
+struct GraphGen(int Size, Rnd) {
+	import floydmodule;
+	int cnt;
+	const int upTo;
+	Rnd* rnd;
+	const(GraphGenConfig) ggc;
+	Floyd floyd;
+	Graph!Size cur;
+
+	this(int upTo, const(GraphGenConfig) ggc, ref Rnd rnd) {
+		this.upTo = upTo;
+		this.ggc = ggc;
+		this.rnd = &rnd;
+		auto tmp = Graph!Size(Size);
+		this.floyd.reserveArrays(Size);
+		this.gen();
+	}
+
+	bool empty() const @property @safe pure nothrow {
+		return this.cnt >= this.upTo;
+	}
+
+	private void gen() {
+		outer: while(true) {
+			Graph!Size tmp = genGraph!Size(*this.rnd, this.ggc);
+			this.floyd.execute(tmp);
+			for(int i = 0; i < this.ggc.numNodes; ++i) {
+				for(int j = i + 1; j < this.ggc.numNodes; ++j) {
+					if(!this.floyd.pathExists(i, j)) {
+						logf("discard");
+						continue outer;
+					}
+				}
+			}
+			this.cur = tmp;
+			this.cnt++;
+			break outer;
+		}
+	}
+
+	@property Graph!Size front() {
+		return this.cur;
+	}
+
+	void popFront() {
+		this.gen();
+	}
+}
+
 
 unittest {
 	import std.stdio : File;
@@ -102,14 +159,17 @@ string topString =
 	f.write(topString);
 	f.writeln("\\section{New Section Because Latex Can not handle many floats}");
 
-	auto r = Random(13);
+	auto r = Random(1234414 << 2);
 	GraphGenConfig config;
-	config.numNodes = 32;
-	config.minEdges = 2;
-	config.maxEdges = 4;
-	for(int i = 0; i < 50; ++i) {
-		auto g = genGraph!32(r, config);
+	config.numNodes = 30;
+	config.minEdges = 1;
+	config.maxEdges = 3;
+	/*for(int i = 0; i < 50; ++i) {
+		auto g = genGraph!32(r, config);*/
 
+	int i = 0;
+	foreach(it; graphGenerator!32(50, config, r)) {
+		auto g = it;
 		string fn = format("graph%s.tex", i);
 		auto tf = File(fn, "w");
 		g.toTikz(tf.lockingTextWriter());
@@ -121,6 +181,7 @@ string topString =
 			f.writefln("\\clearpage");
 			f.writeln("\\section{New Section Because Latex Can not handle many floats}");
 		}
+		++i;
 	}
 
 	f.writeln("\\end{document}");
