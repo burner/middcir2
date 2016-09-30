@@ -52,6 +52,16 @@ struct FixedSizeArraySlice(FSA,T, size_t Size) {
 	void popBack() pure @safe nothrow @nogc {
 		--this.high;
 	}
+
+	pragma(inline, true);
+	@property typeof(this) save() pure @safe nothrow @nogc {
+		return this;
+	}
+
+	pragma(inline, true);
+	@property const(typeof(this)) save() const pure @safe nothrow @nogc {
+		return this;
+	}
 }
 
 struct FixedSizeArray(T,size_t Size = 32) {
@@ -203,7 +213,12 @@ pure nothrow unittest {
 }
 
 unittest {
+	import std.traits;
+	import std.range;
 	FixedSizeArray!(int,16) fsa;
+	static assert(isInputRange!(typeof(fsa[])));
+	static assert(isForwardRange!(typeof(fsa[])));
+	static assert(isBidirectionalRange!(typeof(fsa[])));
 	foreach(it; [[0], [0,1,2,3,4], [2,3,6,5,6,2123,9,36,6123,624565345]]) {
 		foreach(jdx, jt; it) {
 			fsa.insertBack(jt);

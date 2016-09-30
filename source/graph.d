@@ -241,6 +241,40 @@ struct Graph(int Size) {
 		return app.data;
 	}
 
+	bool isHomomorph(const ref Graph other) const {
+		import std.conv : to;
+		import std.stdio : writeln;
+		import std.algorithm : nextPermutation;
+		import permutation;
+		import fixedsizearray;
+		if(this.length != other.length) {
+			return false;
+		}
+
+		FixedSizeArray!(byte,32) perm;
+		for(byte i = 0; i < this.length; ++i) {
+			perm.insertBack(i);
+		}
+
+		// Lets test all combinations to see if there is a homomorphic mapping
+		// Yeah, fun all combinations again.
+		do {
+			writeln(perm[]);
+			size_t idx;
+			foreach(it; perm[]) {
+				if(this.nodes[idx] != other.nodes[it]) {
+					goto next;
+				}
+				++idx;
+			}
+			return true;
+			next:
+		} while(nextPermutation(perm[]));
+
+		return false;
+
+	}
+
 	void toString(A)(ref A app) const {
 		for(int i = 0; i < this.length; ++i) {
 			if(i < this.nodePositions.length) {
@@ -508,4 +542,9 @@ void completeConnectGraph(G)(ref G graph) {
 			graph.setEdge(i, j);
 		}
 	}
+}
+
+unittest {
+	auto six = makeSix!16();
+	assert(six.isHomomorph(six));	
 }
