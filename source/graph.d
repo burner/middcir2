@@ -547,4 +547,8 @@ void completeConnectGraph(G)(ref G graph) {
 unittest {
 	auto six = makeSix!16();
 	assert(six.isHomomorph(six));	
+
+	auto nine = makeNine!16();
+	assert(!six.isHomomorph(nine));	
+	assert(nine.isHomomorph(nine));	
 }
