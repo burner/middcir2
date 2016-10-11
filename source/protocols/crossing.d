@@ -8,6 +8,7 @@ import std.container.array : Array;
 
 import gfm.math.vector;
 
+import bitsetrbtree;
 import bitsetmodule;
 import graph;
 import protocols;
@@ -29,6 +30,14 @@ struct Crossings {
 
 		return sum(curRslt.writeAvail)  * writeBalance + 
 			sum(curRslt.readAvail) * 1.0 - writeBalance;
+	}
+
+	@property ref BitsetStore!uint read() {
+		return this.bestCrossing.read;
+	}
+
+	@property ref BitsetStore!uint write() {
+		return this.bestCrossing.write;
 	}
 
 	Result calcAC() {
@@ -76,7 +85,6 @@ struct Crossings {
 
 struct Crossing {
 	import core.bitop : popcnt;
-	import bitsetrbtree;
 	import floydmodule;
 	import bitfiddle;
 	import utils : removeAll, testQuorumIntersection, testAllSubsetsSmaller;

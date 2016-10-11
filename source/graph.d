@@ -421,6 +421,58 @@ unittest {
 	}
 }
 
+Graph!Size genTestGraph12(int Size)() {
+	auto g = Graph!Size(12);
+	g.setNodePos(0, vec3d(0.5,2,0.0));
+	g.setNodePos(1, vec3d(1.5,1,0.0));
+	g.setNodePos(2, vec3d(1.5,3.5,0.0));
+	g.setNodePos(3, vec3d(2,2.5,0.0));
+	g.setNodePos(4, vec3d(4.5,2,0.0));
+	g.setNodePos(5, vec3d(4,3,0.0));
+	g.setNodePos(6, vec3d(4,1.4,0.0));
+	g.setNodePos(7, vec3d(2.8,3.8,0.0));
+	g.setNodePos(8, vec3d(3.3,2.2,0.0));
+	g.setNodePos(9, vec3d(3,0.5,0.0));
+	g.setNodePos(10, vec3d(3,3,0.0));
+	g.setNodePos(11, vec3d(2.5,1.5,0.0));
+
+	g.setEdge( 0, 1);
+	g.setEdge( 0, 2);
+	g.setEdge( 0, 3);
+	g.setEdge( 9, 6);
+	g.setEdge( 9,11);
+	g.setEdge( 1, 9);
+	g.setEdge( 1, 3);
+	g.setEdge( 1,11);
+	g.setEdge( 3,11);
+	g.setEdge( 6, 4);
+	g.setEdge( 6, 5);
+	g.setEdge( 6, 8);
+	g.setEdge( 6,11);
+	g.setEdge(11, 3);
+	g.setEdge(11, 8);
+	g.setEdge( 4, 5);
+	g.setEdge( 8, 3);
+	g.setEdge( 8, 5);
+	g.setEdge( 8,10);
+	g.setEdge( 3, 2);
+	g.setEdge( 3,10);
+	g.setEdge( 5, 7);
+	g.setEdge( 2, 7);
+	g.setEdge( 3, 7);
+	g.setEdge(10, 7);
+	g.setEdge(10, 5);
+	
+	return g;
+}
+
+unittest {
+	import std.stdio : File;
+	auto g = genTestGraph12!32();
+	auto f = File("testgraph12.tex", "w");
+	f.write(g.toTikz());
+}
+
 Graph!16 makeTwoTimesTwo() {
 	auto ret = Graph!16(4);
 	ret.setNodePos(0, vec3d(0.0, 0.0, 0.0));

@@ -81,22 +81,53 @@ void createDataFiles(string prefix, ResultPlot[] results ...) {
 }
 
 void createGnuplotFiles(string prefix, ResultPlot[] results ...) {
-	createGnuplotFile(prefix, resultFilenameAvail, dataFilenameAvail,
+	createGnuplotFile(prefix, gpAvail, resultFilenameAvail, dataFilenameAvail,
 			gnuplotFilenameAvail, "Protocol Availability", 1, results);
 
-	createGnuplotFile(prefix, resultFilenameAvail, dataFilenameAvail,
+	createGnuplotFile(prefix, gpAvail80, resultFilenameAvail, dataFilenameAvail,
 			gnuplotFilenameAvail, "Protocol Availability", 80, results);
 
-	createGnuplotFile(prefix, resultFilenameCost, dataFilenameCost,
+	createGnuplotFile(prefix, gpCosts, resultFilenameCost, dataFilenameCost,
 			gnuplotFilenameCost, "Protocol Costs", 1, results);
 }
 
-void createGnuplotFile(string prefix, string rsltFN, string dataFN, string gpFN, 
-		string ylabel, int xmin, ResultPlot[] results ...) {
-	import std.array : appender;
+immutable(string) gpAvail = `set size ratio 0.71
+print GPVAL_TERMINALS
+set terminal eps color
+set xrange [%f:1.0]
+set yrange [:1.0]
+set output '%s'
+set border linewidth 1.5
+# Grid
+set grid back lc rgb "black"
+set border 3 back lc rgb "black"
+set key left top
+set style data linespoints
+#set key at 50,112
+set xlabel 'Node Availability'
+set ylabel '%s' offset 1,0
+set tics scale 0.75
+plot `;
 
-	auto app = appender!string();
-	formattedWrite(app, `set size ratio 0.71
+immutable(string) gpAvail80 = `set size ratio 0.71
+print GPVAL_TERMINALS
+set terminal eps color
+set xrange [%f:1.0]
+set yrange [:1.0]
+set output '%s'
+set border linewidth 1.5
+# Grid
+set grid back lc rgb "black"
+set border 3 back lc rgb "black"
+set key right bottom
+set style data linespoints
+#set key at 50,112
+set xlabel 'Node Availability'
+set ylabel '%s' offset 1,0
+set tics scale 0.75
+plot `;
+
+immutable(string) gpCosts = `set size ratio 0.71
 print GPVAL_TERMINALS
 set terminal eps color
 set xrange [%f:1.0]
@@ -111,7 +142,15 @@ set style data linespoints
 set xlabel 'Node Availability'
 set ylabel '%s' offset 1,0
 set tics scale 0.75
-plot `, xmin / 100.0, prefix ~ to!string(xmin) ~ rsltFN, ylabel);
+plot `;
+
+void createGnuplotFile(string prefix, string gpString, string rsltFN, 
+		string dataFN, string gpFN, string ylabel, int xmin, ResultPlot[] results ...) 
+{
+	import std.array : appender;
+
+	auto app = appender!string();
+	formattedWrite(app, gpString, xmin / 100.0, prefix ~ to!string(xmin) ~ rsltFN, ylabel);
 
 	bool first = true;
 	foreach(result; results) {

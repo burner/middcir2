@@ -153,6 +153,16 @@ void latticeMCSMappedCrossing9() {
 	mappingPlot2("Results/LatticeMCSCrossing9", pnt, lattice, mcs, crossing);
 }
 
+void latticeMCSMappedCrossing12() {
+	auto pnt = genTestGraph12!32();
+
+	auto lattice = Lattice(3,3);
+	auto mcs = MCS(9);
+	auto crossings = Crossings(pnt);
+
+	mappingPlot2("Results/LatticeMCSCrossing12", pnt, lattice, mcs, crossings);
+}
+
 void mcsMapped() {
 	auto mcs = MCS(6);
 	auto mcsRslt = mcs.calcAC();
@@ -181,6 +191,37 @@ void gridMapped() {
 	);
 }
 
+void crossing12() {
+	auto pnt = genTestGraph12!32();
+
+	auto crs = Crossings(pnt);
+	auto crsRslt = crs.calcAC();
+	gnuPlot("Results/Crossing12", "", ResultPlot(crs.name, crsRslt));
+	writefln("%(%s\n %)", crs.bestCrossing.read[]);
+}
+
+void crossingSixteen() {
+	auto pnt = genTestGraph!32();
+
+	auto crs = Crossings(pnt);
+	auto crsRslt = crs.calcAC();
+	gnuPlot("Results/Crossing16", "", ResultPlot(crs.name, crsRslt));
+}
+
+void crossingMCSSixteen() {
+	auto pnt = genTestGraph!32();
+
+	auto crs = Crossings(pnt);
+	auto crsRslt = crs.calcAC();
+	auto mcs = MCS(16);
+	auto mcsRslt = mcs.calcAC();
+	gnuPlot("Results/CrossingMCS16", "",
+			ResultPlot(crs.name(), crsRslt),
+			ResultPlot(mcs.name(), mcsRslt)
+	);
+}
+
+
 void latticeMapped9quantil() {
 	import plot.resultplot;
 	import std.typecons : Unique;
@@ -204,7 +245,6 @@ void latticeMapped9quantil() {
 
 		td[idx] = sw.peek().msecs;
 	}
-	//resultNTPlot("Results/LatticeQuantil", *rps[0].opDot(), *rps[1].opDot());
 	resultNTPlot("Results/LatticeQuantil", expand!rps);
 
 	writefln("\n%(%5d\n%)", td);
@@ -217,12 +257,16 @@ void main() {
 	//latticeMapped();
 	//latticeMapped2();
 	//latticeMCSMapped6();
-	latticeMCSMapped9();
+	//latticeMCSMapped9();
 	//latticeMCSMappedCrossing6();
 	//latticeMCSMappedCrossing9();
+	//latticeMCSMappedCrossing12();
+	crossing12();
 	//latticeMapped2();
 	//mcsMapped();
 	//gridMapped();
 	//crossings9();
+	//crossingSixteen();
+	//crossingMCSSixteen();
 	//latticeMapped9quantil();
 }

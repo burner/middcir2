@@ -164,7 +164,10 @@ void mappingPlot2(Graph,P...)(string path, auto ref Graph pnt, auto ref P ps) {
 		formattedWrite(ltw, "\\clearpage\n");
 
 		mappings ~= Mappings!(32,32)(p.getGraph(), pnt, QTF(1.0), ROW(0.5));
-		static if(is(typeof(p) == Crossing)) {
+		static if(is(typeof(p) == Crossings)) {
+			mappings.back.createDummyBestMapping();
+			resultsMapping[idx] = results[idx];
+		} else static if(is(typeof(p) == Crossing)) {
 			// HACK to not make it segfault we create a dummy best mapping for
 			// the crossing protocol, as it does not require a mapping
 			mappings.back.createDummyBestMapping();
@@ -253,12 +256,12 @@ string graphInclude =
 string figureInclude = 
 `\begin{figure}[H]
 	\includegraphics[width=0.9\linewidth]{%s1resultavail.pdf}
-	\caption{Availability of %s"}
+	\caption{Availability of %s}
 	\includegraphics[width=0.9\linewidth]{%s80resultavail.pdf}
-	\caption{Availability of %s p \(\ge\) 0.8"}
+	\caption{Availability of %s p \(\ge\) 0.8}
 \end{figure}
 \begin{figure}[H]
 	\includegraphics[width=0.9\linewidth]{%s1resultcost.pdf}
-	\caption{Costs of %s"}
+	\caption{Costs of %s}
 \end{figure}
 `;
