@@ -156,8 +156,8 @@ void latticeMCSMappedCrossing9() {
 void latticeMCSMappedCrossing12() {
 	auto pnt = genTestGraph12!32();
 
-	auto lattice = Lattice(3,3);
-	auto mcs = MCS(9);
+	auto lattice = Lattice(4,3);
+	auto mcs = MCS(12);
 	auto crossings = Crossings(pnt);
 
 	mappingPlot2("Results/LatticeMCSCrossing12", pnt, lattice, mcs, crossings);
@@ -197,7 +197,15 @@ void crossing12() {
 	auto crs = Crossings(pnt);
 	auto crsRslt = crs.calcAC();
 	gnuPlot("Results/Crossing12", "", ResultPlot(crs.name, crsRslt));
-	writefln("%(%s\n %)", crs.bestCrossing.read[]);
+	writefln(
+		"\nt [%(%s, %)], b [%(%s, %)], l [%(%s, %)], r [%(%s, %)], d [%(%s, %)]\n",
+		crs.bestCrossing.top[],
+		crs.bestCrossing.bottom[],
+		crs.bestCrossing.left[],
+		crs.bestCrossing.right[],
+		crs.bestCrossing.diagonalPairs[]
+	);
+	writefln("\n%(%s\n %)", crs.bestCrossing.read[]);
 }
 
 void crossingSixteen() {
@@ -260,8 +268,8 @@ void main() {
 	//latticeMCSMapped9();
 	//latticeMCSMappedCrossing6();
 	//latticeMCSMappedCrossing9();
-	//latticeMCSMappedCrossing12();
-	crossing12();
+	latticeMCSMappedCrossing12();
+	//crossing12();
 	//latticeMapped2();
 	//mcsMapped();
 	//gridMapped();

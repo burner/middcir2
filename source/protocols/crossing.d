@@ -48,7 +48,7 @@ struct Crossings {
 		bringToFront(uniqueBorder[0 .. 1], uniqueBorder[1 .. $]);
 
 		for(int i = 0; i < uniqueBorder.length; ++i) {
-			logf("[%(%s, %)]", uniqueBorder[]);
+			//logf("[%(%s, %)]", uniqueBorder[]);
 			if(i == 0) {
 				this.bestCrossing = Crossing(this.graph);
 				this.bestResult = this.bestCrossing.calcAC(uniqueBorder);
@@ -175,9 +175,6 @@ struct Crossing {
 		}
 
 		calcDiagonalPairs(bottom, top, left, right, diagonalPairs);
-		logf("lft [%(%s %)] tp [%(%s %)] rght[%(%s %)] btm [%(%s %)] dia [%(%s, %)]",
-			left[], top[], right[], bottom[], diagonalPairs[]
-		);
 	}
 
 	Result calcAC(ref Array!int uniqueBorder) {
@@ -186,6 +183,12 @@ struct Crossing {
 
 		this.splitBorderIntoTBLR(uniqueBorder, this.bottom, this.top, this.left, 
 				this.right, this.diagonalPairs);
+		logf("lft [%(%s %)] tp [%(%s %)] rght[%(%s %)] btm [%(%s %)] dia [%(%s, %)]",
+			this.left[], this.top[], this.right[], this.bottom[], this.diagonalPairs[]
+		);
+		testEmptyIntersection(this.top, this.bottom);
+		testEmptyIntersection(this.left, this.right);
+		testEmptyIntersection(this.diagonalPairs);
 
 		auto paths = floyd!32(this.graph);
 

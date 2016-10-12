@@ -104,6 +104,28 @@ PathResult testDiagonal(ref const(Floyd) paths, const int bl,
 	return ret;
 }
 
+void testEmptyIntersection(ref const(Array!int) a, ref const(Array!int) b) {
+	foreach(it; a[]) {
+		foreach(jt; b[]) {
+			if(it == jt) {
+				throw new Exception(
+						format("a and b both hold element %d", it)
+				);
+			}
+		}
+	}
+}
+
+void testEmptyIntersection(ref const(Array!(int[2])) a) {
+	foreach(it; a[]) {
+		if(it[0] == it[1]) {
+			throw new Exception(
+					format("a has element where both subelements are %d", it[0])
+			);
+		}
+	}
+}
+
 Result calcACforPathBased(ref Floyd paths, ref const(Graph!32) graph, 
 		const(Array!int) bottom, const(Array!int) top, const(Array!int) left, 
 		const(Array!int) right, const(Array!(int[2])) diagonalPairs, 

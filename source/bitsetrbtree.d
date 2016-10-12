@@ -35,12 +35,9 @@ struct BitsetArray(T) {
 
 	void toString(scope void delegate(const(char)[]) sink) const {
 		import std.format : formattedWrite;
-		/*formattedWrite(sink, "%b len(%s) [%(%s %)]", this.bitset.store,
-			this.subsets.length, this.subsets[]
-		);*/
-		formattedWrite(sink, "%b len(%s) [", this.bitset.store,
-			this.subsets.length
-		);
+		this.bitset.toString2(sink);
+		//formattedWrite(sink, "%b len(%s) [", this.bitset.store,
+		formattedWrite(sink, " len(%s) [", this.subsets.length);
 		foreach(ref it; this.subsets) {
 			formattedWrite(sink, "%b ", it.store);
 		}

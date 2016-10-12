@@ -197,6 +197,22 @@ struct Bitset(Store) if(isIntegral!Store && isUnsigned!Store) {
 		return (rhs & this.store) == rhs;
 	}
 
+	void toString2(scope void delegate(const(char)[]) sink) const {
+		import std.format : formattedWrite;	
+		formattedWrite(sink, "(");
+		bool first = true;
+		for(size_t i = 0; i < Store.sizeof * 8; ++i) {
+			if(this.test(i)) {
+				if(!first) {
+					formattedWrite(sink, ",", i);
+				}
+				formattedWrite(sink, "%d", i);
+				first = false;
+			}
+		}
+		formattedWrite(sink, ")");
+	}
+
 	void toString(scope void delegate(const(char)[]) sink) const {
 		/*bool first = true;
 		Store v = this.store;
