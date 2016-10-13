@@ -1,9 +1,12 @@
 module mapping;
 
+import core.thread;
+
 import std.conv : to;
 import std.stdio;
 import std.experimental.logger;
 import std.meta;
+import std.concurrency;
 
 import gfm.math.vector;
 
@@ -202,7 +205,7 @@ struct Mappings(int SizeLnt, int SizePnt) {
 		int[] permutation = to!(int[])(iota(0, (*lnt).length).array);
 		ulong numPerm = factorial(permutation.length);
 
-		this.calcAC(oRead, oWrite, numPerm, permutation,
+		this.calcACImpl(oRead, oWrite, numPerm, permutation,
 				this.bestMapping, this.bestResult, this.bestAvail,
 				stopAfterFirst);
 		return this.bestResult;
@@ -215,6 +218,8 @@ struct Mappings(int SizeLnt, int SizePnt) {
 		import std.array : array;
 		import std.range : iota;
 		import std.algorithm.sorting : nextPermutation;
+		import std.algorithm.iteration : sum;
+
 		import math;
 		int[] permutation = to!(int[])(iota(0, (*lnt).length).array);
 		ulong numPerm = factorial(permutation.length);
@@ -229,27 +234,63 @@ struct Mappings(int SizeLnt, int SizePnt) {
 		for(int i = 0; i < numThreads-1; ++i) {
 			numberPerms[i] = permPerThread;
 		}
-		numberPerms[3] = numPerm - 
-			(numberPerms[0] + numberPerms[1] + numberPerms[2]);
+		numberPerms.back = numPerm - sum(numberPerms[0 .. numThreads-1], 0L);
 
 		int[][numThreads] permutations;
 		for(int i = 0; i < numThreads; ++i) {
 			permutations[i] = nthPermutation(permutation, firstPerm[i]);
 		}
 
+		double[numThreads] bestAvails;
+		Mapping!(SizeLnt,SizePnt)[numThreads] bestMappings;
+		Result[numThreads] results;
+
 		writefln("numPerm %d\npermPerThread %d\nfirstPerm %(%d, %)\nnumberPerms %(%d, %)\n" ~
 				"permutations:\n%(\t%s,\n%)", numPerm, permPerThread, firstPerm,
 				numberPerms, permutations);
 
-		assert(false);
+		BitsetStore!(uint)[numThreads] oReads;
+		BitsetStore!(uint)[numThreads] oWrites;
+
+		for(int i = 0; i < numThreads; ++i) {
+			oReads[i] = oRead.dup();
+			oWrites[i] = oWrite.dup();
+		}
+
+		MappingImpl!(SizeLnt,SizePnt)[numThreads] threads;
+		for(int i = 0; i < numThreads; ++i) {
+			threads[i] = new MappingImpl!(SizeLnt,SizePnt)(i, cast(shared)&this,
+					cast(shared(const(BitsetStore!uint))*)&oReads[i],
+					cast(shared(const(BitsetStore!uint))*)&oWrites[i],
+					numberPerms[i], cast(shared)permutations[i], stopAfterFirst);
+			threads[i].start();
+		}
+
+		int best;
+		for(int i = 0; i < numThreads; ++i) {
+			threads[i].join();
+			if(i == 0) {
+				this.bestAvail = threads[i].bestAvailL;
+				best = 0;
+			} else if(threads[i].bestAvailL > this.bestAvail) {
+				this.bestAvail = threads[i].bestAvailL;
+				best = i;
+			}
+		}
+
+		this.bestAvail = threads[best].bestAvailL;
+		this.bestMapping = threads[best].bestMappingL;
+		assert(this.bestMapping !is null);
+		this.bestResult = threads[best].bestResultL;
+
+		return this.bestResult;
 	}
 
-	void calcAC(const ref BitsetStore!uint oRead, 
+	void calcACImpl(const ref BitsetStore!uint oRead, 
 			const ref BitsetStore!uint oWrite, const(ulong) numPerm,
-			int[] permutation, 
-			ref Mapping!(SizeLnt,SizePnt) bestMapping,
-			ref Result bestResult, ref double bestAvail,
-			const bool stopAfterFirst = false) const
+			int[] permutation, ref Mapping!(SizeLnt,SizePnt) bestMappingL,
+			ref Result bestResultL, ref double bestAvailL,
+			const bool stopAfterFirst) const
 	{
 		import std.array : array;
 		import std.range : iota;
@@ -274,31 +315,31 @@ struct Mappings(int SizeLnt, int SizePnt) {
 				sum(curRslt.writeAvail)  * this.writeBalance.value + 
 				sum(curRslt.readAvail) * this.readBalance.value;
 
-			if(sumRslt > bestAvail) {
+			if(sumRslt > bestAvailL) {
 				writefln("%(%s, %) %.10f", permutation, sumRslt);
-				if(bestMapping !is null) {
-					destroy(bestMapping);
+				if(bestMappingL !is null) {
+					destroy(bestMappingL);
 				}
 
-				bestMapping = cur;
-				bestAvail = sumRslt;
-				bestResult = curRslt;
+				bestMappingL = cur;
+				bestAvailL = sumRslt;
+				bestResultL = curRslt;
 			}
 		} while(nextPermutation(permutation) && cnt < numPerm && !stopAfterFirst);
 
 		if(this.quorumTestFraction.value < 1.0) {
-			int[] mapCp = bestMapping.mapping.dup;
-			if(bestMapping !is null) {
-				destroy(bestMapping);
+			int[] mapCp = bestMappingL.mapping.dup;
+			if(bestMappingL !is null) {
+				destroy(bestMappingL);
 			}
-			bestMapping = new Mapping!(SizeLnt,SizePnt)(*lnt, *pnt, mapCp,
+			bestMappingL = new Mapping!(SizeLnt,SizePnt)(*lnt, *pnt, mapCp,
 					QTF(1.0)
 			);
-			bestResult = bestMapping.calcAC(oRead, oWrite);
-			bestAvail = 
-					sum(bestResult.writeAvail)  * writeBalance.value + 
-					sum(bestResult.readAvail) * readBalance.value;
-			writefln("%(%s, %) %.10f Final", mapCp, bestAvail);
+			bestResultL = bestMappingL.calcAC(oRead, oWrite);
+			bestAvailL = 
+					sum(bestResultL.writeAvail)  * writeBalance.value + 
+					sum(bestResultL.readAvail) * readBalance.value;
+			writefln("%(%s, %) %.10f Final", mapCp, bestAvailL);
 		}
 
 		//return this.bestResult;
@@ -314,6 +355,88 @@ struct Mappings(int SizeLnt, int SizePnt) {
 	string name(string protocolName) const pure {
 		import std.format : format;
 		return format("%s-Mapped", protocolName);
+	}
+}
+
+class MappingImpl(int SizeLnt, int SizePnt) : Thread {
+	Mappings!(SizeLnt,SizePnt)* mappings;
+	Mapping!(SizeLnt,SizePnt) bestMappingL;
+	Result bestResultL; 
+	double bestAvailL;
+	const(BitsetStore!uint)* oWrite;
+	const(BitsetStore!uint)* oRead;
+	const(ulong) numPerm;
+	int[] permutation;
+	const(bool) stopAfterFirst;
+	const(int) tid;
+
+	this(int tid, shared Mappings!(SizeLnt,SizePnt)* mappings, const shared BitsetStore!uint* oRead, 
+			const shared BitsetStore!uint* oWrite, const(ulong) numPerm,
+			shared int[] permutation, const bool stopAfterFirst)
+	{
+		super(&run);
+		this.tid = tid;
+		this.mappings = cast(Mappings!(SizeLnt,SizePnt)*)mappings;
+		this.oWrite = cast(const(BitsetStore!uint)*)(oWrite);
+		this.oRead = cast(const(BitsetStore!uint)*)(oRead);
+		this.numPerm = numPerm;
+		this.permutation = cast(int[])permutation;
+		this.stopAfterFirst = stopAfterFirst;
+		this.bestAvailL = 0.0;
+	}
+
+	void run() {
+		import std.array : array;
+		import std.range : iota;
+		import std.algorithm.sorting : nextPermutation;
+		import math;
+		ulong numPermPercent = numPerm / 100;
+
+		writefln("Start %.10f", this.mappings.quorumTestFraction);
+		size_t cnt = 0;
+		do {
+			//if(cnt != 0 && numPermPercent != 0 && cnt % numPermPercent == 0) {
+			//	//logf("%(%2d, %) %7d of %7d %6.2f%%", permutation,
+			//	logf("%7d of %7d %6.2f%%",
+			//		cnt, numPerm, (cast(double)cnt/numPerm) * 100.0);
+			//}
+			++cnt;
+			auto cur = new Mapping!(SizeLnt,SizePnt)(*this.mappings.lnt,
+					*this.mappings.pnt, permutation,
+					this.mappings.quorumTestFraction
+			);
+			Result curRslt = cur.calcAC(*oRead, *oWrite);
+			double sumRslt = 
+				sum(curRslt.writeAvail)  * this.mappings.writeBalance.value + 
+				sum(curRslt.readAvail) * this.mappings.readBalance.value;
+
+			if(sumRslt > bestAvailL) {
+				writefln("%(%s, %) %.10f", permutation, sumRslt);
+				if(bestMappingL !is null) {
+					destroy(bestMappingL);
+				}
+
+				bestMappingL = cur;
+				bestAvailL = sumRslt;
+				bestResultL = curRslt;
+			}
+		} while(nextPermutation(permutation) && cnt < numPerm && !stopAfterFirst);
+
+		if(this.mappings.quorumTestFraction.value < 1.0) {
+			int[] mapCp = bestMappingL.mapping.dup;
+			if(bestMappingL !is null) {
+				destroy(bestMappingL);
+			}
+			bestMappingL = new Mapping!(SizeLnt,SizePnt)(*this.mappings.lnt,
+					*this.mappings.pnt, mapCp, QTF(1.0)
+			);
+			bestResultL = bestMappingL.calcAC(*oRead, *oWrite);
+			bestAvailL = 
+					sum(bestResultL.writeAvail)  * this.mappings.writeBalance.value + 
+					sum(bestResultL.readAvail) * this.mappings.readBalance.value;
+		}
+		writefln("Done Tid %d Best Mapping %(%s, %) %.10f Final", this.tid, 
+				bestMappingL.mapping, bestAvailL);
 	}
 }
 

@@ -43,6 +43,15 @@ struct BitsetArray(T) {
 		}
 		formattedWrite(sink, "]");
 	}
+
+	auto dup() const {
+		import std.traits;
+
+		Unqual!(typeof(this)) ret;
+		ret.bitset = this.bitset;
+		ret.subsets = this.subsets.dup;
+		return ret;
+	}
 }
 
 BitsetArray!T bitsetArray(T)(T t) if(isIntegral!T) {
@@ -290,6 +299,15 @@ struct BitsetArrayArray(T) {
 
 	ref BitsetArray!(T) opIndex(const size_t idx) {
 		return this.array[idx];
+	}
+
+	auto dup() const {
+		import std.traits : Unqual;
+		Unqual!(typeof(this)) ret;
+		foreach(it; this.array[]) {
+			ret.array.insertBack(it.dup);
+		}
+		return ret;
 	}
 }
 unittest {

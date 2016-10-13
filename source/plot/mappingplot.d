@@ -182,7 +182,7 @@ void mappingPlot2(Graph,P...)(string path, auto ref Graph pnt, auto ref P ps) {
 
 			resultsMapping[idx] = ResultPlot(
 					mappings.back.name(p.name()),
-					mappings.back.calcAC(p.read, p.write, isMCS)
+					mappings.back.calcACThreaded(p.read, p.write, isMCS)
 			);
 		}
 

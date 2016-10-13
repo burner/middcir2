@@ -5,7 +5,7 @@ release:
 	dub --compiler=ldc --build=release
 
 debug:
-	dub --compiler=ldc --build=debug
+	dub --compiler=dmd --build=debug
 
 test:
 	dub test -debug --compiler=dmd --coverage
