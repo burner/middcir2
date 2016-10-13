@@ -265,10 +265,10 @@ void main() {
 	//latticeMapped();
 	//latticeMapped2();
 	//latticeMCSMapped6();
-	latticeMCSMapped9();
+	//latticeMCSMapped9();
 	//latticeMCSMappedCrossing6();
 	//latticeMCSMappedCrossing9();
-	//latticeMCSMappedCrossing12();
+	latticeMCSMappedCrossing12();
 	//crossing12();
 	//latticeMapped2();
 	//mcsMapped();

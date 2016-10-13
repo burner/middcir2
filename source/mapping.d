@@ -395,11 +395,10 @@ class MappingImpl(int SizeLnt, int SizePnt) : Thread {
 		writefln("Start %.10f", this.mappings.quorumTestFraction);
 		size_t cnt = 0;
 		do {
-			//if(cnt != 0 && numPermPercent != 0 && cnt % numPermPercent == 0) {
-			//	//logf("%(%2d, %) %7d of %7d %6.2f%%", permutation,
-			//	logf("%7d of %7d %6.2f%%",
-			//		cnt, numPerm, (cast(double)cnt/numPerm) * 100.0);
-			//}
+			if(cnt != 0 && numPermPercent != 0 && cnt % numPermPercent == 0) {
+				logf("Tid %d %7d of %7d %6.2f%%", this.tid,
+					cnt, numPerm, (cast(double)cnt/numPerm) * 100.0);
+			}
 			++cnt;
 			auto cur = new Mapping!(SizeLnt,SizePnt)(*this.mappings.lnt,
 					*this.mappings.pnt, permutation,

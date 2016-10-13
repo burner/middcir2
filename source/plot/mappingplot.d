@@ -6,6 +6,7 @@ import protocols.crossing;
 import protocols.mcs;
 import mapping;
 import graph;
+import config;
 import std.stdio : File;
 import std.experimental.logger;
 import std.format : formattedWrite;
@@ -180,10 +181,17 @@ void mappingPlot2(Graph,P...)(string path, auto ref Graph pnt, auto ref P ps) {
 			// one mapping
 			const bool isMCS = is(typeof(p) == MCS);
 
-			resultsMapping[idx] = ResultPlot(
-					mappings.back.name(p.name()),
-					mappings.back.calcACThreaded(p.read, p.write, isMCS)
-			);
+			if(getConfig().runMultiThreaded) {
+				resultsMapping[idx] = ResultPlot(
+						mappings.back.name(p.name()),
+						mappings.back.calcACThreaded(p.read, p.write, isMCS)
+				);
+			} else {
+				resultsMapping[idx] = ResultPlot(
+						mappings.back.name(p.name()),
+						mappings.back.calcAC(p.read, p.write, isMCS)
+				);
+			}
 		}
 
 		string mapFigName = p.name() ~ "mapped";
