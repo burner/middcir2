@@ -200,15 +200,69 @@ struct Mappings(int SizeLnt, int SizePnt) {
 		import std.algorithm.sorting : nextPermutation;
 		import math;
 		int[] permutation = to!(int[])(iota(0, (*lnt).length).array);
-
 		ulong numPerm = factorial(permutation.length);
+
+		this.calcAC(oRead, oWrite, numPerm, permutation,
+				this.bestMapping, this.bestResult, this.bestAvail,
+				stopAfterFirst);
+		return this.bestResult;
+	}
+
+	Result calcACThreaded(const ref BitsetStore!uint oRead, 
+			const ref BitsetStore!uint oWrite, 
+			const bool stopAfterFirst = false) 
+	{
+		import std.array : array;
+		import std.range : iota;
+		import std.algorithm.sorting : nextPermutation;
+		import math;
+		int[] permutation = to!(int[])(iota(0, (*lnt).length).array);
+		ulong numPerm = factorial(permutation.length);
+
+		const numThreads = 4;
+		const permPerThread = numPerm / numThreads;
+		long[numThreads] firstPerm;
+		for(int i = 0; i < numThreads; ++i) {
+			firstPerm[i] = permPerThread * i;
+		}
+		long[numThreads] numberPerms;
+		for(int i = 0; i < numThreads-1; ++i) {
+			numberPerms[i] = permPerThread;
+		}
+		numberPerms[3] = numPerm - 
+			(numberPerms[0] + numberPerms[1] + numberPerms[2]);
+
+		int[][numThreads] permutations;
+		for(int i = 0; i < numThreads; ++i) {
+			permutations[i] = nthPermutation(permutation, firstPerm[i]);
+		}
+
+		writefln("numPerm %d\npermPerThread %d\nfirstPerm %(%d, %)\nnumberPerms %(%d, %)\n" ~
+				"permutations:\n%(\t%s,\n%)", numPerm, permPerThread, firstPerm,
+				numberPerms, permutations);
+
+		assert(false);
+	}
+
+	void calcAC(const ref BitsetStore!uint oRead, 
+			const ref BitsetStore!uint oWrite, const(ulong) numPerm,
+			int[] permutation, 
+			ref Mapping!(SizeLnt,SizePnt) bestMapping,
+			ref Result bestResult, ref double bestAvail,
+			const bool stopAfterFirst = false) const
+	{
+		import std.array : array;
+		import std.range : iota;
+		import std.algorithm.sorting : nextPermutation;
+		import math;
 		ulong numPermPercent = numPerm / 100;
 
 		writefln("Start %.10f", this.quorumTestFraction);
 		size_t cnt = 0;
 		do {
 			if(cnt != 0 && numPermPercent != 0 && cnt % numPermPercent == 0) {
-				writefln("%(%2d, %) %7d of %7d %6.2f%%", permutation,
+				//logf("%(%2d, %) %7d of %7d %6.2f%%", permutation,
+				logf("%7d of %7d %6.2f%%",
 					cnt, numPerm, (cast(double)cnt/numPerm) * 100.0);
 			}
 			++cnt;
@@ -220,34 +274,34 @@ struct Mappings(int SizeLnt, int SizePnt) {
 				sum(curRslt.writeAvail)  * this.writeBalance.value + 
 				sum(curRslt.readAvail) * this.readBalance.value;
 
-			if(sumRslt > this.bestAvail) {
+			if(sumRslt > bestAvail) {
 				writefln("%(%s, %) %.10f", permutation, sumRslt);
-				if(this.bestMapping !is null) {
-					destroy(this.bestMapping);
+				if(bestMapping !is null) {
+					destroy(bestMapping);
 				}
 
-				this.bestMapping = cur;
-				this.bestAvail = sumRslt;
-				this.bestResult = curRslt;
+				bestMapping = cur;
+				bestAvail = sumRslt;
+				bestResult = curRslt;
 			}
-		} while(nextPermutation(permutation) && !stopAfterFirst);
+		} while(nextPermutation(permutation) && cnt < numPerm && !stopAfterFirst);
 
 		if(this.quorumTestFraction.value < 1.0) {
-			int[] mapCp = this.bestMapping.mapping.dup;
-			if(this.bestMapping !is null) {
-				destroy(this.bestMapping);
+			int[] mapCp = bestMapping.mapping.dup;
+			if(bestMapping !is null) {
+				destroy(bestMapping);
 			}
-			this.bestMapping = new Mapping!(SizeLnt,SizePnt)(*lnt, *pnt, mapCp,
+			bestMapping = new Mapping!(SizeLnt,SizePnt)(*lnt, *pnt, mapCp,
 					QTF(1.0)
 			);
-			this.bestResult = this.bestMapping.calcAC(oRead, oWrite);
-			this.bestAvail = 
-					sum(this.bestResult.writeAvail)  * this.writeBalance.value + 
-					sum(this.bestResult.readAvail) * this.readBalance.value;
-			writefln("%(%s, %) %.10f Final", mapCp, this.bestAvail);
+			bestResult = bestMapping.calcAC(oRead, oWrite);
+			bestAvail = 
+					sum(bestResult.writeAvail)  * writeBalance.value + 
+					sum(bestResult.readAvail) * readBalance.value;
+			writefln("%(%s, %) %.10f Final", mapCp, bestAvail);
 		}
 
-		return this.bestResult;
+		//return this.bestResult;
 	}
 
 	void createDummyBestMapping() {

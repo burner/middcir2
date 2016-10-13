@@ -6,6 +6,7 @@ import std.stdio;
 import gfm.math.vector;
 
 import bitsetmodule;
+import fixedsizearray;
 
 ulong factorial(const ulong fac) {
 	assert(fac < 23);
@@ -218,4 +219,84 @@ unittest {
 
 	a = angleFunc(dirOfEdge(left, zero), dirOfEdge(zero, left));
 	assert(approxEqual(abs(a), 180.0));
+}
+
+void deziToFac(long deci, ref FixedSizeArray!(ubyte,16) fac) {
+	import std.algorithm.mutation : reverse;
+	import std.conv : to;
+	for(long i = 1; deci != 0; ++i) {
+		fac.insertBack(to!ubyte(deci % i));
+		deci /= i;
+	}
+
+	if(fac.empty) {
+		fac.insertBack(cast(ubyte)0);
+	}
+
+	reverse(fac[]);
+}
+
+long facToDezi(ref const(FixedSizeArray!(ubyte,16)) fac) {
+	long ret = 0L;
+
+	long inS = fac.length-1u;
+
+	size_t idx = 0u;
+	for(; inS > 0; --inS, ++idx) {
+		ret += factorial(inS) * fac[idx];
+	}	
+
+	return ret;
+}
+
+unittest {
+	import exceptionhandling;
+
+	FixedSizeArray!(ubyte,16) rslt;
+	deziToFac(2982, rslt);
+
+	assertEqual(rslt[], [4,0,4,1,0,0,0]);
+}
+
+unittest {
+	import exceptionhandling;
+
+	for(long i = 0; i < 1024; ++i) {
+		FixedSizeArray!(ubyte,16) rslt;
+		deziToFac(i, rslt);
+		long dezi = facToDezi(rslt);
+		assertEqual(dezi, i);
+	}
+}
+
+int[] nthPermutation(int[] original, long perm) {
+	import std.array;
+	import std.algorithm.mutation : remove;
+	import std.stdio : writefln;
+
+	original = original.dup;
+
+	FixedSizeArray!(ubyte,16) fac;
+	deziToFac(perm, fac);
+
+	while(fac.length < original.length) {
+		fac.insertBack(cast(ubyte)0);
+	}
+
+	auto app = appender!(int[])();
+	for(size_t i = 0; i < fac.length; ++i) {
+		app.put(original[fac[i]]);
+		original = remove(original, fac[i]);	
+	}
+
+	return app.data;
+}
+
+unittest {
+	import exceptionhandling;
+
+	auto o = [0,1,2,3,4,5,6];
+
+	auto c = nthPermutation(o, 2982);
+	assertEqual(c, [4,0,6,2,1,3,5]);
 }

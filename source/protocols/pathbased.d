@@ -105,6 +105,7 @@ PathResult testDiagonal(ref const(Floyd) paths, const int bl,
 }
 
 void testEmptyIntersection(ref const(Array!int) a, ref const(Array!int) b) {
+	import std.format : format;
 	foreach(it; a[]) {
 		foreach(jt; b[]) {
 			if(it == jt) {
@@ -117,6 +118,7 @@ void testEmptyIntersection(ref const(Array!int) a, ref const(Array!int) b) {
 }
 
 void testEmptyIntersection(ref const(Array!(int[2])) a) {
+	import std.format : format;
 	foreach(it; a[]) {
 		if(it[0] == it[1]) {
 			throw new Exception(
