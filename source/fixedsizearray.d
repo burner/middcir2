@@ -11,54 +11,54 @@ struct FixedSizeArraySlice(FSA,T, size_t Size) {
 	short low;
 	short high;
 
-	pragma(inline, true);
+	pragma(inline, true)
 	this(FSA* fsa, short low, short high) {
 		this.fsa = fsa;
 		this.low = low;
 		this.high = high;
 	}
 
-	pragma(inline, true);
+	pragma(inline, true)
 	@property bool empty() pure @safe nothrow @nogc {
 		return this.low == this.high;
 	}
 
-	pragma(inline, true);
+	pragma(inline, true)
 	@property size_t length() pure @safe nothrow @nogc {
 		return this.high - this.low;
 	}
 
-	pragma(inline, true);
+	pragma(inline, true)
 	@property ref T front() {
 		return (*this.fsa)[this.low];
 	}
 
-	pragma(inline, true);
+	pragma(inline, true)
 	@property ref T back() {
 		return (*this.fsa)[this.high - 1];
 	}
 
-	pragma(inline, true);
+	pragma(inline, true)
 	ref T opIndex(const size_t idx) {
 		return (*this.fsa)[this.low + idx];
 	}
 
-	pragma(inline, true);
+	pragma(inline, true)
 	void popFront() pure @safe nothrow @nogc {
 		++this.low;
 	}
 
-	pragma(inline, true);
+	pragma(inline, true)
 	void popBack() pure @safe nothrow @nogc {
 		--this.high;
 	}
 
-	pragma(inline, true);
+	pragma(inline, true)
 	@property typeof(this) save() pure @safe nothrow @nogc {
 		return this;
 	}
 
-	pragma(inline, true);
+	pragma(inline, true)
 	@property const(typeof(this)) save() const pure @safe nothrow @nogc {
 		return this;
 	}
@@ -69,24 +69,25 @@ struct FixedSizeArray(T,size_t Size = 32) {
 	size_t len;
 	byte[T.sizeof * Size] store;
 
-	pragma(inline, true);
+	pragma(inline, true)
 	~this() {
 		static if(hasElaborateDestructor!T) {
 			this.removeAll();
 		}
 	}
 
-	pragma(inline, true);
+	pragma(inline, true)
 	void insertBack(S)(auto ref S t) @trusted {
 		import std.conv : emplace;
 		static assert(isImplicitlyConvertible!(S,T));
 		assert(this.len + 1 < Size);
 
-		emplace(cast(T*)(&this.store[this.len * T.sizeof]), t);
+		//emplace(cast(T*)(&this.store[this.len * T.sizeof]), t);
+		*cast(T*)(this.store.ptr + (this.len * T.sizeof)) = t;
 		++this.len;
 	}
 
-	pragma(inline, true);
+	pragma(inline, true)
 	void emplaceBack(Args...)(auto ref Args args) {
 		import std.conv : emplace;
 		assert(this.len + 1 < Size);
@@ -95,7 +96,7 @@ struct FixedSizeArray(T,size_t Size = 32) {
 		++this.len;
 	}
 
-	pragma(inline, true);
+	pragma(inline, true)
 	void removeBack() {
 		assert(this.len > 0);
 
@@ -106,68 +107,68 @@ struct FixedSizeArray(T,size_t Size = 32) {
 		--this.len;
 	}
 
-	pragma(inline, true);
+	pragma(inline, true)
 	void removeAll() {
 		while(!this.empty) {
 			this.removeBack();
 		}
 	}
 
-	pragma(inline, true);
+	pragma(inline, true)
 	@property ref T back() @trusted {
 		assert(this.len > 0);
 		return *(cast(T*)(&this.store[(this.len - 1) * T.sizeof]));
 	}
 
-	pragma(inline, true);
+	pragma(inline, true)
 	@property ref T front() @trusted {
 		assert(this.len > 0);
 		return *(cast(T*)(this.store.ptr));
 	}
 
-	pragma(inline, true);
+	pragma(inline, true)
 	ref T opIndex(const size_t idx) @trusted {
 		cast(void)assertLess(idx,  this.len);
 		return *(cast(T*)(&this.store[idx * T.sizeof]));
 	}
 
-	pragma(inline, true);
+	pragma(inline, true)
 	ref const(T) opIndex(const size_t idx) @trusted const {
 		cast(void)assertLess(idx,  this.len);
 		return *(cast(const(T)*)(&this.store[idx * T.sizeof]));
 	}
 
-	pragma(inline, true);
+	pragma(inline, true)
 	@property size_t length() const pure @nogc nothrow {
 		return this.len;
 	}
 
-	pragma(inline, true);
+	pragma(inline, true)
 	@property size_t empty() const pure @nogc nothrow {
 		return this.len == 0UL;
 	}
 
-	pragma(inline, true);
+	pragma(inline, true)
 	auto opSlice() pure @nogc @safe nothrow {
 		return FixedSizeArraySlice!(typeof(this),T,Size)(&this, cast(short)0, 
 				cast(short)this.len
 		);
 	}
 	
-	pragma(inline, true);
+	pragma(inline, true)
 	auto opSlice(const size_t low, const size_t high) pure @nogc @safe nothrow {
 		return FixedSizeArraySlice!(typeof(this),T,Size)(&this, cast(short)low, 
 				cast(short)high
 		);
 	}
 
-	pragma(inline, true);
+	pragma(inline, true)
 	auto opSlice() pure @nogc @safe nothrow const {
 		return FixedSizeArraySlice!(typeof(this),const(T),Size)
 			(&this, cast(short)0, cast(short)this.len);
 	}
 	
-	pragma(inline, true);
+	pragma(inline, true)
 	auto opSlice(const size_t low, const size_t high) pure @nogc @safe nothrow
 			const 
 	{

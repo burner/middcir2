@@ -76,6 +76,27 @@ class Mapping(int SizeLnt, int SizePnt) {
 	void reconnectQuorum(ref const(Bitset!uint) quorum, 
 			ref BitsetStore!uint rsltQuorumSet, Bitset!uint perm)
 	{
+		enum numBits = uint.sizeof * 8;
+		for(int fidx = 0; fidx < numBits; ++fidx) {
+			if(quorum[fidx]) {
+				for(int tidx = 0; tidx < numBits; ++tidx) {
+					if(quorum[tidx]) {
+						if(!floyd.pathExists(
+								mapping[fidx], 
+								mapping[tidx])) 
+						{
+							return;
+						}
+					}
+				}
+			}
+		}
+		rsltQuorumSet.insertUnique(perm);
+	}
+
+	/*void reconnectQuorum(ref const(Bitset!uint) quorum, 
+			ref BitsetStore!uint rsltQuorumSet, Bitset!uint perm)
+	{
 		FixedSizeArray!(int,32) whichNodesToReconnect;
 		getBitsSet(quorum, whichNodesToReconnect);
 		const int numNodesToReconnect = to!int(whichNodesToReconnect.length);
@@ -92,7 +113,7 @@ class Mapping(int SizeLnt, int SizePnt) {
 		}
 
 		rsltQuorumSet.insertUnique(perm);
-	}
+	}*/
 
 	void reconnectQuorums(const ref BitsetStore!uint quorumSetA, 
 			ref BitsetStore!uint rsltQuorumSetA, 
@@ -219,6 +240,7 @@ struct Mappings(int SizeLnt, int SizePnt) {
 		import std.range : iota;
 		import std.algorithm.sorting : nextPermutation;
 		import std.algorithm.iteration : sum;
+		import fixedsizearray;
 
 		import math;
 		int[] permutation = to!(int[])(iota(0, (*lnt).length).array);

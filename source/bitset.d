@@ -104,6 +104,7 @@ struct Bitset(Store) if(isIntegral!Store && isUnsigned!Store) {
 		this.store = s;
 	}
 
+	pragma(inline, true)
 	bool opIndex(const size_t idx) const {
 		return testBit(this.store, idx);
 	}
