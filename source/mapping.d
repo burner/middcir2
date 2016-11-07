@@ -236,7 +236,7 @@ struct Mappings(int SizeLnt, int SizePnt) {
 			const ref BitsetStore!uint oWrite, 
 			const bool stopAfterFirst = false) 
 	{
-		import std.array : array;
+		import std.array : array, back;
 		import std.range : iota;
 		import std.algorithm.sorting : nextPermutation;
 		import std.algorithm.iteration : sum;

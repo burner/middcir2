@@ -89,6 +89,20 @@ unittest {
 	}
 }
 
+template TypeFromSize(int Size) {
+	static if(Size == 8) {
+		alias TypeFromSize = ubyte;
+	} else static if(Size == 16) {
+		alias TypeFromSize = ushort;
+	} else static if(Size == 32) {
+		alias TypeFromSize = uint;
+	} else static if(Size == 64) {
+		alias TypeFromSize = ulong;
+	} else {
+		static assert(false);
+	}
+}
+
 Bitset!T bitsetAll(T)() {
 	Bitset!T ret;
 	ret.set();
@@ -198,6 +212,46 @@ struct Bitset(Store) if(isIntegral!Store && isUnsigned!Store) {
 		return (rhs & this.store) == rhs;
 	}
 
+	size_t lowestBit() const {
+		import core.bitop : bsf;
+		if(this.store == 0) {
+			return size_t.max;
+		} else {
+			return bsf(this.store);
+		}
+	}
+
+	unittest {
+		auto b = Bitset!uint(0b0001);
+		assert(b.lowestBit() == 0);
+
+		b = Bitset!uint(0b1000);
+		assert(b.lowestBit() == 3);
+
+		b = Bitset!uint(0b0000);
+		assert(b.lowestBit() == size_t.max);
+	}
+
+	size_t lowestBit(const size_t belowBit) const {
+		import std.stdio;
+		import core.bitop : bsf;
+
+		uint mask;
+		if(belowBit == 0) {
+			mask = uint.max;
+		} else {
+			mask = ~((1U << (belowBit)) - 1U);
+		}
+		uint nv = cast(uint)(this.store & mask);
+		//writefln("%3d %032b %032b", belowBit, mask, nv);
+
+		if(nv == 0) {
+			return size_t.max;
+		} else {
+			return bsf(nv);
+		}
+	}
+
 	void toString2(scope void delegate(const(char)[]) sink) const {
 		import std.format : formattedWrite;	
 		formattedWrite(sink, "(");
@@ -214,7 +268,15 @@ struct Bitset(Store) if(isIntegral!Store && isUnsigned!Store) {
 		formattedWrite(sink, ")");
 	}
 
-	void toString(scope void delegate(const(char)[]) sink) const {
+	string toString() const {
+		import std.array : appender;
+		auto app = appender!string();
+		this.toString(app);
+
+		return app.data;
+	}
+
+	void toString(S)(S sink) const {
 		/*bool first = true;
 		Store v = this.store;
 		for(int i = 0; i < this.size() / 4 && v != cast(Store)(0); ++i) {
@@ -349,6 +411,43 @@ unittest {
 		store.flip();
 		for(int i = 0; i < store.size(); ++i) {
 			assert(store.test(i));
+		}
+	}
+}
+
+unittest {
+	import std.conv : to;
+	import std.format : format;
+	import std.meta : AliasSeq;
+	auto b = Bitset!uint(0b1001);
+	assert(b.lowestBit(0) == 0, to!string(b.lowestBit(0)));
+	assert(b.lowestBit(2) == 3, to!string(b.lowestBit(2)));
+	assert(b.lowestBit(5) == size_t.max, to!string(b.lowestBit(5)));
+
+	foreach(T; AliasSeq!(ubyte,uint,ushort)) {
+		auto c = Bitset!T(T.max);
+		for(int i = 0; i < T.sizeof * 8; ++i) {
+			assert(c.lowestBit(i) == i, 
+				format("%s %s %s", T.stringof, i, to!string(c.lowestBit(i)))
+			);
+		}
+	}
+
+	b = Bitset!uint(0b_10_10_10_10_10_10_10_10_10_10_10_10_10_10_10_10);
+	for(int i = 0; i < 32; ++i) {
+		if(i % 2 == 0) {
+			assert(b.lowestBit(i) == i + 1);
+		} else {
+			assert(b.lowestBit(i) == i);
+		}
+	}
+
+	b = Bitset!uint(0b_01_01_01_01_01_01_01_01_01_01_01_01_01_01_01_01);
+	for(int i = 0; i < 31; ++i) {
+		if(i % 2 == 0) {
+			assert(b.lowestBit(i) == i);
+		} else {
+			assert(b.lowestBit(i) == i + 1, format("%s %s", i, b.lowestBit(i)));
 		}
 	}
 }
