@@ -78,6 +78,16 @@ Bitset!T bitset(T,R)(ref Array!R r) if(isIntegral!T) {
 	return ret;
 }
 
+import std.traits : isArray;
+
+Bitset!T bitset(T,A)(A arr) if(isArray!A) {
+	Bitset!T ret;
+	foreach(it; arr) {
+		ret.set(it);
+	}
+	return ret;
+}
+
 unittest {
 	int[] arr = [0, 4, 6, 8, 31];
 	Array!uint a;
@@ -252,7 +262,15 @@ struct Bitset(Store) if(isIntegral!Store && isUnsigned!Store) {
 		}
 	}
 
-	void toString2(scope void delegate(const(char)[]) sink) const {
+	string toString2() const {
+		import std.array : appender;
+		auto app = appender!string();
+		this.toString2(app);
+
+		return app.data;
+	}
+
+	void toString2(S)(S sink) const {
 		import std.format : formattedWrite;	
 		formattedWrite(sink, "(");
 		bool first = true;

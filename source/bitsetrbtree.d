@@ -39,7 +39,7 @@ struct BitsetArray(T) {
 		//formattedWrite(sink, "%b len(%s) [", this.bitset.store,
 		formattedWrite(sink, " len(%s) [", this.subsets.length);
 		foreach(ref it; this.subsets) {
-			formattedWrite(sink, "%b ", it.store);
+			formattedWrite(sink, "%s ", it.toString2());
 		}
 		formattedWrite(sink, "]");
 	}
@@ -160,11 +160,11 @@ unittest {
 	}
 }
 
-struct BitsetArrayArrayIterator(T) {
-	BitsetArrayArray!(T)* ptr;
+struct BitsetArrayArrayIterator(T,S) {
+	S* ptr;
 	long curPos;
 
-	this(BitsetArrayArray!(T)* ptr, long curPos = 0) {
+	this(S* ptr, long curPos = 0) {
 		this.ptr = ptr;
 		this.curPos = curPos;
 	}
@@ -185,7 +185,7 @@ struct BitsetArrayArrayIterator(T) {
 		this.curPos--;
 	}
 
-	bool opEqual(const BitsetArrayArrayIterator!T rhs) {
+	bool opEqual(const(BitsetArrayArrayIterator!(T,S)) rhs) {
 		return this.ptr == rhs.ptr && this.curPos == rhs.curPos;
 	}
 
@@ -267,11 +267,11 @@ struct BitsetArrayArray(T) {
 	}
 
 	auto begin() {
-		return BitsetArrayArrayIterator!T(&this, 0);
+		return BitsetArrayArrayIterator!(T,typeof(this))(&this, 0);
 	}
 
 	auto end() {
-		return BitsetArrayArrayIterator!T(&this, this.length);
+		return BitsetArrayArrayIterator!(T,typeof(this))(&this, this.length);
 	}
 
 	auto opSlice() const {
