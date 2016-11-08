@@ -247,6 +247,7 @@ struct BitsetArrayArray(T) {
 		auto it = this.search(bs);
 		if(!it.isNull()) {
 			//writefln("%b %b", (*it).bitset.store, bs.store);
+			// TODO figure out if this is really a valid assertion
 			assert(bs != (*it).bitset, format("bs(%b) it(%b)", bs.store,
 					(*it).bitset.store
 			));

@@ -1,38 +1,61 @@
 module bitsettrie;
 
+import std.stdio;
+
 import bitsetmodule;
 
 import bitsetrbtree : BitsetArray;
 
 class TrieNode(T) {
 	const(size_t) bitSetPos;
-	long bitSetArrayIdx;
+	long arrayIdx;
 
 	TrieNode!(T)[T.sizeof * 8] follow;
 
 	this(size_t bitSetPos, long bitSetArrayIdx) {
 		this.bitSetPos = bitSetPos;
-		this.bitSetArrayIdx = bitSetArrayIdx;
+		this.arrayIdx = bitSetArrayIdx;
 	}
 
-	void insert(const(size_t) bitPos, const(long) arrayIdx, 
-			ref Trie!T trie, const(Bitset!T) bs) 
-	{
-		if(this.bitSetArrayIdx != -1) {
-			trie.array[this.bitSetArrayIdx].subsets ~= bs;
-		}
-
-		const lp = trie.array[arrayIdx].lowestBit(bitPos);
-
-		if(lp == size_t.max) {
-			this.bitSetArrayIdx = arrayIdx;
-			return;
+	void insert(ref Trie!T trie, const(Bitset!T) bs) {
+		if(this.arrayIdx != -1) {
+			trie.array[this.arrayIdx].subsets ~= bs;
 		} else {
+			const lp = bs.lowestBit(this.bitSetPos + 1);
 
+			if(lp == size_t.max) {
+				this.arrayIdx = trie.array.length;
+				trie.array ~= BitsetArray!T(bs);
+			} else {
+				if(this.follow[lp] is null) {
+					this.follow[lp] = new TrieNode!T(lp, -1);
+				}
+
+				this.follow[lp].insert(trie, bs);
+			}
 		}
 	}
 
-	void toString(S)(S sink, ref const(Trie!Size) trie, const(ulong) indent) const {
+	void toString(S)(S sink, ref const(Trie!T) trie, const(ulong) indent) const {
+		if(indent == 0) {
+			format(sink, indent, "%02d:", this.bitSetPos);
+		} else {
+			format(sink, indent, "%2d:", this.bitSetPos);
+		}
+		if(this.arrayIdx != -1) {
+			format(sink, 0, "%s [", trie.array[this.arrayIdx].bitset.toString2());
+			foreach(it; trie.array[this.arrayIdx].subsets) {
+				format(sink, 0, "%s ", it.toString2());
+			}
+			format(sink, 0, "]");
+		}
+		format(sink, 0, "\n");
+
+		foreach(it; this.follow) {
+			if(it !is null) {
+				it.toString(sink, trie, indent + 1);
+			}
+		}
 	}
 }
 
@@ -49,21 +72,17 @@ struct Trie(T) {
 
 		const lowBit = bs.lowestBit(0);
 		if(this.follow[lowBit] is null) {
-			const arrayIdx = this.array.length;
-			this.array ~= BitsetArray!T(bs);
-			this.follow[lowBit] = new TrieNode!T(lowBit + 1, -1);
+			this.follow[lowBit] = new TrieNode!T(lowBit, -1);
 		}
 
-		this.follow[lowBit].insert(lowBit + 1, this, bs);
+		this.follow[lowBit].insert(this, bs);
 	}
 
 	auto begin() {
-		alias T = TypeFromSize!Size;
 		return BitsetArrayArrayIterator!(T,typeof(this))(&this, 0);
 	}
 
 	auto end() {
-		alias T = TypeFromSize!Size;
 		return BitsetArrayArrayIterator!(T,typeof(this))(&this, this.array.length);
 	}
 
@@ -79,10 +98,10 @@ struct Trie(T) {
 	}
 
 	void toString(S)(S sink) const {
-		for(int i = 0; i < Size; ++i) {
+		for(int i = 0; i < T.sizeof * 8; ++i) {
 			if(this.follow[i] !is null) {
-				format(sink, 0, "%s:\n", i);
-				this.follow[i].toString(sink, this, 1);
+				//format(sink, 0, "%2d:\n", i);
+				this.follow[i].toString(sink, this, 0);
 			}
 		}
 	}
@@ -135,8 +154,8 @@ unittest {
 	Trie!ushort t; 
 	BitsetArrayArray!ushort baa;
 
-	for(int i = 4; i < 7; ++i) {
-		for(int j = 0; j < i * 3; ++j) {
+	for(int i = 4; i < 9; ++i) {
+		for(int j = 0; j < i * 2; ++j) {
 			randomShuffle(tmp, rnd);
 
 			auto bs = bitset!ushort(tmp[0 .. i]);
