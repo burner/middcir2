@@ -102,13 +102,43 @@ struct Trie(T) {
 		return -1;
 	}
 
+	long search(const(Bitset!T) bs) const {
+		import std.format : format;
+
+		long id = -1;
+		outer: for(size_t j = 0; j < follow.length; ++j) {
+			for(size_t i = bs.lowestBit(0); 
+					i != size_t.max; i = bs.lowestBit(i + 1))
+			{
+				if(follow[j][i] !is null) {
+					id = follow[j][i].search(bs);
+					if(id != -1) {
+						const bFS = this.bluntForceSearch(bs);
+						assert(bFS != -1);
+						assert(this.array[bFS].bitset.count() ==
+								this.array[id].bitset.count(),
+							format("\nbs  %s\nid  %s\nbFS %s", 
+								bs.toString2(),
+								this.array[id].bitset.toString2(),
+								this.array[bFS].bitset.toString2()
+							)
+						);
+						//this.array[id].subsets ~= bs;
+						break outer;
+					}
+				}
+			}
+		}
+		return id;
+	}
+
 	void insert(const(Bitset!T) bs) {
 		import std.format : format;
 		assert(bs.any());
 
 
 		//writefln("\tnew search %s", bs.toString2());
-		long id = -1;
+		/*long id = -1;
 		outer: for(size_t j = 0; j < follow.length; ++j) {
 			for(size_t i = bs.lowestBit(0); 
 					i != size_t.max; i = bs.lowestBit(i + 1))
@@ -131,9 +161,12 @@ struct Trie(T) {
 					}
 				}
 			}
-		}
+		}*/
 
-		if(id == -1) {
+		long id = this.search(bs);
+		if(id != -1) {
+			this.array[id].subsets ~= bs;
+		} else {
 			long ne = bs.lowestBit(0);
 			const count = bs.count();
 			if(this.follow[count][ne] is null) {
