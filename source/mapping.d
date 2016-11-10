@@ -94,27 +94,6 @@ class Mapping(int SizeLnt, int SizePnt) {
 		rsltQuorumSet.insertUnique(perm);
 	}
 
-	/*void reconnectQuorum(ref const(Bitset!uint) quorum, 
-			ref BitsetStore!uint rsltQuorumSet, Bitset!uint perm)
-	{
-		FixedSizeArray!(int,32) whichNodesToReconnect;
-		getBitsSet(quorum, whichNodesToReconnect);
-		const int numNodesToReconnect = to!int(whichNodesToReconnect.length);
-
-		for(int fidx = 0; fidx < numNodesToReconnect; ++fidx) {
-			for(int tidx = 0; tidx < numNodesToReconnect; ++tidx) {
-				if(!floyd.pathExists(
-						mapping[whichNodesToReconnect[fidx]], 
-						mapping[whichNodesToReconnect[tidx]])) 
-				{
-					return;
-				}
-			}
-		}
-
-		rsltQuorumSet.insertUnique(perm);
-	}*/
-
 	void reconnectQuorums(const ref BitsetStore!uint quorumSetA, 
 			ref BitsetStore!uint rsltQuorumSetA, 
 			const ref BitsetStore!uint quorumSetB, 

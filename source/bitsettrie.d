@@ -35,7 +35,7 @@ class TrieNode(T) {
 		if(this.arrayIdx != -1) {
 			return this.arrayIdx;
 		} else {
-			for(size_t i = bs.lowestBit(0); 
+			for(size_t i = bs.lowestBit(this.bitSetPos); 
 					i != size_t.max; i = bs.lowestBit(i + 1))
 			{
 				//writefln("i %d", i);
@@ -106,24 +106,26 @@ struct Trie(T) {
 		import std.format : format;
 		assert(bs.any());
 
-		//const bFS = this.bluntForceSearch(bs);
 
 		//writefln("\tnew search %s", bs.toString2());
 		long id = -1;
-		outer: for(size_t i = bs.lowestBit(0); 
-				i != size_t.max; i = bs.lowestBit(i + 1))
-		{
-			for(size_t j = 0; j < follow.length; ++j) {
+		outer: for(size_t j = 0; j < follow.length; ++j) {
+			for(size_t i = bs.lowestBit(0); 
+					i != size_t.max; i = bs.lowestBit(i + 1))
+			{
 				if(follow[j][i] !is null) {
 					id = follow[j][i].search(bs);
 					if(id != -1) {
-						//assert(bFS == id, 
-						//	format("bs %s\n id %s\nbFS %s", 
-						//		bs.toString2(),
-						//		this.array[id].bitset.toString2(),
-						//		this.array[bFS].bitset.toString2()
-						//	)
-						//);
+						const bFS = this.bluntForceSearch(bs);
+						assert(bFS != -1);
+						assert(this.array[bFS].bitset.count() ==
+								this.array[id].bitset.count(),
+							format("\nbs  %s\nid  %s\nbFS %s", 
+								bs.toString2(),
+								this.array[id].bitset.toString2(),
+								this.array[bFS].bitset.toString2()
+							)
+						);
 						this.array[id].subsets ~= bs;
 						break outer;
 					}
@@ -267,8 +269,8 @@ unittest {
 		t.insert(it);
 		baa.insert(it);
 	}
-	writeln(t.toString());
-	writeln(baa.toString());
+	//writeln(t.toString());
+	//writeln(baa.toString());
 }
 
 unittest {
@@ -279,6 +281,32 @@ unittest {
 	auto td = [
 		Bitset!ushort(0b0000_0001_0101_0010),
 		Bitset!ushort(0b0100_0011_0101_1110),
+	];
+
+	Trie!ushort t; 
+	BitsetArrayArray!ushort baa;
+
+	size_t minBits = 0;
+	foreach(it; td) {
+		size_t mb = it.count();
+		assert(mb >= minBits);
+		minBits = max(mb, minBits);
+		t.insert(it);
+		baa.insert(it);
+	}
+	//writeln(t.toString());
+	//writeln(baa.toString());
+}
+
+unittest {
+	import std.stdio;
+	import bitsetrbtree : BitsetArrayArray;
+	import std.algorithm.comparison : max;
+
+	auto td = [
+		Bitset!ushort(0b0101_0100_0001_1100),
+		Bitset!ushort(0b1101_0100_1011_1000),
+		Bitset!ushort(0b1101_0100_1011_1100),
 	];
 
 	Trie!ushort t; 
