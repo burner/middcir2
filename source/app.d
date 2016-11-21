@@ -258,6 +258,42 @@ void latticeMapped9quantil() {
 	writefln("\n%(%5d\n%)", td);
 }
 
+void genRandomGraphs() {
+	import std.random : Random;
+	import graphgen;
+
+	Array!(Graph!16) graphs;
+
+	auto rnd = Random(1337);
+
+	GraphGenConfig ggc;
+	ggc.numNodes = 9;
+	ggc.minEdges = 1;
+	ggc.maxEdges = 3;
+
+	log("Here");
+	auto gg = graphGenerator!16(16, ggc, rnd);
+	while(!gg.empty) {
+		writeln(gg.front.toString());
+		graphs.insertBack(gg.front);
+		gg.popFront(graphs);
+	}
+
+	auto f = File("128graphs.json", "w");
+	f.write("{\n \"graphs\" : [\n");
+	bool first = true;
+	foreach(ref it; graphs[]) {
+		if(first) {
+			it.toJSON(f.lockingTextWriter());
+		} else {
+			f.write(",\n");
+			it.toJSON(f.lockingTextWriter());
+		}
+		first = false;
+	}
+	f.write("\n ]\n}\n");
+}
+
 void main() {
 	//lattice(4,4);
 	//gridAgainstGrid(4,4);
@@ -266,7 +302,7 @@ void main() {
 	//latticeMapped2();
 	//latticeMCSMapped6();
 	//latticeMCSMapped9();
-	latticeMCSMappedCrossing6();
+	//latticeMCSMappedCrossing6();
 	//latticeMCSMappedCrossing9();
 	//latticeMCSMappedCrossing12();
 	//crossing12();
@@ -277,4 +313,5 @@ void main() {
 	//crossingSixteen();
 	//crossingMCSSixteen();
 	//latticeMapped9quantil();
+	genRandomGraphs();
 }

@@ -4,7 +4,7 @@ import std.math;
 import std.stdio;
 import std.format;
 import math;
-import utils;
+//import utils;
 
 double gridColumnCoverLong(const double p, const long nodesPerColumn, 
 		const long numberColumn) 

@@ -145,3 +145,15 @@ double sum(const(double[101]) arr) {
 
 	return rslt;
 }
+
+void format(S,Args...)(S sink, const(ulong) indent, string str, 
+		Args args)
+{
+	import std.format : formattedWrite;
+	for(ulong i = 0; i < indent; ++i) {
+		formattedWrite(sink, " ");
+	}
+
+	formattedWrite(sink, str, args);
+}
+

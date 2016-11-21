@@ -78,14 +78,14 @@ struct GraphGen(int Size, Rnd) {
 		this.rnd = &rnd;
 		auto tmp = Graph!Size(Size);
 		this.floyd.reserveArrays(Size);
-		this.gen();
+		this.popFront();
 	}
 
 	bool empty() const @property @safe pure nothrow {
 		return this.cnt >= this.upTo;
 	}
 
-	private void gen() {
+	private void gen(ref Array!(Graph!Size) existingGraphs) {
 		outer: while(true) {
 			Graph!Size tmp = genGraph!Size(*this.rnd, this.ggc);
 			this.floyd.execute(tmp);
@@ -94,6 +94,11 @@ struct GraphGen(int Size, Rnd) {
 					if(!this.floyd.pathExists(i, j)) {
 						continue outer;
 					}
+				}
+			}
+			foreach(ref it; existingGraphs) {
+				if(it.isHomomorph(tmp)) {
+					continue outer;
 				}
 			}
 			this.cur = tmp;
@@ -107,10 +112,14 @@ struct GraphGen(int Size, Rnd) {
 	}
 
 	void popFront() {
-		this.gen();
+		Array!(Graph!Size) empty;
+		this.gen(empty);
+	}
+
+	void popFront(ref Array!(Graph!Size) existingGraphs) {
+		this.gen(existingGraphs);
 	}
 }
-
 
 unittest {
 	import std.stdio : File;

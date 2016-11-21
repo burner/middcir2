@@ -3,8 +3,8 @@ module bitsettrie;
 import std.stdio;
 
 import bitsetmodule;
-
 import bitsetrbtree : BitsetArray;
+import utils : format;
 
 class TrieNode(T) {
 	const(size_t) bitSetPos;
@@ -236,17 +236,6 @@ struct Trie(T) {
 
 		return app.data;
 	}
-}
-
-private void format(S,Args...)(S sink, const(ulong) indent, string str, 
-		Args args)
-{
-	import std.format : formattedWrite;
-	for(ulong i = 0; i < indent; ++i) {
-		formattedWrite(sink, " ");
-	}
-
-	formattedWrite(sink, str, args);
 }
 
 unittest {

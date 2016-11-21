@@ -10,7 +10,7 @@ import exceptionhandling;
 
 import protocols;
 import math;
-import utils;
+import utils : compare, testSemetry, testQuorumIntersection, equal;
 import graph;
 
 struct MCS {

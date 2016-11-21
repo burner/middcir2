@@ -20,22 +20,44 @@ struct Graph(int Size) {
 	import std.array : appender;
 	import std.format : formattedWrite;
 
+	import stdx.data.json;
+
 	enum Length = Size;
 
 	static if(Size <= 8) {
 		alias Node = Bitset!ubyte;
+		alias NodeType = ubyte;
 	} else static if(Size <= 16) {
 		alias Node = Bitset!ushort;
+		alias NodeType = ushort;
 	} else static if(Size <= 32) {
 		alias Node = Bitset!uint;
+		alias NodeType = uint;
 	} else static if(Size <= 64) {
 		alias Node = Bitset!ulong;
+		alias NodeType = ulong;
 	}
 
 	int numNodes;
 
 	this(int numNodes) {
 		this.numNodes = numNodes;
+	}
+
+	this(const(JSONValue) j) {
+		import std.conv : to;
+		this.numNodes = to!int(j["numNodes"].get!long());
+		for(int i = 0; i < this.numNodes; ++i) {
+			this.nodePositions.insertBack(vec3d());
+		}
+		foreach(ref it; j["nodes"].get!(JSONValue[])) {
+			this.nodes[it["id"].get!long()].store = cast(NodeType)(it["adjacency"].get!long());
+			this.nodePositions[it["id"].get!long()] = vec3d(
+					it["x"].get!double(),
+					it["y"].get!double(), 
+					0.0
+				);
+		}
 	}
 
 	Node[Size] nodes;
@@ -259,7 +281,7 @@ struct Graph(int Size) {
 		// Lets test all combinations to see if there is a homomorphic mapping
 		// Yeah, fun all combinations again.
 		do {
-			writeln(perm[]);
+			//writeln(perm[]);
 			size_t idx;
 			foreach(it; perm[]) {
 				if(this.nodes[idx] != other.nodes[it]) {
@@ -291,6 +313,62 @@ struct Graph(int Size) {
 			}
 			formattedWrite(app, "\n");
 		}
+	}
+
+	void toJSON(A)(auto ref A app) const {
+		import utils : format;
+		format(app, 1, "{\n");
+		format(app, 2, "\"numNodes\" : %d,\n", this.numNodes);
+		format(app, 2, "\"nodes\" : [\n");
+		bool first = true;
+		for(int i = 0; i < this.numNodes; ++i) {
+			if(first) {
+				format(app, 3, "{\n");
+			} else {
+				format(app, 0, ",\n");
+				format(app, 3, "{\n");
+			}
+			first = false;
+			format(app, 4, "\"id\" : %d,\n", i);
+			format(app, 4, "\"x\" : %f,\n", this.nodePositions[i].x);
+			format(app, 4, "\"y\" : %f,\n", this.nodePositions[i].y);
+			format(app, 4, "\"adjacency\" : %d\n", this.nodes[i].store);
+			format(app, 3, "}");
+		}
+		format(app, 0, "\n");
+		format(app, 2, "]\n");
+		format(app, 1, "}");
+	}
+
+	bool isEqual(const ref typeof(this) other) const {
+		if(this.numNodes != other.numNodes) {
+			return false;
+		}
+
+		foreach(idx, it; this.nodes) {
+			if(it.store != other.nodes[idx].store) {
+				return false;
+			}
+		}
+
+		if(this.nodePositions.length != other.nodePositions.length) {
+			return false;
+		}
+
+		int idx = 0;
+		foreach(it; this.nodePositions) {
+			import std.math : approxEqual;
+
+			if(!approxEqual(it.x, other.nodePositions[idx].x) 
+					|| !approxEqual(it.y, other.nodePositions[idx].y) )
+			{
+				return false;
+			}
+
+			++idx;
+		}
+
+		return true;
 	}
 }
 
@@ -347,6 +425,20 @@ unittest {
 	auto g = genTestGraph!16();
 	auto f = File("tikztest.tex", "w");
 	f.write(g.toTikz());
+
+	import std.array : appender;
+	auto app = appender!string();
+	g.toJSON(app);
+	writeln(app.data);
+
+	import stdx.data.json;
+
+	auto js = toJSONValue(app.data);
+	auto g2 = typeof(g)(js);
+
+	import std.format : format;
+
+	assert(g == g2, format("\n%s%s", g, g2));
 }
 
 Graph!Size genTestGraph(int Size)() {
