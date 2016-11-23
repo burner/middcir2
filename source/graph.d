@@ -340,7 +340,7 @@ struct Graph(int Size) {
 		format(app, 1, "}");
 	}
 
-	bool isEqual(const ref typeof(this) other) const {
+	bool opEquals(const ref typeof(this) other) const {
 		if(this.numNodes != other.numNodes) {
 			return false;
 		}
@@ -429,7 +429,7 @@ unittest {
 	import std.array : appender;
 	auto app = appender!string();
 	g.toJSON(app);
-	writeln(app.data);
+	//writeln(app.data);
 
 	import stdx.data.json;
 
@@ -438,7 +438,7 @@ unittest {
 
 	import std.format : format;
 
-	assert(g == g2, format("\n%s%s", g, g2));
+	assert(g == g2, format("\n%s\n%s", g, g2));
 }
 
 Graph!Size genTestGraph(int Size)() {

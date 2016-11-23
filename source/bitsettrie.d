@@ -262,8 +262,8 @@ unittest {
 		t.insert(it);
 		baa.insert(it);
 	}
-	writeln(t.toString());
-	writeln(baa.toString());
+	//writeln(t.toString());
+	//writeln(baa.toString());
 }
 
 unittest {
@@ -342,8 +342,8 @@ unittest {
 		t.insert(it);
 		baa.insert(it);
 	}
-	writeln(t.toString());
-	writeln(baa.toString());
+	//writeln(t.toString());
+	//writeln(baa.toString());
 }
 
 unittest {
@@ -371,7 +371,7 @@ unittest {
 	}
 
 	//writeln(t.toString(), "\n\n\n\n", baa.toString());
-	writeln(t.toString2(), "\n\n\n\n", baa.toString());
+	//writeln(t.toString2(), "\n\n\n\n", baa.toString());
 
 	cast(void)assertEqual(t.array.length, baa.array.length);
 
@@ -409,9 +409,9 @@ unittest {
 
 	foreach(jdx, it; trieSort) {
 		//cast(void)assertEqual(it.length, baaSort[jdx].length);
-		writefln("%2d %5d %5d", jdx, it.length, baaSort[jdx].length);
+		//writefln("%2d %5d %5d", jdx, it.length, baaSort[jdx].length);
 	}
-	writefln("   %5d %5d", sumTrie, sumBaa);
+	//writefln("   %5d %5d", sumTrie, sumBaa);
 
 	foreach(i, it; baaSort) {
 		if(i > 0) {

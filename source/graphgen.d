@@ -183,7 +183,7 @@ string topString =
 		auto g = genGraph!32(r, config);*/
 
 	int i = 0;
-	foreach(it; graphGenerator!32(50, config, r)) {
+	foreach(it; graphGenerator!32(50, 50, config, r)) {
 		auto g = it;
 		string fn = format("graph%s.tex", i);
 		auto tf = File(fn, "w");
