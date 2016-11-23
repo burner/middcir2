@@ -31,7 +31,7 @@ bool areGraphsIsomorph(int Size)(const Graph!Size a, const Graph!Size b) {
 	import fixedsizearray;
 
 	if(a.length != b.length) {
-		writeln("LEN");
+		//writeln("LEN");
 		return false;
 	}
 
@@ -42,7 +42,7 @@ bool areGraphsIsomorph(int Size)(const Graph!Size a, const Graph!Size b) {
 	fillStores(aStores, a);
 
 	if(testIsomorphPossibility(aStores, bStores)) {
-		writeln("INDIVIDUAL LEN");
+		//writeln("INDIVIDUAL LEN");
 		return false;
 	}
 
@@ -52,13 +52,13 @@ bool areGraphsIsomorph(int Size)(const Graph!Size a, const Graph!Size b) {
 	}
 
 	do {
-		writefln("%(%2d %)", perm[]);
+		//writefln("%(%2d %)", perm[]);
 		// cur permutation of A must have equal length elements to B
 		size_t idx = 0;
 		inner: foreach(it; perm[]) {
 			// A and B must have the same number of edges
 			if(a.nodes[it].count() != b.nodes[idx].count()) {
-				writefln("NODE COUNT");
+				//writefln("NODE COUNT");
 				goto next;
 			}
 
@@ -67,6 +67,7 @@ bool areGraphsIsomorph(int Size)(const Graph!Size a, const Graph!Size b) {
 			size_t lowIdx = a.nodes[it].lowestBit();
 			while(lowIdx != size_t.max) {
 				if(!b.nodes[idx].test(perm[lowIdx])) {
+					//writefln("NODE FAIL");
 					goto next;
 				}
 				lowIdx = a.nodes[it].lowestBit(lowIdx + 1UL);
