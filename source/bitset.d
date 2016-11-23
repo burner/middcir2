@@ -150,9 +150,9 @@ struct Bitset(Store) if(isIntegral!Store && isUnsigned!Store) {
 
 	pragma(inline, true)
 	size_t count() const {
-		import core.bitop : popcnt;
-		return countImpl(this.store);	
-		//return popcnt(this.store);
+		//import core.bitop : popcnt;
+		//return countImpl(this.store);	
+		return popcnt(this.store);
 	}
 
 	// modify

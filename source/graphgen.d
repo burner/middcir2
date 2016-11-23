@@ -57,23 +57,25 @@ Graph!Size genGraph(int Size,R)(ref R random, const ref GraphGenConfig config) {
 	return ret;
 }
 
-auto graphGenerator(int Size, Rnd)(int upTo, const(GraphGenConfig) ggc,
+auto graphGenerator(int Size, Rnd)(int upTo, long maxTries, const(GraphGenConfig) ggc,
 	   	ref Rnd rnd)
 {
-	return GraphGen!(Size,Rnd)(upTo, ggc, rnd);
+	return GraphGen!(Size,Rnd)(upTo, maxTries, ggc, rnd);
 }
 
 struct GraphGen(int Size, Rnd) {
 	import floydmodule;
 	int cnt;
 	const int upTo;
+	long maxTries;
 	Rnd* rnd;
 	const(GraphGenConfig) ggc;
 	Floyd floyd;
 	Graph!Size cur;
 
-	this(int upTo, const(GraphGenConfig) ggc, ref Rnd rnd) {
+	this(int upTo, long maxTries, const(GraphGenConfig) ggc, ref Rnd rnd) {
 		this.upTo = upTo;
+		this.maxTries = maxTries;
 		this.ggc = ggc;
 		this.rnd = &rnd;
 		auto tmp = Graph!Size(Size);
@@ -82,11 +84,16 @@ struct GraphGen(int Size, Rnd) {
 	}
 
 	bool empty() const @property @safe pure nothrow {
-		return this.cnt >= this.upTo;
+		return this.cnt >= this.upTo || this.maxTries <= 0;
 	}
 
 	private void gen(ref Array!(Graph!Size) existingGraphs) {
 		outer: while(true) {
+			if(this.empty) {
+				break;
+			}
+			--this.maxTries;
+
 			Graph!Size tmp = genGraph!Size(*this.rnd, this.ggc);
 			this.floyd.execute(tmp);
 			for(int i = 0; i < this.ggc.numNodes; ++i) {
@@ -193,4 +200,36 @@ string topString =
 	}
 
 	f.writeln("\\end{document}");
+}
+
+Array!(Graph!Size) loadGraphsFromJSON(int Size)(const string filename) {
+	import std.file : readText;
+	import stdx.data.json;
+
+	Array!(Graph!Size) ret;
+
+	auto json = toJSONValue(readText(filename));
+
+	foreach(ref it; json["graphs"].get!(JSONValue[])) {
+		ret.insertBack(Graph!Size(it));
+	}
+
+	return ret;
+}
+
+void graphsToJSON(G)(const string filename, ref G g) {
+	import std.stdio : File;
+	auto f = File(filename, "w");
+	f.write("{\n \"graphs\" : [\n");
+	bool first = true;
+	foreach(ref it; g[]) {
+		if(first) {
+			it.toJSON(f.lockingTextWriter());
+		} else {
+			f.write(",\n");
+			it.toJSON(f.lockingTextWriter());
+		}
+		first = false;
+	}
+	f.write("\n ]\n}\n");
 }

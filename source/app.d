@@ -272,26 +272,44 @@ void genRandomGraphs() {
 	ggc.maxEdges = 3;
 
 	log("Here");
-	auto gg = graphGenerator!16(16, ggc, rnd);
+	auto gg = graphGenerator!16(16, 1024, ggc, rnd);
 	while(!gg.empty) {
 		writeln(gg.front.toString());
 		graphs.insertBack(gg.front);
 		gg.popFront(graphs);
 	}
 
-	auto f = File("128graphs.json", "w");
-	f.write("{\n \"graphs\" : [\n");
-	bool first = true;
-	foreach(ref it; graphs[]) {
-		if(first) {
-			it.toJSON(f.lockingTextWriter());
-		} else {
-			f.write(",\n");
-			it.toJSON(f.lockingTextWriter());
-		}
-		first = false;
+	graphsToJSON("129graphs.json", graphs);
+}
+
+void addGraphsToFile(int Size)(const string filename, long numGraphsToAdd) {
+	import std.random : Random;
+	import graphgen;
+
+	Array!(Graph!Size) graphs = loadGraphsFromJSON!Size(filename);
+
+	auto rnd = Random();
+
+	GraphGenConfig ggc;
+	ggc.numNodes = 9;
+	ggc.minEdges = 1;
+	ggc.maxEdges = 5;
+	auto gg = graphGenerator!16(256, 3, ggc, rnd);
+
+	while(!gg.empty) {
+		writefln("%4d\n%s", gg.maxTries, gg.front.toString());
+		graphs.insertBack(gg.front);
+		gg.popFront(graphs);
 	}
-	f.write("\n ]\n}\n");
+
+	logf("Generated %d new graphs. File now contains %d graphs", gg.cnt,
+			graphs.length);
+
+	graphsToJSON(filename, graphs);
+}
+
+void addGraphsToFile() {
+	addGraphsToFile!16("128graphs.json", 16);
 }
 
 void main() {
@@ -313,5 +331,6 @@ void main() {
 	//crossingSixteen();
 	//crossingMCSSixteen();
 	//latticeMapped9quantil();
-	genRandomGraphs();
+	//genRandomGraphs();
+	addGraphsToFile();
 }
