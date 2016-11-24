@@ -57,7 +57,7 @@ Graph!Size genGraph(int Size,R)(ref R random, const ref GraphGenConfig config) {
 	return ret;
 }
 
-auto graphGenerator(int Size, Rnd)(int upTo, long maxTries, const(GraphGenConfig) ggc,
+auto graphGenerator(int Size, Rnd)(long upTo, long maxTries, const(GraphGenConfig) ggc,
 	   	ref Rnd rnd)
 {
 	return GraphGen!(Size,Rnd)(upTo, maxTries, ggc, rnd);
@@ -66,14 +66,14 @@ auto graphGenerator(int Size, Rnd)(int upTo, long maxTries, const(GraphGenConfig
 struct GraphGen(int Size, Rnd) {
 	import floydmodule;
 	int cnt;
-	const int upTo;
+	const long upTo;
 	long maxTries;
 	Rnd* rnd;
 	const(GraphGenConfig) ggc;
 	Floyd floyd;
 	Graph!Size cur;
 
-	this(int upTo, long maxTries, const(GraphGenConfig) ggc, ref Rnd rnd) {
+	this(long upTo, long maxTries, const(GraphGenConfig) ggc, ref Rnd rnd) {
 		this.upTo = upTo;
 		this.maxTries = maxTries;
 		this.ggc = ggc;
@@ -88,6 +88,7 @@ struct GraphGen(int Size, Rnd) {
 	}
 
 	private void gen(ref Array!(Graph!Size) existingGraphs) {
+		import graphisomorph;
 		outer: while(true) {
 			if(this.empty) {
 				break;
@@ -104,7 +105,8 @@ struct GraphGen(int Size, Rnd) {
 				}
 			}
 			foreach(ref it; existingGraphs) {
-				if(it.isHomomorph(tmp)) {
+				//if(it.isHomomorph(tmp)) {
+				if(areGraphsIsomorph(tmp, it)) {
 					continue outer;
 				}
 			}

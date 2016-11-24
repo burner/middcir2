@@ -284,9 +284,13 @@ void genRandomGraphs() {
 
 void addGraphsToFile(int Size)(const string filename, long numGraphsToAdd) {
 	import std.random : Random;
+	import std.file : exists;
 	import graphgen;
 
-	Array!(Graph!Size) graphs = loadGraphsFromJSON!Size(filename);
+	Array!(Graph!Size) graphs;
+	if(exists(filename)) {
+		graphs = loadGraphsFromJSON!Size(filename);
+	}
 
 	auto rnd = Random();
 
@@ -294,7 +298,7 @@ void addGraphsToFile(int Size)(const string filename, long numGraphsToAdd) {
 	ggc.numNodes = 9;
 	ggc.minEdges = 1;
 	ggc.maxEdges = 5;
-	auto gg = graphGenerator!16(256, 3, ggc, rnd);
+	auto gg = graphGenerator!16(numGraphsToAdd, numGraphsToAdd * 3, ggc, rnd);
 
 	while(!gg.empty) {
 		writefln("%4d\n%s", gg.maxTries, gg.front.toString());
@@ -309,7 +313,7 @@ void addGraphsToFile(int Size)(const string filename, long numGraphsToAdd) {
 }
 
 void addGraphsToFile() {
-	addGraphsToFile!16("128graphs.json", 16);
+	addGraphsToFile!16("9nodegraphs.json", 256);
 }
 
 void main() {

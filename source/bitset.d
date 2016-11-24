@@ -152,7 +152,7 @@ struct Bitset(Store) if(isIntegral!Store && isUnsigned!Store) {
 	size_t count() const {
 		import core.bitop : popcnt;
 		//return countImpl(this.store);	
-		return popcnt(this.store);
+		return popcnt(cast(uint)this.store);
 	}
 
 	// modify
