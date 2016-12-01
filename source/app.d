@@ -229,7 +229,6 @@ void crossingMCSSixteen() {
 	);
 }
 
-
 void latticeMapped9quantil() {
 	import plot.resultplot;
 	import std.typecons : Unique;
@@ -314,6 +313,13 @@ void addGraphsToFile(int Size)(const string filename, long numGraphsToAdd) {
 
 void addGraphsToFile() {
 	addGraphsToFile!16("9nodegraphs.json", 256);
+}
+
+void runAllMappings(const(string) graphFile) {
+	Array!(Graph!Size) graphs;
+	if(exists(graphFile)) {
+		graphs = loadGraphsFromJSON!Size(graphFile);
+	}
 }
 
 void main() {

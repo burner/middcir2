@@ -39,6 +39,11 @@ struct Graph(int Size) {
 	}
 
 	int numNodes;
+	Node[Size] nodes;
+	Array!vec3d nodePositions;
+	string mappingRsltFile;
+	string crossingRsltFile;
+
 
 	this(int numNodes) {
 		this.numNodes = numNodes;
@@ -58,11 +63,29 @@ struct Graph(int Size) {
 					0.0
 				);
 		}
+
+		enum mrf = "mappingRlstFile";
+		if(mrf in j) {
+			this.mappingRsltFile = j[mrf].get!string();
+		}
+
+		enum crf = "crossingRlstFile";
+		if(crf in j) {
+			this.crossingRsltFile = j[crf].get!string();
+		}
 	}
 
-	Node[Size] nodes;
+	string isomorphName() const {
+		import std.array : appender;
+		import std.format : formattedWrite;
+		auto app = appender!string();
 
-	Array!vec3d nodePositions;
+		formattedWrite(app, "%d", this.numNodes);
+		foreach(it; nodes) {
+			formattedWrite(app, "_%d", it.store);
+		}
+		return app.data;
+	}
 
 	Graph!Size dup() const {
 		auto ret = Graph!Size(this.numNodes);
