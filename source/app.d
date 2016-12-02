@@ -320,6 +320,15 @@ void runAllMappings(const(string) graphFile) {
 	if(exists(graphFile)) {
 		graphs = loadGraphsFromJSON!Size(graphFile);
 	}
+
+	foreach(ref it; graphs[]) {
+		if(it.mappingFileName.empty) {
+
+		}
+		if(it.crossingFileName.empty) {
+
+		}
+	}
 }
 
 void main() {
