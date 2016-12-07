@@ -315,6 +315,14 @@ void addGraphsToFile() {
 	addGraphsToFile!16("9nodegraphs.json", 256);
 }
 
+void runMapping() {
+	foreach(row; [ROW(0.01), ROW(0.1), ROW(0.25), ROW(0.5), ROW(0.75),
+			ROW(0.9), ROW(0.99)])
+	{
+
+	}
+}
+
 void runAllMappings(const(string) graphFile) {
 	Array!(Graph!Size) graphs;
 	if(exists(graphFile)) {
@@ -323,6 +331,7 @@ void runAllMappings(const(string) graphFile) {
 
 	foreach(ref it; graphs[]) {
 		if(it.mappingFileName.empty) {
+
 
 		}
 		if(it.crossingFileName.empty) {
