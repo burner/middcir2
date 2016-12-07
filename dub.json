@@ -11,6 +11,7 @@
 		"bitfiddle": ">=0.0.5",
 		"exceptionhandling": ">=0.0.9",
 		"units-d": "~>0.1.0",
-		"std_data_json": "~>0.18.2"
+		"std_data_json": "~>0.18.2",
+		"rc": "~>0.0.2"
 	}
 }

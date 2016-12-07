@@ -171,7 +171,9 @@ class Mapping(int SizeLnt, int SizePnt) {
 }
 
 struct Mappings(int SizeLnt, int SizePnt) {
-	Mapping!(SizeLnt,SizePnt) bestMapping;
+	import std.typecons : RefCounted;
+
+	RefCounted!(Mapping!(SizeLnt,SizePnt)) bestMapping;
 	Result bestResult;
 	const(ROW) readBalance;
 	const(ROW) writeBalance;
