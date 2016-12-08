@@ -7,6 +7,7 @@ import std.stdio;
 import std.experimental.logger;
 import std.meta;
 import std.concurrency;
+import std.array : empty;
 
 import gfm.math.vector;
 
@@ -42,11 +43,12 @@ struct RCMapping(int SizeLnt, int SizePnt) {
 }
 
 void decrementRCMapping(RC)(RC* ptr) {
+	import core.memory : GC;
 	assert(ptr !is null);	
 	(*ptr).rc--;
-	if(*ptr.rc == 0) {
-		GC.free(*ptr.mapping);
-		*ptr.mapping = null;
+	if((*ptr).rc == 0) {
+		GC.free(cast(void*)(*ptr).mapping);
+		(*ptr).mapping = null;
 		GC.free(ptr);
 	}
 }
@@ -63,6 +65,7 @@ struct MappingResultElement(int SizeLnt, int SizePnt) {
 }
 
 struct MappingResultStore(int SizeLnt, int SizePnt) {
+	import std.math : isNaN;
 	MappingResultElement!(SizeLnt,SizePnt)[101] bestAvail; 
 	MappingResultElement!(SizeLnt,SizePnt)[101] bestCosts; 
 
@@ -76,9 +79,12 @@ struct MappingResultStore(int SizeLnt, int SizePnt) {
 
 	static RCMapping!(SizeLnt,SizePnt)* newPtr(Mapping!(SizeLnt,SizePnt) mapping) 
 	{
-		RCMapping!(SizeLnt,SizePnt)* ptr = GC.malloc(RCMapping!(SizeLnt,SizePnt).sizeof);
-		*ptr.rc = 1;
-		*ptr.mapping = mapping;
+		import core.memory : GC;
+		RCMapping!(SizeLnt,SizePnt)* ptr = cast(RCMapping!(SizeLnt,SizePnt)*)(
+			GC.malloc(RCMapping!(SizeLnt,SizePnt).sizeof)
+		);
+		(*ptr).rc = 1;
+		(*ptr).mapping = mapping;
 		return ptr;
 	}
 
@@ -99,15 +105,15 @@ struct MappingResultStore(int SizeLnt, int SizePnt) {
 
 			const(int) idx = cast(int)(it.value * 100);
 
-			if(!isNaN(this.row[idx].value) && value > this.row[idx].value) {
-				decrementRCMapping(this.row[idx].mapping);
-				this.row[idx].mapping = ptr;
-				incrementRCMapping(this.row[idx].mapping);
+			if(!isNaN(this.bestAvail[idx].value) && value > this.bestAvail[idx].value) {
+				decrementRCMapping(this.bestAvail[idx].mapping);
+				this.bestAvail[idx].mapping = ptr;
+				incrementRCMapping(this.bestAvail[idx].mapping);
 			}
 		}
 	}
 
-	void compareROWC(ref Result rslt, Mapping!(SizeLnt,SizePnt) mapping) {
+	void compareROWC(ref Result rslt, RCMapping!(SizeLnt,SizePnt)* ptr) {
 		const(double) sumRsltW = sum(rslt.writeCosts);
 		const(double) sumRsltR = sum(rslt.readCosts);
 
@@ -117,10 +123,10 @@ struct MappingResultStore(int SizeLnt, int SizePnt) {
 
 			const(int) idx = cast(int)(it.value * 100);
 
-			if(!isNaN(this.rowc[idx].value) && value > this.rowc[idx].value) {
-				decrementRCMapping(this.rowc[idx].mapping);
-				this.row[idx].mapping = ptr;
-				incrementRCMapping(this.rowc[idx].mapping);
+			if(!isNaN(this.bestCosts[idx].value) && value > this.bestCosts[idx].value) {
+				decrementRCMapping(this.bestCosts[idx].mapping);
+				this.bestCosts[idx].mapping = ptr;
+				incrementRCMapping(this.bestCosts[idx].mapping);
 			}
 		}
 	}
@@ -266,6 +272,8 @@ struct Mappings(int SizeLnt, int SizePnt) {
 
 	RefCounted!(Mapping!(SizeLnt,SizePnt)) bestMapping;
 	Result bestResult;
+	MappingResultStore!(SizeLnt,SizePnt) results;
+
 	const(ROW) readBalance;
 	const(ROW) writeBalance;
 
@@ -285,6 +293,15 @@ struct Mappings(int SizeLnt, int SizePnt) {
 		this.readBalance = readWriteBalance;
 		this.writeBalance = ROW(1.0) - readWriteBalance;
 		this.quorumTestFraction = quorumTestFraction;
+	}
+
+	this(ref Graph!SizeLnt lnt, ref Graph!SizePnt pnt,
+			ROW[] row, ROWC[] rowc)
+	{
+		assert(!row.empty);
+		this(lnt, pnt, QTF(1.0), row[0]);
+
+		this.results = MappingResultStore!(SizeLnt,SizePnt)(row, rowc);
 	}
 
 	Result calcAC(const ref BitsetStore!uint oRead, 
