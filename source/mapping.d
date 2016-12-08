@@ -23,6 +23,7 @@ import utils;
 import units;
 
 alias ROW = Quantity!(double, "ReadOverWrite", 0.0, 1.0);
+alias ROWC = Quantity!(double, "ReadOverWriteCosts", 0.0, 1.0);
 alias QTF = Quantity!(double, "QuorumTestFraction", 0.0, 1.0);
 
 struct MappingParameter {
@@ -32,6 +33,96 @@ struct MappingParameter {
 	this(ROW row, QTF qtf) {
 		this.row = row;
 		this.quorumTestFraction = qtf;
+	}
+}
+
+struct RCMapping(int SizeLnt, int SizePnt) {
+	int rc;
+	Mapping!(SizeLnt,SizePnt) mapping;
+}
+
+void decrementRCMapping(RC)(RC* ptr) {
+	assert(ptr !is null);	
+	(*ptr).rc--;
+	if(*ptr.rc == 0) {
+		GC.free(*ptr.mapping);
+		*ptr.mapping = null;
+		GC.free(ptr);
+	}
+}
+
+void incrementRCMapping(RC)(RC* ptr) {
+	assert(ptr !is null);	
+	(*ptr).rc++;
+}
+
+struct MappingResultElement(int SizeLnt, int SizePnt) {
+	RCMapping!(SizeLnt, SizePnt)* mapping;
+	double value;
+	Result result;
+}
+
+struct MappingResultStore(int SizeLnt, int SizePnt) {
+	MappingResultElement!(SizeLnt,SizePnt)[101] bestAvail; 
+	MappingResultElement!(SizeLnt,SizePnt)[101] bestCosts; 
+
+	ROW[] row;
+	ROWC[] rowc;
+
+	this(ROW[] row, ROWC[] rowc) {
+		this.row = row;
+		this.rowc = rowc;
+	}
+
+	static RCMapping!(SizeLnt,SizePnt)* newPtr(Mapping!(SizeLnt,SizePnt) mapping) 
+	{
+		RCMapping!(SizeLnt,SizePnt)* ptr = GC.malloc(RCMapping!(SizeLnt,SizePnt).sizeof);
+		*ptr.rc = 1;
+		*ptr.mapping = mapping;
+		return ptr;
+	}
+
+	void compare(ref Result rslt, Mapping!(SizeLnt,SizePnt) mapping) {
+		auto ptr = newPtr(mapping);
+		this.compareROW(rslt, ptr);
+		this.compareROWC(rslt, ptr);
+		decrementRCMapping(ptr);
+	}
+
+	void compareROW(ref Result rslt, RCMapping!(SizeLnt,SizePnt)* ptr) {
+		const(double) sumRsltW = sum(rslt.writeAvail);
+		const(double) sumRsltR = sum(rslt.readAvail);
+
+		foreach(it; this.row) {
+			const(double) value = sumRsltR * it.value
+				+ sumRsltW * (1.0 - it.value);
+
+			const(int) idx = cast(int)(it.value * 100);
+
+			if(!isNaN(this.row[idx].value) && value > this.row[idx].value) {
+				decrementRCMapping(this.row[idx].mapping);
+				this.row[idx].mapping = ptr;
+				incrementRCMapping(this.row[idx].mapping);
+			}
+		}
+	}
+
+	void compareROWC(ref Result rslt, Mapping!(SizeLnt,SizePnt) mapping) {
+		const(double) sumRsltW = sum(rslt.writeCosts);
+		const(double) sumRsltR = sum(rslt.readCosts);
+
+		foreach(it; this.rowc) {
+			const(double) value = sumRsltR * it.value
+				+ sumRsltW * (1.0 - it.value);
+
+			const(int) idx = cast(int)(it.value * 100);
+
+			if(!isNaN(this.rowc[idx].value) && value > this.rowc[idx].value) {
+				decrementRCMapping(this.rowc[idx].mapping);
+				this.row[idx].mapping = ptr;
+				incrementRCMapping(this.rowc[idx].mapping);
+			}
+		}
 	}
 }
 
@@ -344,8 +435,6 @@ struct Mappings(int SizeLnt, int SizePnt) {
 					sum(bestResultL.readAvail) * readBalance.value;
 			writefln("%(%s, %) %.10f Final", mapCp, bestAvailL);
 		}
-
-		//return this.bestResult;
 	}
 
 	void createDummyBestMapping() {
