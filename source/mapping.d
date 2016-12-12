@@ -79,14 +79,12 @@ struct MappingResultStore(int SizeLnt, int SizePnt) {
 
 	RCMapping!(SizeLnt,SizePnt)* get(ROW row) {
 		auto idx = cast(int)(row.value * 100);
-		logf("idx %d", idx);
 		auto ret = this.bestAvail[idx].mapping;
 		return ret;
 	}
 
 	const(RCMapping!(SizeLnt,SizePnt)*) get(ROW row) const {
 		auto idx = cast(int)(row.value * 100);
-		logf("idx %d", idx);
 		auto ret = this.bestAvail[idx].mapping;
 		return ret;
 	}
@@ -111,7 +109,7 @@ struct MappingResultStore(int SizeLnt, int SizePnt) {
 		decrementRCMapping(ptr);
 	}
 
-	void compareImpl(const(double) value, RCMapping!(SizeLnt,SizePnt)* ptr,
+	static void compareImpl(const(double) value, RCMapping!(SizeLnt,SizePnt)* ptr,
 			const(int) idx, ref MappingResultElement!(SizeLnt,SizePnt)[101] arr)
 	{
 		if(arr[idx].mapping is null) {
@@ -320,6 +318,7 @@ struct Mappings(int SizeLnt, int SizePnt) {
 			ROW[] row, ROWC[] rowc)
 	{
 		assert(!row.empty);
+		this.quorumTestFraction = QTF(1.0);
 		this.lnt = &lnt;
 		this.pnt = &pnt;
 
@@ -328,10 +327,8 @@ struct Mappings(int SizeLnt, int SizePnt) {
 
 	@property Mapping!(SizeLnt,SizePnt) bestMapping() {
 		if(this.results.get(ROW(0.5)) !is null) {
-			logf("%s", ROW(0.5));
 			return this.results.get(ROW(0.5)).mapping;
 		} else {
-			logf("%s", this.results.row[0]);
 			return this.results.get(this.results.row[0]).mapping;
 		}
 	}
@@ -342,10 +339,8 @@ struct Mappings(int SizeLnt, int SizePnt) {
 
 	@property ref Result bestResult() {
 		if(this.results.get(ROW(0.5)) !is null) {
-			logf("%s", ROW(0.5));
 			return this.results.get(ROW(0.5)).result;
 		} else {
-			logf("%s", this.results.row[0]);
 			return this.results.get(this.results.row[0]).result;
 		}
 	}
@@ -630,12 +625,14 @@ unittest {
 	auto latticeRslt = lattice.calcAC();
 
 	logf("\n\n\n");
-	auto map = Mappings!(32,32)(lattice.graph, lattice.graph, [ROW(0.9)], null);
+	auto map = Mappings!(32,32)(lattice.graph, lattice.graph, [ROW(0.91)], null);
+	//auto map = Mappings!(32,32)(lattice.graph, lattice.graph);
 	auto mapRslt = map.calcAC(lattice.read, lattice.write);
 
-	for(int i = 0; i < 101; ++i) {
-		writefln("%.10f %.10f", mapRslt.readAvail[i], mapRslt.writeAvail[i]);
-	}
+	//for(int i = 0; i < 101; ++i) {
+	//	writefln("%.10f %.10f", map.results.get(ROW(0.91)).result.readAvail[i],
+	//			map.results.get(ROW(0.91)).result.writeAvail[i]);
+	//}
 
 	gnuPlot("Results/Lattice4_Lattice_Graph_ROW(0.9)", "",
 			ResultPlot(lattice.name(), latticeRslt),

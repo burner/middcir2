@@ -8,6 +8,36 @@ import bitsetmodule;
 import graph;
 import protocols;
 
+long[][] bestGridDiffs(long size) {
+	long[][] ret;
+
+	for(long i = 1; i <= size; ++i) {
+		long r = size / i;
+		if(r * i == size) {
+			ret ~= [r,i];
+		}
+	}
+
+	return ret;
+}
+
+unittest {
+	import exceptionhandling;
+
+	auto six = bestGridDiffs(6);
+	cast(void)assertEqual(six.length, 4);
+	cast(void)assertEqual(six[0], cast(long[])[6,1]);
+	cast(void)assertEqual(six[1], cast(long[])[3,2]);
+	cast(void)assertEqual(six[2], cast(long[])[2,3]);
+	cast(void)assertEqual(six[3], cast(long[])[1,6]);
+
+	auto nine = bestGridDiffs(9);
+	cast(void)assertEqual(nine.length, 3);
+	cast(void)assertEqual(nine[0], cast(long[])[9,1]);
+	cast(void)assertEqual(nine[1], cast(long[])[3,3]);
+	cast(void)assertEqual(nine[2], cast(long[])[1,9]);
+}
+
 struct Lattice {
 	import core.bitop : popcnt;
 	import std.container.array : Array;

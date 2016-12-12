@@ -19,6 +19,7 @@ import plot.mappingplot;
 import utils;
 import graph;
 import mapping;
+import stats;
 
 //version(release) {
 	//version = exceptionhandling_release_asserts;
@@ -315,14 +316,6 @@ void addGraphsToFile() {
 	addGraphsToFile!16("9nodegraphs.json", 256);
 }
 
-void runMapping() {
-	foreach(row; [ROW(0.01), ROW(0.1), ROW(0.25), ROW(0.5), ROW(0.75),
-			ROW(0.9), ROW(0.99)])
-	{
-
-	}
-}
-
 /*void runAllMappings(const(string) graphFile) {
 	Array!(Graph!Size) graphs;
 	if(exists(graphFile)) {
@@ -345,7 +338,7 @@ void main() {
 	//gridAgainstGrid(4,4);
 	//MCSAgainstMCS(15);
 	//latticeMapped();
-	latticeMapped2();
+	//latticeMapped2();
 	//latticeMCSMapped6();
 	//latticeMCSMapped9();
 	//latticeMCSMappedCrossing6();
@@ -361,4 +354,5 @@ void main() {
 	//latticeMapped9quantil();
 	//genRandomGraphs();
 	//addGraphsToFile();
+	runMappings("9nodegraphs.json");
 }
