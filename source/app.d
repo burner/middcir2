@@ -323,7 +323,7 @@ void runMapping() {
 	}
 }
 
-void runAllMappings(const(string) graphFile) {
+/*void runAllMappings(const(string) graphFile) {
 	Array!(Graph!Size) graphs;
 	if(exists(graphFile)) {
 		graphs = loadGraphsFromJSON!Size(graphFile);
@@ -338,14 +338,14 @@ void runAllMappings(const(string) graphFile) {
 
 		}
 	}
-}
+}*/
 
 void main() {
 	//lattice(4,4);
 	//gridAgainstGrid(4,4);
 	//MCSAgainstMCS(15);
 	//latticeMapped();
-	//latticeMapped2();
+	latticeMapped2();
 	//latticeMCSMapped6();
 	//latticeMCSMapped9();
 	//latticeMCSMappedCrossing6();
@@ -360,5 +360,5 @@ void main() {
 	//crossingMCSSixteen();
 	//latticeMapped9quantil();
 	//genRandomGraphs();
-	addGraphsToFile();
+	//addGraphsToFile();
 }

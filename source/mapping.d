@@ -40,6 +40,7 @@ struct MappingParameter {
 struct RCMapping(int SizeLnt, int SizePnt) {
 	int rc;
 	Mapping!(SizeLnt,SizePnt) mapping;
+	Result result;
 }
 
 void decrementRCMapping(RC)(RC* ptr) {
@@ -61,7 +62,6 @@ void incrementRCMapping(RC)(RC* ptr) {
 struct MappingResultElement(int SizeLnt, int SizePnt) {
 	RCMapping!(SizeLnt, SizePnt)* mapping;
 	double value;
-	Result result;
 }
 
 struct MappingResultStore(int SizeLnt, int SizePnt) {
@@ -77,7 +77,22 @@ struct MappingResultStore(int SizeLnt, int SizePnt) {
 		this.rowc = rowc;
 	}
 
-	static RCMapping!(SizeLnt,SizePnt)* newPtr(Mapping!(SizeLnt,SizePnt) mapping) 
+	RCMapping!(SizeLnt,SizePnt)* get(ROW row) {
+		auto idx = cast(int)(row.value * 100);
+		logf("idx %d", idx);
+		auto ret = this.bestAvail[idx].mapping;
+		return ret;
+	}
+
+	const(RCMapping!(SizeLnt,SizePnt)*) get(ROW row) const {
+		auto idx = cast(int)(row.value * 100);
+		logf("idx %d", idx);
+		auto ret = this.bestAvail[idx].mapping;
+		return ret;
+	}
+
+	static RCMapping!(SizeLnt,SizePnt)* newPtr(Mapping!(SizeLnt,SizePnt) mapping,
+			ref Result rslt) 
 	{
 		import core.memory : GC;
 		RCMapping!(SizeLnt,SizePnt)* ptr = cast(RCMapping!(SizeLnt,SizePnt)*)(
@@ -85,14 +100,32 @@ struct MappingResultStore(int SizeLnt, int SizePnt) {
 		);
 		(*ptr).rc = 1;
 		(*ptr).mapping = mapping;
+		(*ptr).result = rslt.dup();
 		return ptr;
 	}
 
 	void compare(ref Result rslt, Mapping!(SizeLnt,SizePnt) mapping) {
-		auto ptr = newPtr(mapping);
+		auto ptr = newPtr(mapping, rslt);
 		this.compareROW(rslt, ptr);
 		this.compareROWC(rslt, ptr);
 		decrementRCMapping(ptr);
+	}
+
+	void compareImpl(const(double) value, RCMapping!(SizeLnt,SizePnt)* ptr,
+			const(int) idx, ref MappingResultElement!(SizeLnt,SizePnt)[101] arr)
+	{
+		if(arr[idx].mapping is null) {
+			arr[idx].mapping = ptr;
+			arr[idx].value = value;
+			incrementRCMapping(ptr);
+		} else if(arr[idx].mapping !is null) {
+			if(value > arr[idx].value) {
+				decrementRCMapping(arr[idx].mapping);
+				arr[idx].mapping = ptr;
+				arr[idx].value = value;
+				incrementRCMapping(ptr);
+			}
+		}
 	}
 
 	void compareROW(ref Result rslt, RCMapping!(SizeLnt,SizePnt)* ptr) {
@@ -104,12 +137,7 @@ struct MappingResultStore(int SizeLnt, int SizePnt) {
 				+ sumRsltW * (1.0 - it.value);
 
 			const(int) idx = cast(int)(it.value * 100);
-
-			if(!isNaN(this.bestAvail[idx].value) && value > this.bestAvail[idx].value) {
-				decrementRCMapping(this.bestAvail[idx].mapping);
-				this.bestAvail[idx].mapping = ptr;
-				incrementRCMapping(this.bestAvail[idx].mapping);
-			}
+			compareImpl(value, ptr, idx, this.bestAvail);
 		}
 	}
 
@@ -122,12 +150,7 @@ struct MappingResultStore(int SizeLnt, int SizePnt) {
 				+ sumRsltW * (1.0 - it.value);
 
 			const(int) idx = cast(int)(it.value * 100);
-
-			if(!isNaN(this.bestCosts[idx].value) && value > this.bestCosts[idx].value) {
-				decrementRCMapping(this.bestCosts[idx].mapping);
-				this.bestCosts[idx].mapping = ptr;
-				incrementRCMapping(this.bestCosts[idx].mapping);
-			}
+			compareImpl(value, ptr, idx, this.bestCosts);
 		}
 	}
 }
@@ -268,16 +291,15 @@ class Mapping(int SizeLnt, int SizePnt) {
 }
 
 struct Mappings(int SizeLnt, int SizePnt) {
-	import std.typecons : RefCounted;
+	Mapping!(SizeLnt,SizePnt) bestMappingLocal;
 
-	RefCounted!(Mapping!(SizeLnt,SizePnt)) bestMapping;
-	Result bestResult;
+	Result bestResultLocal;
 	MappingResultStore!(SizeLnt,SizePnt) results;
 
-	const(ROW) readBalance;
-	const(ROW) writeBalance;
+	//const(ROW) readBalance;
+	//const(ROW) writeBalance;
 
-	double bestAvail;
+	//double bestAvail;
 
 	const(Graph!SizeLnt)* lnt;	
 	const(Graph!SizePnt)* pnt;	
@@ -287,11 +309,10 @@ struct Mappings(int SizeLnt, int SizePnt) {
 	this(ref Graph!SizeLnt lnt, ref Graph!SizePnt pnt, 
 			QTF quorumTestFraction = QTF(1.0), ROW readWriteBalance = ROW(0.5)) 
 	{
-		this.lnt = &lnt;
-		this.pnt = &pnt;
-		this.bestAvail = 0.0;
-		this.readBalance = readWriteBalance;
-		this.writeBalance = ROW(1.0) - readWriteBalance;
+		this(lnt, pnt, [readWriteBalance], null);
+		//this.bestAvail = 0.0;
+		//this.readBalance = readWriteBalance;
+		//this.writeBalance = ROW(1.0) - readWriteBalance;
 		this.quorumTestFraction = quorumTestFraction;
 	}
 
@@ -299,9 +320,38 @@ struct Mappings(int SizeLnt, int SizePnt) {
 			ROW[] row, ROWC[] rowc)
 	{
 		assert(!row.empty);
-		this(lnt, pnt, QTF(1.0), row[0]);
+		this.lnt = &lnt;
+		this.pnt = &pnt;
 
 		this.results = MappingResultStore!(SizeLnt,SizePnt)(row, rowc);
+	}
+
+	@property Mapping!(SizeLnt,SizePnt) bestMapping() {
+		if(this.results.get(ROW(0.5)) !is null) {
+			logf("%s", ROW(0.5));
+			return this.results.get(ROW(0.5)).mapping;
+		} else {
+			logf("%s", this.results.row[0]);
+			return this.results.get(this.results.row[0]).mapping;
+		}
+	}
+
+	@property const(Mapping!(SizeLnt,SizePnt)) bestMapping() const {
+		return (cast(Mappings!(SizeLnt,SizePnt))(this)).bestMapping();
+	}
+
+	@property ref Result bestResult() {
+		if(this.results.get(ROW(0.5)) !is null) {
+			logf("%s", ROW(0.5));
+			return this.results.get(ROW(0.5)).result;
+		} else {
+			logf("%s", this.results.row[0]);
+			return this.results.get(this.results.row[0]).result;
+		}
+	}
+
+	@property const(Result) bestResult() const {
+		return (cast(Mappings!(SizeLnt,SizePnt))(this)).bestResult();
 	}
 
 	Result calcAC(const ref BitsetStore!uint oRead, 
@@ -316,7 +366,7 @@ struct Mappings(int SizeLnt, int SizePnt) {
 		ulong numPerm = factorial(permutation.length);
 
 		this.calcACImpl(oRead, oWrite, numPerm, permutation,
-				this.bestMapping, this.bestResult, this.bestAvail,
+				//this.bestMappingLocal, this.bestResultLocal, this.bestAvail,
 				stopAfterFirst);
 		return this.bestResult;
 	}
@@ -325,7 +375,7 @@ struct Mappings(int SizeLnt, int SizePnt) {
 			const ref BitsetStore!uint oWrite, 
 			const bool stopAfterFirst = false) 
 	{
-		import std.array : array, back;
+		/*import std.array : array, back;
 		import std.range : iota;
 		import std.algorithm.sorting : nextPermutation;
 		import std.algorithm.iteration : sum;
@@ -392,16 +442,17 @@ struct Mappings(int SizeLnt, int SizePnt) {
 		this.bestAvail = threads[best].bestAvailL;
 		this.bestMapping = threads[best].bestMappingL;
 		assert(this.bestMapping !is null);
-		this.bestResult = threads[best].bestResultL;
+		this.bestResultLocal = threads[best].bestResultL;
 
-		return this.bestResult;
+		return this.bestResult;*/
+		assert(false);
 	}
 
 	void calcACImpl(const ref BitsetStore!uint oRead, 
 			const ref BitsetStore!uint oWrite, const(ulong) numPerm,
-			int[] permutation, ref Mapping!(SizeLnt,SizePnt) bestMappingL,
-			ref Result bestResultL, ref double bestAvailL,
-			const bool stopAfterFirst) const
+			int[] permutation, /*ref Mapping!(SizeLnt,SizePnt) bestMappingL,
+			ref Result bestResultL, ref double bestAvailL,*/
+			const bool stopAfterFirst)
 	{
 		import std.array : array;
 		import std.range : iota;
@@ -409,7 +460,6 @@ struct Mappings(int SizeLnt, int SizePnt) {
 		import math;
 		ulong numPermPercent = numPerm / 100;
 
-		writefln("Start %.10f", this.quorumTestFraction);
 		size_t cnt = 0;
 		do {
 			if(cnt != 0 && numPermPercent != 0 && cnt % numPermPercent == 0) {
@@ -422,42 +472,14 @@ struct Mappings(int SizeLnt, int SizePnt) {
 					this.quorumTestFraction
 			);
 			Result curRslt = cur.calcAC(oRead, oWrite);
-			double sumRslt = 
-				sum(curRslt.writeAvail)  * this.writeBalance.value + 
-				sum(curRslt.readAvail) * this.readBalance.value;
-
-			if(sumRslt > bestAvailL) {
-				writefln("%(%s, %) %.10f", permutation, sumRslt);
-				if(bestMappingL !is null) {
-					destroy(bestMappingL);
-				}
-
-				bestMappingL = cur;
-				bestAvailL = sumRslt;
-				bestResultL = curRslt;
-			}
+			this.results.compare(curRslt, cur);
 		} while(nextPermutation(permutation) && cnt < numPerm && !stopAfterFirst);
-
-		if(this.quorumTestFraction.value < 1.0) {
-			int[] mapCp = bestMappingL.mapping.dup;
-			if(bestMappingL !is null) {
-				destroy(bestMappingL);
-			}
-			bestMappingL = new Mapping!(SizeLnt,SizePnt)(*lnt, *pnt, mapCp,
-					QTF(1.0)
-			);
-			bestResultL = bestMappingL.calcAC(oRead, oWrite);
-			bestAvailL = 
-					sum(bestResultL.writeAvail)  * writeBalance.value + 
-					sum(bestResultL.readAvail) * readBalance.value;
-			writefln("%(%s, %) %.10f Final", mapCp, bestAvailL);
-		}
 	}
 
 	void createDummyBestMapping() {
 		import std.range : iota;
 		import std.array : array;
-		this.bestMapping = new Mapping!(SizeLnt,SizePnt)(*lnt, *pnt, 
+		this.bestMappingLocal = new Mapping!(SizeLnt,SizePnt)(*lnt, *pnt, 
 				iota(pnt.length).array().to!(int[]));
 	}
 
@@ -467,7 +489,7 @@ struct Mappings(int SizeLnt, int SizePnt) {
 	}
 }
 
-class MappingImpl(int SizeLnt, int SizePnt) : Thread {
+/*class MappingImpl(int SizeLnt, int SizePnt) : Thread {
 	Mappings!(SizeLnt,SizePnt)* mappings;
 	Mapping!(SizeLnt,SizePnt) bestMappingL;
 	Result bestResultL; 
@@ -546,7 +568,7 @@ class MappingImpl(int SizeLnt, int SizePnt) : Thread {
 		writefln("Done Tid %d Best Mapping %(%s, %) %.10f Final", this.tid, 
 				bestMappingL.mapping, bestAvailL);
 	}
-}
+}*/
 
 unittest {
 	auto lnt = Graph!16();
@@ -584,7 +606,6 @@ unittest {
 	);
 }
 
-
 unittest {
 	auto lattice = Lattice(2,2);
 	auto latticeRslt = lattice.calcAC();
@@ -602,4 +623,28 @@ unittest {
 
 	compare(latticeRslt.readCosts, mapRslt.readCosts, &equal);
 	compare(latticeRslt.writeCosts, mapRslt.writeCosts, &equal);
+}
+
+unittest {
+	auto lattice = Lattice(2,2);
+	auto latticeRslt = lattice.calcAC();
+
+	logf("\n\n\n");
+	auto map = Mappings!(32,32)(lattice.graph, lattice.graph, [ROW(0.9)], null);
+	auto mapRslt = map.calcAC(lattice.read, lattice.write);
+
+	for(int i = 0; i < 101; ++i) {
+		writefln("%.10f %.10f", mapRslt.readAvail[i], mapRslt.writeAvail[i]);
+	}
+
+	gnuPlot("Results/Lattice4_Lattice_Graph_ROW(0.9)", "",
+			ResultPlot(lattice.name(), latticeRslt),
+			ResultPlot(map.name(lattice.name()), mapRslt)
+	);
+
+	//compare(latticeRslt.readAvail, mapRslt.readAvail, &equal);
+	//compare(latticeRslt.writeAvail, mapRslt.writeAvail, &equal);
+
+	//compare(latticeRslt.readCosts, mapRslt.readCosts, &equal);
+	//compare(latticeRslt.writeCosts, mapRslt.writeCosts, &equal);
 }

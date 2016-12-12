@@ -3,7 +3,7 @@ module config;
 immutable double stepCount = 0.01;
 
 struct Config {
-	bool runMultiThreaded = true;
+	bool runMultiThreaded = false;
 }
 
 private Config __theConfig;

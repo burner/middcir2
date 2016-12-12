@@ -24,6 +24,25 @@ struct Result {
 		ret.writeCosts[] = 0.0;
 		return ret;
 	}
+
+	Result dup() {
+		auto ret = Result();
+
+		foreach(idx, it; this.readAvail) {
+			ret.readAvail[idx] = it;
+		}
+		foreach(idx, it; this.writeAvail) {
+			ret.writeAvail[idx] = it;
+		}
+		foreach(idx, it; this.readCosts) {
+			ret.readCosts[idx] = it;
+		}
+		foreach(idx, it; this.writeCosts) {
+			ret.writeCosts[idx] = it;
+		}
+
+		return ret;
+	}
 }
 
 Result calcAvailForTree(const int numNodes,
