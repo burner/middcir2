@@ -295,7 +295,7 @@ void addGraphsToFile(int Size)(const string filename, long numGraphsToAdd) {
 	auto rnd = Random();
 
 	GraphGenConfig ggc;
-	ggc.numNodes = 9;
+	ggc.numNodes = 6;
 	ggc.minEdges = 1;
 	ggc.maxEdges = 5;
 	auto gg = graphGenerator!16(numGraphsToAdd, numGraphsToAdd * 3, ggc, rnd);
@@ -309,29 +309,25 @@ void addGraphsToFile(int Size)(const string filename, long numGraphsToAdd) {
 	logf("Generated %d new graphs. File now contains %d graphs", gg.cnt,
 			graphs.length);
 
+	long id = 0;
+	foreach(ref it; graphs) {
+		if(it.id != long.min && it.id != id) {
+			throw new Exception("ID mismatch");
+		}
+		it.id = id++;
+	}
+
 	graphsToJSON(filename, graphs);
 }
 
 void addGraphsToFile() {
-	addGraphsToFile!16("9nodegraphs.json", 256);
+	addGraphsToFile!16("6nodegraphs.json", 6);
 }
 
-/*void runAllMappings(const(string) graphFile) {
-	Array!(Graph!Size) graphs;
-	if(exists(graphFile)) {
-		graphs = loadGraphsFromJSON!Size(graphFile);
-	}
-
-	foreach(ref it; graphs[]) {
-		if(it.mappingFileName.empty) {
-
-
-		}
-		if(it.crossingFileName.empty) {
-
-		}
-	}
-}*/
+void runMappings(string graphsFilename) {
+	auto runner = new StatsRunner!32(graphsFilename);
+	runner.runMappings();
+}
 
 void main() {
 	//lattice(4,4);
@@ -354,5 +350,5 @@ void main() {
 	//latticeMapped9quantil();
 	//genRandomGraphs();
 	//addGraphsToFile();
-	runMappings("9nodegraphs.json");
+	runMappings("6nodegraphs.json");
 }

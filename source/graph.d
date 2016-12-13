@@ -41,17 +41,18 @@ struct Graph(int Size) {
 	int numNodes;
 	Node[Size] nodes;
 	Array!vec3d nodePositions;
-	string mappingRsltFile;
-	string crossingRsltFile;
-
+	long id;
 
 	this(int numNodes) {
 		this.numNodes = numNodes;
+		this.id = long.min;
 	}
 
 	this(const(JSONValue) j) {
 		import std.conv : to;
 		this.numNodes = to!int(j["numNodes"].get!long());
+		this.id = long.min;
+
 		for(int i = 0; i < this.numNodes; ++i) {
 			this.nodePositions.insertBack(vec3d());
 		}
@@ -64,14 +65,9 @@ struct Graph(int Size) {
 				);
 		}
 
-		enum mrf = "mappingRlstFile";
-		if(mrf in j) {
-			this.mappingRsltFile = j[mrf].get!string();
-		}
-
-		enum crf = "crossingRlstFile";
-		if(crf in j) {
-			this.crossingRsltFile = j[crf].get!string();
+		enum idStr = "id";
+		if(idStr in j) {
+			this.id = j[idStr].get!long();
 		}
 	}
 
@@ -342,6 +338,7 @@ struct Graph(int Size) {
 		import utils : format;
 		format(app, 1, "{\n");
 		format(app, 2, "\"numNodes\" : %d,\n", this.numNodes);
+		format(app, 2, "\"id\" : %d,\n", this.id);
 		format(app, 2, "\"nodes\" : [\n");
 		bool first = true;
 		for(int i = 0; i < this.numNodes; ++i) {

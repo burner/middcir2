@@ -89,6 +89,18 @@ struct MappingResultStore(int SizeLnt, int SizePnt) {
 		return ret;
 	}
 
+	RCMapping!(SizeLnt,SizePnt)* get(ROWC rowc) {
+		auto idx = cast(int)(rowc.value * 100);
+		auto ret = this.bestCosts[idx].mapping;
+		return ret;
+	}
+
+	const(RCMapping!(SizeLnt,SizePnt)*) get(ROWC rowc) const {
+		auto idx = cast(int)(rowc.value * 100);
+		auto ret = this.bestCosts[idx].mapping;
+		return ret;
+	}
+
 	static RCMapping!(SizeLnt,SizePnt)* newPtr(Mapping!(SizeLnt,SizePnt) mapping,
 			ref Result rslt) 
 	{
