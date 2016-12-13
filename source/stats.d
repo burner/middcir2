@@ -142,8 +142,8 @@ class StatsRunner(int Size) {
 					map.results.get(it).mapping.mapping
 				);
 		}
-		format(app, 1, "}\n");
-		format(app, 1, ",\"rowc\" : {\n");
+		format(app, 1, "},\n");
+		format(app, 1, "\"rowc\" : {\n");
 		first = true;
 		foreach(it; this.row) {
 			if(!first) {
