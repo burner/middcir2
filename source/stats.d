@@ -124,7 +124,7 @@ class StatsRunner(int Size) {
 	{
 		import utils : format;
 		import std.stdio : File;
-		auto pathStr = format("%s/%s_.json", folderPath, type);
+		auto pathStr = format("%s/%s.json", folderPath, type);
 		auto af = File(pathStr, "w");
 		auto app = af.lockingTextWriter();
 
