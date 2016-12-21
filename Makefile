@@ -4,6 +4,12 @@ all:
 release:
 	dub --compiler=ldc --build=release
 
+releasedebug:
+	dub --compiler=ldc --build=release-debug
+
+releasedmd:
+	dub --compiler=dmd --build=release
+
 debug:
 	dub --compiler=dmd --build=debug
 

@@ -83,7 +83,13 @@ ResultPlot printPNTResults(LTW, RP)(LTW ltw, ref RP resultProtocol) {
 	return ret;
 }
 
+import std.range : ElementType;
+
+version(LDC) {
 ref auto Delay(alias arg, size_t idx)() { return *arg[idx].opDot(); }
+} else {
+ref auto Delay(alias arg, size_t idx)() { return *arg[idx]; }
+}
 
 template expand(alias args, size_t idx = 0) {
 	import std.meta : AliasSeq;

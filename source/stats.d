@@ -2,6 +2,8 @@ module stats;
 
 import std.experimental.logger;
 
+import core.thread;
+
 import utils;
 import mapping;
 import graph;
@@ -13,7 +15,9 @@ import protocols.lattice;
 import protocols.crossing;
 
 class StatsRunner(int Size) {
+	import core.memory : GC;
 	import std.file : exists, rmdir, mkdir, isDir;
+	import std.container.array;
 	import graphgen;
 	import std.format : format;
 
@@ -32,15 +36,31 @@ class StatsRunner(int Size) {
 	ROW[] row;
 	ROWC[] rowc;
 
-	this(string graphsFilename) {
+	int start;
+	int upTo;
+
+	this(string graphsFilename, int start, int upTo) {
 		this.graphsFilename = graphsFilename;
 		this.graphsResultFolderName = this.graphsFilename ~ "_Results";
 		if(exists(graphsFilename)) {
 			this.graphs = loadGraphsFromJSON!Size(this.graphsFilename);
 		}
-		assert(!graphs.empty);
+		assert(!this.graphs.empty);
+		bool[size_t] ids;
+		foreach(g; this.graphs[]) {
+			if(g.id in ids) {
+				throw new Exception(format(
+						"id %d already present check file %s",
+						g.id, graphsFilename
+					));
+			}
+			ids[g.id] = true;
+		}
+
+		this.start = start;
+		this.upTo = upTo == 0 ? cast(int)this.graphs.length : upTo;
 	
-		const(long) size = graphs.front.length;
+		const(long) size = this.graphs.front.length;
 		buildGraphBased(size);
 		this.mcs = MCS(cast(int)size);
 
@@ -56,10 +76,42 @@ class StatsRunner(int Size) {
 		this.createResultFolder();
 		this.runNormal();
 
-		int cnt;
-		foreach(g; this.graphs) {
-			logf("%3d of %3d", cnt++, this.graphs.length);
+		int cnt = 0;
+		foreach(g; this.graphs[this.start .. this.upTo]) {
+			logf("%3d of %3d", cnt++, this.upTo);
 			this.runMapping(g);
+			GC.collect();
+			GC.minimize();
+		}
+	}
+
+	void runMappingsThreaded() {
+		import std.range : chunks;
+		this.createResultFolder();
+		this.runNormal();
+
+		enum chunkSize = 4;
+
+		int cnt;
+		foreach(ch; chunks(this.graphs[], chunkSize)) {
+			{
+				Thread[chunkSize] threads;
+				//logf("%3d of %3d", cnt++, this.graphs.length);
+				logf("ch.length(%d)", ch.length);
+				for(int i = 0; i < ch.length; ++i) {
+					logf("\tid %d", ch[i].id);
+					threads[i] = new StatsThread!Size(
+							cast(shared(const(StatsRunner!Size)))this,
+							ch[i]
+						);
+					threads[i].start();
+				}
+				for(int i = 0; i < ch.length; ++i) {
+					threads[i].join();
+				}
+			}
+			GC.collect();
+			GC.minimize();
 		}
 	}
 	
@@ -84,10 +136,7 @@ class StatsRunner(int Size) {
 		}
 	}
 	
-	void runMapping(int Size)(auto ref Graph!Size g) {
-		import core.memory : GC;
-		GC.collect();
-		GC.minimize();
+	void runMapping(int Size)(const(Graph!Size) g) const {
 
 		auto path = format("%s/%05d", this.graphsResultFolderName, g.id);
 		if(exists(path)) {
@@ -119,8 +168,8 @@ class StatsRunner(int Size) {
 		}
 	}
 
-	void mappingToJson(ref Mappings!(Size,Size) map, string type,
-		   	string folderPath) 
+	void mappingToJson(ref const(Mappings!(Size,Size)) map, string type,
+		   	string folderPath) const
 	{
 		import utils : format;
 		import std.stdio : File;
@@ -160,8 +209,8 @@ class StatsRunner(int Size) {
 		format(app, 0, "}");
 	}
 
-	void mappingToDataFile(ref Mappings!(Size,Size) map, string type, 
-			string folderPath)
+	void mappingToDataFile(ref const(Mappings!(Size,Size)) map, string type, 
+			string folderPath) const
 	{
 		foreach(it; this.row) {
 			this.mappingToDataFile(map, type, folderPath, it);
@@ -171,8 +220,8 @@ class StatsRunner(int Size) {
 		}
 	}
 
-	void mappingToDataFile(ref Mappings!(Size,Size) map, string type, 
-			string folderPath, ROW row)
+	void mappingToDataFile(ref const(Mappings!(Size,Size)) map, string type, 
+			string folderPath, ROW row) const
 	{
 		auto pathROWStr = format("%s/%s_row_%.2f_", folderPath, type,
 				row.value
@@ -185,8 +234,8 @@ class StatsRunner(int Size) {
 		}
 	}
 
-	void mappingToDataFile(ref Mappings!(Size,Size) map, string type, 
-			string folderPath, ROWC rowc)
+	void mappingToDataFile(ref const(Mappings!(Size,Size)) map, string type, 
+			string folderPath, ROWC rowc) const
 	{
 		auto pathROWStr = format("%s/%s_rowc_%.2f_", folderPath, type,
 				rowc.value
@@ -199,7 +248,7 @@ class StatsRunner(int Size) {
 		}
 	}
 
-	void mappingToDataFileImpl(ref Result rslt, string fileName) {
+	void mappingToDataFileImpl(ref const(Result) rslt, string fileName) const {
 		import std.stdio : File;
 		import std.format : formattedWrite;
 
@@ -230,5 +279,20 @@ class StatsRunner(int Size) {
 		if(!exists(this.graphsResultFolderName)) {
 			mkdir(this.graphsResultFolderName);	
 		}
+	}
+}
+
+class StatsThread(int Size) : Thread {
+	const(StatsRunner!Size) stats;
+	const(Graph!Size) graph;
+
+	this(shared(const(StatsRunner!Size)) stats, const(Graph!Size) graph) {
+		super(&run);
+		this.stats = cast(const(StatsRunner!Size))stats;
+		this.graph = cast(const(Graph!Size))graph;
+	}
+
+	void run() {
+		this.stats.runMapping(graph);
 	}
 }

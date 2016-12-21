@@ -295,9 +295,9 @@ void addGraphsToFile(int Size)(const string filename, long numGraphsToAdd) {
 	auto rnd = Random();
 
 	GraphGenConfig ggc;
-	ggc.numNodes = 6;
+	ggc.numNodes = 9;
 	ggc.minEdges = 1;
-	ggc.maxEdges = 5;
+	ggc.maxEdges = 6;
 	auto gg = graphGenerator!16(numGraphsToAdd, numGraphsToAdd * 3, ggc, rnd);
 
 	while(!gg.empty) {
@@ -321,15 +321,25 @@ void addGraphsToFile(int Size)(const string filename, long numGraphsToAdd) {
 }
 
 void addGraphsToFile() {
-	addGraphsToFile!16("6nodegraphs.json", 6);
+	addGraphsToFile!16("9nodegraphs.json", 1);
 }
 
-void runMappings(string graphsFilename) {
-	auto runner = new StatsRunner!32(graphsFilename);
+void runMappings(string graphsFilename, string[] args) {
+	import std.getopt;
+	int start = 0;
+	int upto = 0;
+	getopt(args, "start", &start, "upto", &upto);
+	
+	auto runner = new StatsRunner!32(graphsFilename, start, upto);
 	runner.runMappings();
+	/*try {
+		runner.runMappingsThreaded();
+	} catch(Exception e) {
+		logf("%s", e.toString());
+	}*/
 }
 
-void main() {
+void main(string[] args) {
 	//lattice(4,4);
 	//gridAgainstGrid(4,4);
 	//MCSAgainstMCS(15);
@@ -350,5 +360,5 @@ void main() {
 	//latticeMapped9quantil();
 	//genRandomGraphs();
 	//addGraphsToFile();
-	runMappings("6nodegraphs.json");
+	runMappings("9nodegraphs.json", args);
 }

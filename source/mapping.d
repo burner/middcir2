@@ -69,10 +69,10 @@ struct MappingResultStore(int SizeLnt, int SizePnt) {
 	MappingResultElement!(SizeLnt,SizePnt)[101] bestAvail; 
 	MappingResultElement!(SizeLnt,SizePnt)[101] bestCosts; 
 
-	ROW[] row;
-	ROWC[] rowc;
+	const ROW[] row;
+	const ROWC[] rowc;
 
-	this(ROW[] row, ROWC[] rowc) {
+	this(const ROW[] row, const ROWC[] rowc) {
 		this.row = row;
 		this.rowc = rowc;
 	}
@@ -316,8 +316,8 @@ struct Mappings(int SizeLnt, int SizePnt) {
 
 	const QTF quorumTestFraction;
 
-	this(ref Graph!SizeLnt lnt, ref Graph!SizePnt pnt, 
-			QTF quorumTestFraction = QTF(1.0), ROW readWriteBalance = ROW(0.5)) 
+	this(ref const Graph!SizeLnt lnt, ref const Graph!SizePnt pnt, 
+			const QTF quorumTestFraction = QTF(1.0), const ROW readWriteBalance = ROW(0.5)) 
 	{
 		this(lnt, pnt, [readWriteBalance], null);
 		//this.bestAvail = 0.0;
@@ -326,8 +326,8 @@ struct Mappings(int SizeLnt, int SizePnt) {
 		this.quorumTestFraction = quorumTestFraction;
 	}
 
-	this(ref Graph!SizeLnt lnt, ref Graph!SizePnt pnt,
-			ROW[] row, ROWC[] rowc)
+	this(ref const Graph!SizeLnt lnt, ref const Graph!SizePnt pnt,
+			const ROW[] row, const ROWC[] rowc)
 	{
 		assert(!row.empty);
 		this.quorumTestFraction = QTF(1.0);

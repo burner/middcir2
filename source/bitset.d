@@ -135,7 +135,6 @@ struct Bitset(Store) if(isIntegral!Store && isUnsigned!Store) {
 
 	// access
 	
-	pragma(inline, true)
 	bool test(const size_t idx) const {
 		if(idx > Store.sizeof * 8) {
 			throw new Exception("You cannot access passed the size of the Bitset");
