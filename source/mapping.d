@@ -461,6 +461,7 @@ struct Mappings(int SizeLnt, int SizePnt) {
 			ref Result bestResultL, ref double bestAvailL,*/
 			const bool stopAfterFirst)
 	{
+		import core.memory : GC;
 		import std.array : array;
 		import std.range : iota;
 		import std.algorithm.sorting : nextPermutation;
@@ -480,6 +481,8 @@ struct Mappings(int SizeLnt, int SizePnt) {
 			);
 			Result curRslt = cur.calcAC(oRead, oWrite);
 			this.results.compare(curRslt, cur);
+			GC.collect();
+			GC.minimize();
 		} while(nextPermutation(permutation) && cnt < numPerm && !stopAfterFirst);
 	}
 

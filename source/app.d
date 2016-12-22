@@ -306,8 +306,8 @@ void addGraphsToFile(int Size)(const string filename, long numGraphsToAdd) {
 		gg.popFront(graphs);
 	}
 
-	logf("Generated %d new graphs. File now contains %d graphs", gg.cnt,
-			graphs.length);
+	logf("Generated %d new graphs. File now contains %d graphs tries left", gg.cnt,
+			graphs.length, gg.maxTries);
 
 	long id = 0;
 	foreach(ref it; graphs) {
@@ -321,7 +321,7 @@ void addGraphsToFile(int Size)(const string filename, long numGraphsToAdd) {
 }
 
 void addGraphsToFile() {
-	addGraphsToFile!16("9nodegraphs.json", 1);
+	addGraphsToFile!16("9nodegraphs.json", 32);
 }
 
 void runMappings(string graphsFilename, string[] args) {
@@ -330,7 +330,7 @@ void runMappings(string graphsFilename, string[] args) {
 	int upto = 0;
 	getopt(args, "start", &start, "upto", &upto);
 	
-	auto runner = new StatsRunner!32(graphsFilename, start, upto);
+	auto runner = new StatsRunner!16(graphsFilename, start, upto);
 	runner.runMappings();
 	/*try {
 		runner.runMappingsThreaded();

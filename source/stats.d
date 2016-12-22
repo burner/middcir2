@@ -78,7 +78,7 @@ class StatsRunner(int Size) {
 
 		int cnt = 0;
 		foreach(g; this.graphs[this.start .. this.upTo]) {
-			logf("%3d of %3d", cnt++, this.upTo);
+			logf("%3d of range %3d -- %3d", cnt++, this.start, this.upTo);
 			this.runMapping(g);
 			GC.collect();
 			GC.minimize();
@@ -147,28 +147,28 @@ class StatsRunner(int Size) {
 		}
 
 		foreach(it; this.lattices) {
-			auto map = Mappings!(Size,Size)(it.graph, g, row, rowc);
+			auto map = Mappings!(32,Size)(it.graph, g, row, rowc);
 			map.calcAC(it.read, it.write);
 			this.mappingToDataFile(map, "Lattice", path);
 			this.mappingToJson(map, "Lattice", path);
 		}
 
 		foreach(it; this.grids) {
-			auto map = Mappings!(Size,Size)(it.graph, g, row, rowc);
+			auto map = Mappings!(32,Size)(it.graph, g, row, rowc);
 			map.calcAC(it.read, it.write);
 			this.mappingToDataFile(map, "Grid", path);
 			this.mappingToJson(map, "Grid", path);
 		}
 
 		{
-			auto map = Mappings!(Size,Size)(this.mcs.graph, g, row, rowc);
+			auto map = Mappings!(32,Size)(this.mcs.graph, g, row, rowc);
 			map.calcAC(this.mcs.read, this.mcs.write, true);
 			this.mappingToDataFile(map, "MCS", path);
 			this.mappingToJson(map, "MCS", path);
 		}
 	}
 
-	void mappingToJson(ref const(Mappings!(Size,Size)) map, string type,
+	void mappingToJson(M)(ref const(M) map, string type,
 		   	string folderPath) const
 	{
 		import utils : format;
@@ -209,7 +209,7 @@ class StatsRunner(int Size) {
 		format(app, 0, "}");
 	}
 
-	void mappingToDataFile(ref const(Mappings!(Size,Size)) map, string type, 
+	void mappingToDataFile(M)(ref const(M) map, string type, 
 			string folderPath) const
 	{
 		foreach(it; this.row) {
@@ -220,7 +220,7 @@ class StatsRunner(int Size) {
 		}
 	}
 
-	void mappingToDataFile(ref const(Mappings!(Size,Size)) map, string type, 
+	void mappingToDataFile(M)(ref const(M) map, string type, 
 			string folderPath, ROW row) const
 	{
 		auto pathROWStr = format("%s/%s_row_%.2f_", folderPath, type,
@@ -234,7 +234,7 @@ class StatsRunner(int Size) {
 		}
 	}
 
-	void mappingToDataFile(ref const(Mappings!(Size,Size)) map, string type, 
+	void mappingToDataFile(M)(ref const(M) map, string type, 
 			string folderPath, ROWC rowc) const
 	{
 		auto pathROWStr = format("%s/%s_rowc_%.2f_", folderPath, type,
