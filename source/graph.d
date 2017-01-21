@@ -16,6 +16,7 @@ void populate(A,V)(ref A arr, size_t size, V defaultValue) {
 
 struct Graph(int Size) {
 	import bitsetmodule;
+	import fixedsizearray;
 	import std.container.array;
 	import std.array : appender;
 	import std.format : formattedWrite;
@@ -41,6 +42,8 @@ struct Graph(int Size) {
 	int numNodes;
 	Node[Size] nodes;
 	Array!vec3d nodePositions;
+	//FixedSizeArray!(vec3d,Length) nodePositions;
+
 	long id;
 
 	this(int numNodes) {

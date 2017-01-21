@@ -81,6 +81,36 @@ IsPlanar isPlanar(Graph)(const ref Graph graph) {
 	return IsPlanar(Planar.yes, 0, 0, 0, 0);
 }
 
+size_t countEdgeIntersections(Graph)(const auto ref Graph graph) {
+	size_t count = 0;
+	const int nn = to!int(graph.length);
+	for(int ai = 0; ai < nn; ++ai) {
+		for(int aj = 0; aj < nn; ++aj) {
+			if(ai == aj || !graph.testEdge(ai, aj)) {
+				continue;
+			}
+
+			for(int bi = 0; bi < nn; ++bi) {
+				if(bi == ai || bi == aj) {
+					continue;
+				}
+				for(int bj = 0; bj < nn; ++bj) {
+					if(bj == ai || bj == aj || !graph.testEdge(bi, bj)) {
+						continue;
+					}
+
+					if(graph.testEdgeIntersection(ai, aj, bi, bj)) {
+						//logf("%s -> %s XX %s -> %s", ai, aj, bi, bj);
+						++count;
+					}
+				}
+			}
+		}
+	}
+
+	return count;
+}
+
 unittest {
 	auto g = makeTwoTimesTwo();
 
