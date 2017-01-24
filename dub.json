@@ -8,10 +8,10 @@
 	"license": "proprietary",
 	"dependencies": {
 		"gfm:math": ">=6.1.1",
-		"bitfiddle": ">=0.0.5",
-		"exceptionhandling": ">=0.0.9",
-		"fixedsizearray": ">=1.0.0",
 		"units-d": "~>0.1.0",
+		"exceptionhandling": ">=0.1.0",
+		"bitfiddle": ">=0.0.5",
+		"fixedsizearray": ">=1.0.0",
 		"std_data_json": "~>0.18.2",
 		"rc": "~>0.0.2"
 	}

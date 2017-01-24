@@ -11,7 +11,8 @@ import graph;
 void makePlanar(Graph)(Graph orignal, ref Array!Graph result) {
 	Array!Graph stack;
 	stack.insertBack(orignal);
-	const numNodes = assertNotEqual(orignal.nodePositions.length, 0UL);
+	assertNotEqual(orignal.nodePositions.length, 0UL);
+	const numNodes = orignal.nodePositions.length;
 
 	while(!stack.empty()) {
 		Graph cur = stack.back();

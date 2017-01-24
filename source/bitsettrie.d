@@ -373,7 +373,7 @@ unittest {
 	//writeln(t.toString(), "\n\n\n\n", baa.toString());
 	//writeln(t.toString2(), "\n\n\n\n", baa.toString());
 
-	cast(void)assertEqual(t.array.length, baa.array.length);
+	assertEqual(t.array.length, baa.array.length);
 
 	import std.algorithm.sorting : sort;
 	sort!"a.bitset.store < b.bitset.store"(t.array[]);
