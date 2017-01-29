@@ -83,6 +83,7 @@ IsPlanar isPlanar(Graph)(const ref Graph graph) {
 }
 
 size_t countEdgeIntersections(Graph)(const auto ref Graph graph) {
+	import std.conv : to;
 	size_t count = 0;
 	const int nn = to!int(graph.length);
 	for(int ai = 0; ai < nn; ++ai) {
