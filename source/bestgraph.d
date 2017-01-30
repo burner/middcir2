@@ -69,15 +69,26 @@ struct EdgeCmp(int Size) {
 
 			auto ng = Graph!Size(cast(int)len);
 			for(ulong i = 0; i < len; ++i) {
-				writef("%2.1f %2.1f|", pos[s[i]].x, pos[s[i]].y);
+				ng.setAdjancy(i, this.original.getAdjancy(i));
+			}
+			for(ulong i = 0; i < len; ++i) {
+				//writef("%2.1f %2.1f|", pos[s[i]].x, pos[s[i]].y);
 				ng.setNodePos(i, vec3d(pos[s[i]].x, pos[s[i]].y, 0.0));
 			}
 			auto ec = countEdgeIntersections(ng);
+			writefln("%4d %4d", this.bestCnt, ec);
 			if(ec < this.bestCnt) {
 				this.best = ng;
 				this.bestCnt = ec;
+				for(ulong i = 0; i < len; ++i) {
+					writef("%2.1f %2.1f|", pos[s[i]].x, pos[s[i]].y);
+				}
+				writefln(" %s", ec);
 			}
-			writefln(" %s", ec);
+			if(this.bestCnt == 0) {
+				logf("found a perfect one with zero intersections");
+				break;
+			}
 		} while(nextPermutation(s));
 	}
 }
@@ -131,7 +142,7 @@ vec3d[] buildPosArray(const size_t len) {
 }
 
 unittest {
-	auto g = makeNine!16();
+	auto g = makeNine2!16();
 	auto ec = EdgeCmp!16(g);
 	ec.run();
 }
