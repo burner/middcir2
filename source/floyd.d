@@ -18,10 +18,11 @@ struct Floyd {
 
 	enum INF = ubyte.max;
 
-	alias ArrayArrayType = Array!(Array!(ubyte));
-	alias ArrayType = Array!(ubyte);
+	//alias ArrayType = Array!(ubyte);
+	alias ArrayType = FixedSizeArray!(ubyte,16);
+
+	alias ArrayArrayType = Array!(ArrayType);
 	//alias ArrayArrayType = FixedSizeArray!(FixedSizeArray!(ubyte,32),32);
-	//alias ArrayType = FixedSizeArray!(ubyte,32);
 
 	ArrayArrayType distance;
 	ArrayArrayType first;

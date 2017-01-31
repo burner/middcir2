@@ -481,8 +481,6 @@ struct Mappings(int SizeLnt, int SizePnt) {
 			);
 			Result curRslt = cur.calcAC(oRead, oWrite);
 			this.results.compare(curRslt, cur);
-			GC.collect();
-			GC.minimize();
 		} while(nextPermutation(permutation) && cnt < numPerm && !stopAfterFirst);
 	}
 

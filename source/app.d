@@ -360,5 +360,6 @@ void main(string[] args) {
 	//latticeMapped9quantil();
 	//genRandomGraphs();
 	//addGraphsToFile();
+	//runMappings("6nodegraphs.json", args);
 	runMappings("9nodegraphs.json", args);
 }

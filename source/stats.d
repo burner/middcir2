@@ -147,20 +147,27 @@ class StatsRunner(int Size) {
 		}
 
 		foreach(it; this.lattices) {
+			logf("Lattice");
 			auto map = Mappings!(32,Size)(it.graph, g, row, rowc);
 			map.calcAC(it.read, it.write);
 			this.mappingToDataFile(map, "Lattice", path);
 			this.mappingToJson(map, "Lattice", path);
+			GC.collect();
+			GC.minimize();
 		}
 
 		foreach(it; this.grids) {
+			logf("Grid");
 			auto map = Mappings!(32,Size)(it.graph, g, row, rowc);
 			map.calcAC(it.read, it.write);
 			this.mappingToDataFile(map, "Grid", path);
 			this.mappingToJson(map, "Grid", path);
+			GC.collect();
+			GC.minimize();
 		}
 
 		{
+			logf("MCS");
 			auto map = Mappings!(32,Size)(this.mcs.graph, g, row, rowc);
 			map.calcAC(this.mcs.read, this.mcs.write, true);
 			this.mappingToDataFile(map, "MCS", path);
