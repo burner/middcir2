@@ -91,9 +91,9 @@ unittest {
 }
 
 struct MCSFormula {
-	const int numNodes;
-	const int majority;
-	const int half;
+	/*const*/ int numNodes;
+	/*const*/ int majority;
+	/*const*/ int half;
 
 	this(int nn) {
 		this.numNodes = nn;
@@ -109,15 +109,15 @@ struct MCSFormula {
 		for(int idx = 0; idx < 101; ++idx) {
 			const double p = stepCount * idx;
 			for(int avail = this.half; avail < nn; ++avail) {
-				const bino = binomial(this.numNodes, avail);
-				const av = availability(this.numNodes, avail, idx, stepCount);
+				const bino = binomialFunc(this.numNodes, avail);
+				const av = oldAvailability(this.numNodes, avail, idx, stepCount);
 				ret.readAvail[idx] += bino * av;
 			}
 
 			for(int avail = this.majority; avail < nn; ++avail) {
-				const bino = binomial(this.numNodes, avail);
+				const bino = binomialFunc(this.numNodes, avail);
 				ret.writeAvail[idx] += 
-					 bino * availability(this.numNodes, avail, idx, stepCount);
+					 bino * oldAvailability(this.numNodes, avail, idx, stepCount);
 			}
 		}
 

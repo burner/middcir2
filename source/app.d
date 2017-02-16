@@ -25,6 +25,32 @@ import stats;
 	//version = exceptionhandling_release_asserts;
 //}
 
+void MCSForm() {
+	const NN = 7;
+	MCSFormula[NN] formula;
+	Result[NN] rslt;
+	ResultPlot[NN] rsltPlot;
+
+	int[NN] nns = [3,5,8,9,16,33,63];
+
+	for(int i = 0; i < nns.length; ++i) {
+		formula[i] = MCSFormula(nns[i]);
+		logf("a %d", i);
+		rslt[i] = formula[i].calcAC();
+		logf("b %d", i);
+		rsltPlot[i] = ResultPlot(formula[i].name(), rslt[i]);
+		logf("c %d", i);
+	}
+	gnuPlot("Result/MCS_Many", "", 
+			rsltPlot[0],
+			rsltPlot[1],
+			rsltPlot[2],
+			rsltPlot[3],
+			rsltPlot[4],
+			rsltPlot[5],
+			rsltPlot[6]);
+}
+
 void MCSAgainstMCS(int mcsN = 16) {
 	auto mcs = MCS(mcsN);
 	auto mcsRslt = mcs.calcAC();
@@ -361,5 +387,6 @@ void main(string[] args) {
 	//genRandomGraphs();
 	//addGraphsToFile();
 	//runMappings("6nodegraphs.json", args);
-	runMappings("9nodegraphs.json", args);
+	//runMappings("9nodegraphs.json", args);
+	MCSForm();
 }
