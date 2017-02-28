@@ -51,6 +51,107 @@ void MCSForm() {
 			rsltPlot[6]);
 }
 
+void LatticeXX() {
+	import std.typecons : Tuple, tuple;
+	const NN = 3;
+	Lattice[NN] formula;
+	Result[NN] rslt;
+	ResultPlot[NN] rsltPlot;
+
+	Tuple!(int,int)[NN] nns = [tuple(2,2),tuple(3,3),tuple(4,4)];
+
+	for(int i = 0; i < nns.length; ++i) {
+		formula[i] = Lattice(nns[i][0],nns[i][1]);
+		logf("a %d", i);
+		rslt[i] = formula[i].calcAC();
+		logf("b %d", i);
+		rsltPlot[i] = ResultPlot(formula[i].name(), rslt[i]);
+		logf("c %d", i);
+	}
+	gnuPlot("Results/Lattice_XtimesX", "", 
+			rsltPlot[0],
+			rsltPlot[1],
+			rsltPlot[2]
+	);
+}
+
+void LatticeXY() {
+	import std.typecons : Tuple, tuple;
+	const NN = 3;
+	Lattice[NN] formula;
+	Result[NN] rslt;
+	ResultPlot[NN] rsltPlot;
+
+	Tuple!(int,int)[NN] nns = [tuple(8,1),tuple(2,2),tuple(4,2)];
+
+	for(int i = 0; i < nns.length; ++i) {
+		formula[i] = Lattice(nns[i][0],nns[i][1]);
+		logf("a %d", i);
+		rslt[i] = formula[i].calcAC();
+		logf("b %d", i);
+		rsltPlot[i] = ResultPlot(formula[i].name(), rslt[i]);
+		logf("c %d", i);
+	}
+	gnuPlot("Results/Lattice_XtimesY", "", 
+			rsltPlot[0],
+			rsltPlot[1],
+			rsltPlot[2]
+	);
+}
+
+
+void GridFormXY() {
+	import std.typecons : Tuple, tuple;
+	const NN = 3;
+	GridFormula[NN] formula;
+	Result[NN] rslt;
+	ResultPlot[NN] rsltPlot;
+
+	Tuple!(int,int)[NN] nns = [tuple(8,1),tuple(2,2),tuple(4,2)];
+
+	for(int i = 0; i < nns.length; ++i) {
+		formula[i] = GridFormula(nns[i][0],nns[i][1]);
+		logf("a %d", i);
+		rslt[i] = formula[i].calcAC();
+		logf("b %d", i);
+		rsltPlot[i] = ResultPlot(formula[i].name(), rslt[i]);
+		logf("c %d", i);
+	}
+	gnuPlot("Results/Grid_XtimesY", "", 
+			rsltPlot[0],
+			rsltPlot[1],
+			rsltPlot[2]
+	);
+}
+
+
+void GridForm() {
+	const NN = 7;
+	GridFormula[NN] formula;
+	Result[NN] rslt;
+	ResultPlot[NN] rsltPlot;
+
+	int[NN] nns = [2,3,4,5,6,7,8];
+
+	for(int i = 0; i < nns.length; ++i) {
+		formula[i] = GridFormula(nns[i],nns[i]);
+		logf("a %d", i);
+		rslt[i] = formula[i].calcAC();
+		logf("b %d", i);
+		rsltPlot[i] = ResultPlot(formula[i].name(), rslt[i]);
+		logf("c %d", i);
+	}
+	gnuPlot("Results/Grid_XtimesX", "", 
+			rsltPlot[0],
+			rsltPlot[1],
+			rsltPlot[2],
+			rsltPlot[3],
+			rsltPlot[4],
+			rsltPlot[5],
+			rsltPlot[6]);
+}
+
+
 void MCSAgainstMCS(int mcsN = 16) {
 	auto mcs = MCS(mcsN);
 	auto mcsRslt = mcs.calcAC();
@@ -73,6 +174,23 @@ void gridAgainstGrid(int nc, int nr) {
 	auto rsltFGrid = ResultPlot(gridF.name(), gridFRslt);
 
 	gnuPlot(format("Results/Grid%sX%s", nr, nc), "", rsltGrid, rsltFGrid);
+}
+
+void gridVLattice(int nc, int nr) {
+	auto grid = Grid(nc, nr);
+	auto gridRslt = grid.calcAC();
+	auto rsltGrid = ResultPlot(grid.name(), gridRslt);
+
+	auto mcs = MCSFormula(nc * nr);
+	auto mcsRslt = mcs.calcAC();
+	auto rsltMCS = ResultPlot(format("MCS-%d", nc * nr) , mcsRslt);
+
+	auto tl = Lattice(nc, nr);
+	auto tlRslt = tl.calcAC();
+	auto rsltTL = ResultPlot(tl.name(), tlRslt);
+
+	gnuPlot(format("Results/GridVLattice%sX%s", nr, nc), "", rsltGrid, rsltTL,
+			rsltMCS);
 }
 
 void lattice(int nc, int nr) {
@@ -388,5 +506,11 @@ void main(string[] args) {
 	//addGraphsToFile();
 	//runMappings("6nodegraphs.json", args);
 	//runMappings("9nodegraphs.json", args);
-	MCSForm();
+	//MCSForm();
+	//GridFormXY();
+	gridVLattice(3,3);
+	gridVLattice(4,2);
+	gridVLattice(2,4);
+	//LatticeXX();
+	//LatticeXY();
 }
