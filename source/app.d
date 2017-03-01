@@ -192,8 +192,8 @@ void gridVLattice(int nc, int nr) {
 	auto tlRslt = tl.calcAC();
 	auto rsltTL = ResultPlot(tl.name(), tlRslt);
 
-	gnuPlot(format("Results/GridVLattice%sX%s", nr, nc), "", rsltGrid, rsltTL,
-			rsltMCS);
+	gnuPlot(format("Results/GridVLattice%sX%s", nr, nc), "", rsltGrid,
+			rsltMCS, rsltTL);
 }
 
 void lattice(int nc, int nr) {
@@ -514,11 +514,7 @@ void main(string[] args) {
 	//gridVLattice(3,3);
 	//gridVLattice(4,2);
 	//gridVLattice(2,4);
-	try {
-		gridVLattice(6,6);
-	} catch(Throwable t) {
-		logf("%s", t.toString());
-	}
+	gridVLattice(6,6);
 	//LatticeXX();
 	//LatticeXY();
 }

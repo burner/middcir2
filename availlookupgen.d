@@ -13,7 +13,7 @@ void main() {
 	writeln("module availabilitylookuptable;\n");
 	writeln("//[total_nodes][nodes_available][0 <= p < 101]");
 	writeln("immutable availlookuptable = [");
-	for(int totaln = 0; totaln < 24; ++totaln) {
+	for(int totaln = 0; totaln < 37; ++totaln) {
 		writef("[");
 		for(int navail = 0; navail <= totaln; ++navail) {
 			writef("[");
