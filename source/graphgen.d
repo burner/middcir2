@@ -70,7 +70,7 @@ struct GraphGen(int Size, Rnd) {
 	long maxTries;
 	Rnd* rnd;
 	const(GraphGenConfig) ggc;
-	Floyd floyd;
+	FloydImpl!Size floyd;
 	Graph!Size cur;
 
 	this(long upTo, long maxTries, const(GraphGenConfig) ggc, ref Rnd rnd) {

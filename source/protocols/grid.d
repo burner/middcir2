@@ -11,7 +11,9 @@ import exceptionhandling;
 import bitsetmodule;
 import graph;
 
-struct Grid {
+alias Grid = GridImpl!(32);
+
+struct GridImpl(int Size) {
 	import bitsetrbtree;
 
 	BitsetStore!uint read;
@@ -21,16 +23,16 @@ struct Grid {
 	size_t height;
 	uint rowMask;
 	
-	Graph!32 graph;
+	Graph!Size graph;
 
 	this(size_t width, size_t height) {
 		this.width = width;
 		this.height = height;
 		this.rowMask = (1 << this.width) - 1;
-		this.read.array.reserve(32);
-		this.write.array.reserve(32);
+		this.read.array.reserve(Size);
+		this.write.array.reserve(Size);
 
-		this.graph = makeCircle!32(to!int(this.width * this.height));
+		this.graph = makeCircle!Size(to!int(this.width * this.height));
 		completeConnectGraph(this.graph);
 	}
 

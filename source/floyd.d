@@ -6,20 +6,22 @@ import graph;
 import bitsetmodule;
 import fixedsizearray;
 
-auto floyd(int Size)(const ref Graph!(Size) graph) {
-	Floyd rslt;
+auto floyd(G,int Size = 16)(const ref G graph) {
+	FloydImpl!Size rslt;
 	rslt.init(graph);
 
 	return rslt;
 }
 
-struct Floyd {
+alias Floyd = FloydImpl!16;
+
+struct FloydImpl(int Size) {
 	import std.container.array;
 
 	enum INF = ubyte.max;
 
 	//alias ArrayType = Array!(ubyte);
-	alias ArrayType = FixedSizeArray!(ubyte,16);
+	alias ArrayType = FixedSizeArray!(ubyte,Size);
 
 	alias ArrayArrayType = Array!(ArrayType);
 	//alias ArrayArrayType = FixedSizeArray!(FixedSizeArray!(ubyte,32),32);
@@ -159,7 +161,7 @@ unittest {
 	g.setEdge(4,5);
 	g.setEdge(5,6);
 
-	auto fr = floyd!(16)(g);
+	auto fr = floyd(g);
 	assert(fr.distance[4][6] == 2);
 	assert(fr.pathExists(4,6));
 	assert(fr.first[4][6] == 5, fr.toString());

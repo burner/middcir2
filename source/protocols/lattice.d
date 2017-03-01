@@ -38,7 +38,9 @@ unittest {
 	assertEqual(nine[2], cast(long[])[1,9]);
 }
 
-struct Lattice {
+alias Lattice = LatticeImpl!(32);
+
+struct LatticeImpl(int Size) {
 	import core.bitop : popcnt;
 	import std.container.array : Array;
 	import bitsetrbtree;
@@ -54,12 +56,14 @@ struct Lattice {
 	size_t width;
 	size_t height;
 
-	Graph!32 graph;
+	alias LGraph = Graph!Size;
+
+	LGraph graph;
 
 	this(size_t width, size_t height) {
 		this.width = width;
 		this.height = height;
-		this.graph = Graph!32(cast(int)(this.width * this.height));
+		this.graph = LGraph(cast(int)(this.width * this.height));
 		this.createNodeAndEdges();
 	}
 
@@ -132,7 +136,7 @@ struct Lattice {
 		diagonalPairs.insertBack(cast(int[2])[0, highestId]);
 		this.fillSides(bottom, top, left, right);
 		
-		auto paths = floyd!32(this.graph);
+		auto paths = floyd!(typeof(this.graph),64)(this.graph);
 
 		const uint numNodes = to!uint(this.width * this.height);
 		auto ret = calcACforPathBased(paths, this.graph, bottom, top, left, right,

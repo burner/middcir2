@@ -113,6 +113,7 @@ size_t countEdgeIntersections(Graph)(const auto ref Graph graph) {
 	return count;
 }
 
+/*
 unittest {
 	auto g = makeTwoTimesTwo();
 
@@ -138,4 +139,4 @@ unittest {
 		auto o = File(format("testGraph_planar_%d.tex", i), "w");
 		planarGraphs[i].toTikz(o.lockingTextWriter());
 	}
-}
+}*/

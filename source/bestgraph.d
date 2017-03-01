@@ -141,8 +141,8 @@ vec3d[] buildPosArray(const size_t len) {
 	return ret;
 }
 
-unittest {
+/*unittest {
 	auto g = makeNine2!16();
 	auto ec = EdgeCmp!16(g);
 	ec.run();
-}
+}*/

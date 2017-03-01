@@ -190,7 +190,7 @@ struct Crossing {
 		testEmptyIntersection(this.left, this.right);
 		testEmptyIntersection(this.diagonalPairs);
 
-		auto paths = floyd!32(this.graph);
+		auto paths = floyd(this.graph);
 
 		const uint numNodes = to!uint(this.graph.length);
 		auto ret = calcACforPathBased(paths, this.graph, bottom, top, left, right,

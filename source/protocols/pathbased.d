@@ -74,7 +74,7 @@ PathResult selectWriteQuorum(ref const(Array!(Bitset!uint)) vert,
 	return ret;
 }
 
-void testPathsBetween(ref const(Floyd) paths, ref const(Array!int) a, 
+void testPathsBetween(F)(ref const(F) paths, ref const(Array!int) a, 
 		ref const(Array!int) b, ref Array!(Bitset!uint) rslt, 
 		ref Array!uint tmpPathStore)
 {
@@ -90,7 +90,7 @@ void testPathsBetween(ref const(Floyd) paths, ref const(Array!int) a,
 
 }
 
-PathResult testDiagonal(ref const(Floyd) paths, const int bl,
+PathResult testDiagonal(F)(ref const(F) paths, const int bl,
 		const int tr, ref Array!uint tmpPathStore)
 {
 	auto ret = PathResult(bitsetAll!uint(), ValidPath.no);
@@ -128,7 +128,7 @@ void testEmptyIntersection(ref const(Array!(int[2])) a) {
 	}
 }
 
-Result calcACforPathBased(ref Floyd paths, ref const(Graph!32) graph, 
+Result calcACforPathBased(F,G)(ref F paths, ref const(G) graph, 
 		const(Array!int) bottom, const(Array!int) top, const(Array!int) left, 
 		const(Array!int) right, const(Array!(int[2])) diagonalPairs, 
 		ref BitsetStore!uint read, ref BitsetStore!uint write, const uint numNodes)
