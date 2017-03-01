@@ -193,7 +193,7 @@ struct Crossing {
 		auto paths = floyd(this.graph);
 
 		const uint numNodes = to!uint(this.graph.length);
-		auto ret = calcACforPathBased(paths, this.graph, bottom, top, left, right,
+		auto ret = calcACforPathBased!uint(paths, this.graph, bottom, top, left, right,
 			diagonalPairs, this.read, this.write, numNodes
 		);
 

@@ -51,12 +51,19 @@ void compare(A,B,CMP)(const ref A a, const ref B b, CMP cmp) {
 void testQuorumIntersection(ref BitsetStore!uint read, 
 		ref BitsetStore!uint write) 
 {
-	testQuorumIntersectionImpl(read, write);
-	testQuorumIntersectionImpl(write, write);
+	testQuorumIntersectionImpl!uint(read, write);
+	testQuorumIntersectionImpl!uint(write, write);
 }
 
-void testQuorumIntersectionImpl(ref BitsetStore!uint read, 
-		ref BitsetStore!uint write) 
+void testQuorumIntersection(ref BitsetStore!ulong read, 
+		ref BitsetStore!ulong write) 
+{
+	testQuorumIntersectionImpl!ulong(read, write);
+	testQuorumIntersectionImpl!ulong(write, write);
+}
+
+void testQuorumIntersectionImpl(BitsetType)(ref BitsetStore!BitsetType read, 
+		ref BitsetStore!BitsetType write) 
 {
 	auto rbegin = read.begin();
 	auto rend = read.end();
@@ -102,12 +109,18 @@ void testSemetry(ref Result rslt) {
 }
 
 void testAllSubsetsSmaller(ref BitsetStore!uint read, ref BitsetStore!uint write) {
-	testAllSubsetsSmallerImpl(read);
-	testAllSubsetsSmallerImpl(write);
+	testAllSubsetsSmallerImpl!uint(read);
+	testAllSubsetsSmallerImpl!uint(write);
 }
 
-void testAllSubsetsSmallerImpl(ref BitsetStore!uint store) {
-	import core.bitop : popcnt;
+void testAllSubsetsSmaller(ref BitsetStore!ulong read, ref BitsetStore!ulong write) {
+	testAllSubsetsSmallerImpl!ulong(read);
+	testAllSubsetsSmallerImpl!ulong(write);
+}
+
+void testAllSubsetsSmallerImpl(BitsetType)(ref BitsetStore!BitsetType store) {
+	//import core.bitop : popcnt;
+	import bitsetmodule : popcnt;
 
 	auto it = store.begin();
 	auto end = store.end();
@@ -121,7 +134,8 @@ void testAllSubsetsSmallerImpl(ref BitsetStore!uint store) {
 }
 
 bool less(T)(ref BitsetArray!T a, ref BitsetArray!T b) {
-	import core.bitop : popcnt;
+	//import core.bitop : popcnt;
+	import bitsetmodule : popcnt;
 	return popcnt(a.bitset.store) < popcnt(b.bitset.store);
 }
 

@@ -64,7 +64,7 @@ struct MCS {
 			testAllSubsetsSmaller(this.read, this.write);
 		}
 
-		return calcAvailForTree(this.numNodes, this.read, this.write);
+		return calcAvailForTree!uint(this.numNodes, this.read, this.write);
 	}
 
 	string name() const pure {

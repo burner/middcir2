@@ -1,6 +1,6 @@
 module protocols.pathbased;
 
-import core.bitop : popcnt;
+//import core.bitop : popcnt;
 
 import std.typecons : Flag;
 import std.container.array : Array;
@@ -15,15 +15,15 @@ import utils;
 
 alias ValidPath = Flag!"ValidPath";
 
-struct PathResult {
-	Bitset!uint minPath;
+struct PathResult(BitsetType) {
+	Bitset!(BitsetType) minPath;
 	ValidPath validPath;
 }
 
-PathResult selectReadQuorum(ref const(Array!(Bitset!uint)) vert,
-		ref const(Array!(Bitset!uint)) hori, ref const(Array!(Bitset!uint)) diagonal)
+PathResult!BitsetType selectReadQuorum(BitsetType)(ref const(Array!(Bitset!BitsetType)) vert,
+		ref const(Array!(Bitset!BitsetType)) hori, ref const(Array!(Bitset!BitsetType)) diagonal)
 {
-	auto ret = PathResult(bitsetAll!uint(), ValidPath.no);
+	auto ret = PathResult!BitsetType(bitsetAll!BitsetType(), ValidPath.no);
 
 	foreach(it; vert) {
 		if(popcnt(it.store) < popcnt(ret.minPath.store)) {
@@ -49,14 +49,14 @@ PathResult selectReadQuorum(ref const(Array!(Bitset!uint)) vert,
 	return ret;
 }
 
-PathResult selectWriteQuorum(ref const(Array!(Bitset!uint)) vert,
-		ref const(Array!(Bitset!uint)) hori, ref const(Array!(Bitset!uint)) diagonal)
+PathResult!BitsetType selectWriteQuorum(BitsetType)(ref const(Array!(Bitset!BitsetType)) vert,
+		ref const(Array!(Bitset!BitsetType)) hori, ref const(Array!(Bitset!BitsetType)) diagonal)
 {
-	auto ret = PathResult(bitsetAll!uint(), ValidPath.no);
+	auto ret = PathResult!BitsetType(bitsetAll!BitsetType(), ValidPath.no);
 
 	foreach(it; vert) {
 		foreach(jt; hori) {
-			auto join = bitset!uint(it.store | jt.store);
+			auto join = bitset!BitsetType(it.store | jt.store);
 			if(popcnt(join.store) < popcnt(ret.minPath.store)) {
 				ret.minPath = join;
 				ret.validPath = ValidPath.yes;
@@ -74,30 +74,30 @@ PathResult selectWriteQuorum(ref const(Array!(Bitset!uint)) vert,
 	return ret;
 }
 
-void testPathsBetween(F)(ref const(F) paths, ref const(Array!int) a, 
-		ref const(Array!int) b, ref Array!(Bitset!uint) rslt, 
-		ref Array!uint tmpPathStore)
+void testPathsBetween(BitsetType,F)(ref const(F) paths, ref const(Array!int) a, 
+		ref const(Array!int) b, ref Array!(Bitset!BitsetType) rslt, 
+		ref Array!BitsetType tmpPathStore)
 {
 	for(uint ai = 0; ai < a.length; ++ai) {
 		for(uint bi = 0; bi < b.length; ++bi) {
 			tmpPathStore.removeAll();
 			if(paths.path(a[ai], b[bi], tmpPathStore)) {
 				//logf("%s %s \"%(%s, %)\"", a[ai], b[bi], tmpPathStore[]);
-				rslt.insertBack(bitset!uint(tmpPathStore));
+				rslt.insertBack(bitset!BitsetType(tmpPathStore));
 			}
 		}
 	}
 
 }
 
-PathResult testDiagonal(F)(ref const(F) paths, const int bl,
-		const int tr, ref Array!uint tmpPathStore)
+PathResult!BitsetType testDiagonal(BitsetType,F)(ref const(F) paths, const int bl,
+		const int tr, ref Array!BitsetType tmpPathStore)
 {
-	auto ret = PathResult(bitsetAll!uint(), ValidPath.no);
+	auto ret = PathResult!BitsetType(bitsetAll!BitsetType(), ValidPath.no);
 
 	tmpPathStore.removeAll();
 	if(paths.path(bl, tr, tmpPathStore)) {
-		ret.minPath = bitset!uint(tmpPathStore);
+		ret.minPath = bitset!BitsetType(tmpPathStore);
 		ret.validPath = ValidPath.yes;
 	}
 
@@ -128,34 +128,35 @@ void testEmptyIntersection(ref const(Array!(int[2])) a) {
 	}
 }
 
-Result calcACforPathBased(F,G)(ref F paths, ref const(G) graph, 
+Result calcACforPathBased(BitsetType,F,G)(ref F paths, ref const(G) graph, 
 		const(Array!int) bottom, const(Array!int) top, const(Array!int) left, 
 		const(Array!int) right, const(Array!(int[2])) diagonalPairs, 
-		ref BitsetStore!uint read, ref BitsetStore!uint write, const uint numNodes)
+		ref BitsetStore!BitsetType read, ref BitsetStore!BitsetType write, const uint numNodes)
 {
 	import std.conv : to;
 	import std.stdio : writefln;
 	import permutation;
 
-	Array!uint tmpPathStore;
+	Array!BitsetType tmpPathStore;
 
-	Array!(Bitset!uint) verticalPaths;
-	Array!(Bitset!uint) horizontalPaths;
-	Array!(Bitset!uint) diagonalPaths;
+	Array!(Bitset!BitsetType) verticalPaths;
+	Array!(Bitset!BitsetType) horizontalPaths;
+	Array!(Bitset!BitsetType) diagonalPaths;
 
-	auto permu = Permutations(numNodes);
+	auto permu = PermutationsImpl!BitsetType(numNodes);
 	foreach(perm; permu) {
+		//logf("%s %s", permu.numNodes, perm);
 		paths.execute(graph, perm);
 
 		verticalPaths.removeAll();
 		horizontalPaths.removeAll();
 		diagonalPaths.removeAll();
 
-		testPathsBetween(paths, top, bottom, verticalPaths, tmpPathStore);	
-		testPathsBetween(paths, left, right, horizontalPaths, tmpPathStore);	
+		testPathsBetween!BitsetType(paths, top, bottom, verticalPaths, tmpPathStore);	
+		testPathsBetween!BitsetType(paths, left, right, horizontalPaths, tmpPathStore);	
 
 		foreach(ref int[2] diagonalPair; diagonalPairs) {
-			PathResult dia = testDiagonal(paths, diagonalPair[0],
+			PathResult!BitsetType dia = testDiagonal!BitsetType(paths, diagonalPair[0],
 					diagonalPair[1], tmpPathStore
 			);
 
@@ -164,10 +165,10 @@ Result calcACforPathBased(F,G)(ref F paths, ref const(G) graph,
 			}
 		}
 
-		PathResult readQuorum = selectReadQuorum(verticalPaths,
+		PathResult!BitsetType readQuorum = selectReadQuorum!BitsetType(verticalPaths,
 				horizontalPaths, diagonalPaths
 		);
-		PathResult writeQuorum = selectWriteQuorum(verticalPaths,
+		PathResult!BitsetType writeQuorum = selectWriteQuorum!BitsetType(verticalPaths,
 				horizontalPaths, diagonalPaths
 		);
 
@@ -180,5 +181,5 @@ Result calcACforPathBased(F,G)(ref F paths, ref const(G) graph,
 		}
 	}
 
-	return calcAvailForTree(to!int(numNodes), read, write);
+	return calcAvailForTree!BitsetType(to!int(numNodes), read, write);
 }

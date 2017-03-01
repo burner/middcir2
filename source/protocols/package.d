@@ -45,12 +45,12 @@ struct Result {
 	}
 }
 
-Result calcAvailForTree(const int numNodes,
-		ref BitsetStore!uint read, ref BitsetStore!uint write)
+Result calcAvailForTree(BitsetType)(const int numNodes,
+		ref BitsetStore!BitsetType read, ref BitsetStore!BitsetType write)
 {
 	auto ret = Result();
-	calcAvailForTreeImpl(numNodes, read, ret.readAvail, ret.readCosts);
-	calcAvailForTreeImpl(numNodes, write, ret.writeAvail, ret.writeCosts);
+	calcAvailForTreeImpl!BitsetType(numNodes, read, ret.readAvail, ret.readCosts);
+	calcAvailForTreeImpl!BitsetType(numNodes, write, ret.writeAvail, ret.writeCosts);
 
 	return ret;
 }
@@ -107,16 +107,16 @@ auto resultProtocolUnique(P)(P proto, const(MappingParameter) mp,
 	return Unique!(ResultProtocol!P)(new ResultProtocol!P(proto, mp, pnt));
 }
 
-private void calcAvailForTreeImpl(const int numNodes,
-		ref BitsetStore!uint tree, ref double[101] avail,
+private void calcAvailForTreeImpl(BitsetType)(const int numNodes,
+		ref BitsetStore!BitsetType tree, ref double[101] avail,
 	   	ref double[101] costs)
 {
 	import std.format : format;
 	import std.algorithm.sorting : sort;
-	import core.bitop : popcnt;
+	//import core.bitop : popcnt;
 
 	import config : stepCount;
-	import math : availability, binomial, isNaN;
+	import math : availability, binomial, isNaN, popcnt;
 
 	auto it = tree.begin();
 	auto end = tree.end();

@@ -291,7 +291,7 @@ class Mapping(int SizeLnt, int SizePnt) {
 		this.reconnectQuorums(oRead, this.read, oWrite, this.write);
 		//this.reconnectQuorums(oWrite, this.write);
 
-		return calcAvailForTree(to!int(this.lnt.length), this.read, this.write);
+		return calcAvailForTree!uint(to!int(this.lnt.length), this.read, this.write);
 	}
 
 	string name(string protocolName) const pure {

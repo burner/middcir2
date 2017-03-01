@@ -36,6 +36,22 @@ pure size_t countImpl(const ulong n) {
 		bits_in_uint8[(n >> 48) & 0xFFU] + bits_in_uint8[(n >> 56) & 0xFFU];
 }
 
+pure int popcnt(const(ushort) v) {
+	static import core.bitop;
+	return core.bitop.popcnt(cast(ushort)v);
+}
+
+pure int popcnt(const(uint) v) {
+	static import core.bitop;
+	return core.bitop.popcnt(cast(uint)v);
+}
+
+pure int popcnt(const(ulong) v) {
+	//static import core.bitop;
+	//return core.bitop.popcnt(cast(ulong)v);
+	return cast(int)countImpl(v);
+}
+
 void getBitsSet(B,A)(const auto ref B bitset, ref A store) {
 	for(int i = 0; i < B.StoreType.sizeof * 8; ++i) {
 		if(bitset.test(i)) {

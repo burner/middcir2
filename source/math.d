@@ -28,7 +28,8 @@ unittest {
 
 double availability(T,S)(const S numNodes, const ref Bitset!T bitSet, 
 		const size_t p, const double stepWidth = 0.01) pure {
-	import core.bitop : popcnt;
+	//import core.bitop : popcnt;
+	import math : popcnt;
 	const bitsSet = popcnt(bitSet.store);
 	return availability(numNodes, bitsSet, p, stepWidth);
 }

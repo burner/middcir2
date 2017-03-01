@@ -87,7 +87,7 @@ struct GridImpl(int Size) {
 			}
 		}
 
-		auto ret = calcAvailForTree(to!int(this.width * this.height), this.read, this.write);
+		auto ret = calcAvailForTree!uint(to!int(this.width * this.height), this.read, this.write);
 		bool test;
 		debug {
 			test = true;
