@@ -72,18 +72,25 @@ alias Permutations = PermutationsImpl!uint;
 struct PermutationsImpl(BitsetType) {
 	const int numNodes;
 	int curNodes;
+	const int stopCount;
 
 	PermutationImpl!BitsetType cur;
 
-	this(const int numNodes) {
+	this(const int numNodes, const int startCnt, const int stopCnt) {
 		this.numNodes = numNodes;
-		this.curNodes = 1;
+		this.curNodes = startCnt;
+		this.stopCount = stopCnt;
 
 		this.cur = PermutationImpl!BitsetType(this.numNodes, this.curNodes);
 	}
 
+	this(const int numNodes) {
+		this(numNodes, 1, numNodes);
+	}
+
 	@property bool empty() const {
-		return this.curNodes >= this.numNodes && this.cur.empty;
+		return (this.curNodes >= this.numNodes && this.cur.empty)
+			|| this.curNodes + 1 >= this.stopCount;
 	}
 
 	@property Bitset!BitsetType front() const {

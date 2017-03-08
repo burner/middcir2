@@ -162,3 +162,35 @@ private void calcAvailForTreeImpl(BitsetType)(const int numNodes,
 		costs[idx] /= avail[idx];
 	}
 }
+
+void closedQuorumListWriter(BitsetType,Out)(const ref BitsetStore!BitsetType store,
+	   	Out writer) 
+{
+	import std.format : formattedWrite;
+
+	formattedWrite(writer, "{\n\tlist : [\n");
+	foreach(ref it; store.array[]) {
+		formattedWrite(writer, 
+			"\t\t{head : %d, supersets : [\n", it.bitset.store
+		);
+		bool first = true;
+		foreach(ref jt; it.subsets[]) {
+			if(first) {
+				formattedWrite(writer, "\t\t\t%d\n", jt.store);
+				first = false;
+			} else {
+				formattedWrite(writer, "\t\t\t,%d\n", jt.store);
+			}
+		}
+		formattedWrite(writer, "\t\t]}\n");
+	}
+
+	formattedWrite(writer, "\t]\n}\n");
+}
+
+void closedQuorumListWriter(BitsetType)(
+		const ref BitsetStore!BitsetType store) 
+{
+	import std.stdio : stdout;
+	closedQuorumListWriter!BitsetType(store, stdout.lockingTextWriter());
+}

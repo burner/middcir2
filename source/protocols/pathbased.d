@@ -136,6 +136,7 @@ Result calcACforPathBased(BitsetType,F,G)(ref F paths, ref const(G) graph,
 	import std.conv : to;
 	import std.stdio : writefln;
 	import permutation;
+	import config;
 
 	Array!BitsetType tmpPathStore;
 
@@ -143,7 +144,11 @@ Result calcACforPathBased(BitsetType,F,G)(ref F paths, ref const(G) graph,
 	Array!(Bitset!BitsetType) horizontalPaths;
 	Array!(Bitset!BitsetType) diagonalPaths;
 
-	auto permu = PermutationsImpl!BitsetType(numNodes);
+	auto permu = PermutationsImpl!BitsetType(
+		numNodes,
+		getConfig().permutationStart(),
+		getConfig().permutationStop(numNodes)
+	);
 	foreach(perm; permu) {
 		//logf("%s %s", permu.numNodes, perm);
 		paths.execute(graph, perm);

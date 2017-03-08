@@ -20,6 +20,7 @@ import utils;
 import graph;
 import mapping;
 import stats;
+import config;
 
 //version(release) {
 	//version = exceptionhandling_release_asserts;
@@ -191,9 +192,10 @@ void gridVLattice(int nc, int nr) {
 	auto tl = LatticeImpl!64(nc, nr);
 	auto tlRslt = tl.calcAC();
 	auto rsltTL = ResultPlot(tl.name(), tlRslt);
+	closedQuorumListWriter!ulong(tl.write);
 
-	gnuPlot(format("Results/GridVLattice%sX%s", nr, nc), "", rsltGrid,
-			rsltMCS, rsltTL);
+	/*gnuPlot(format("Results/GridVLattice%sX%s", nr, nc), "", rsltGrid,
+			rsltMCS, rsltTL);*/
 }
 
 void lattice(int nc, int nr) {
@@ -487,6 +489,7 @@ void runMappings(string graphsFilename, string[] args) {
 }
 
 void main(string[] args) {
+	parseConfig(args);
 	//lattice(4,4);
 	//gridAgainstGrid(4,4);
 	//MCSAgainstMCS(15);
@@ -514,7 +517,7 @@ void main(string[] args) {
 	//gridVLattice(3,3);
 	//gridVLattice(4,2);
 	//gridVLattice(2,4);
-	gridVLattice(6,6);
+	gridVLattice(4,4);
 	//LatticeXX();
 	//LatticeXY();
 }
