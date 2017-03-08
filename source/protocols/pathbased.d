@@ -163,7 +163,8 @@ Result calcACforPathBased(BitsetType,F,G)(ref F paths, ref const(G) graph,
 		}
 
 		if(!subsetRead.isNull() && !subsetWrite.isNull()) {
-			logf("early %d notEarly %d", earlyCnt++, notEarly);
+			logf("early %d notEarly %d", earlyCnt++, notEarly,
+			);
 			continue;
 		}
 
