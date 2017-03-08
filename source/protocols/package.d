@@ -169,20 +169,32 @@ void closedQuorumListWriter(BitsetType,Out)(const ref BitsetStore!BitsetType sto
 	import std.format : formattedWrite;
 
 	formattedWrite(writer, "{\n\tlist : [\n");
+	bool outerFirst = true;
 	foreach(ref it; store.array[]) {
-		formattedWrite(writer, 
-			"\t\t{head : %d, supersets : [\n", it.bitset.store
-		);
+		if(outerFirst) {
+			formattedWrite(writer, 
+				"\t\t{head : %d, supersets : [", it.bitset.store
+			);
+			outerFirst = false;
+		} else {
+			formattedWrite(writer, 
+				"\t\t,{head : %d, supersets : [", it.bitset.store
+			);
+		}
 		bool first = true;
 		foreach(ref jt; it.subsets[]) {
 			if(first) {
-				formattedWrite(writer, "\t\t\t%d\n", jt.store);
+				formattedWrite(writer, "\n\t\t\t%d", jt.store);
 				first = false;
 			} else {
-				formattedWrite(writer, "\t\t\t,%d\n", jt.store);
+				formattedWrite(writer, "\n\t\t\t,%d", jt.store);
 			}
 		}
-		formattedWrite(writer, "\t\t]}\n");
+		if(first) {
+			formattedWrite(writer, "]}\n");
+		} else {
+			formattedWrite(writer, "\n\t\t]}\n");
+		}
 	}
 
 	formattedWrite(writer, "\t]\n}\n");
@@ -193,4 +205,11 @@ void closedQuorumListWriter(BitsetType)(
 {
 	import std.stdio : stdout;
 	closedQuorumListWriter!BitsetType(store, stdout.lockingTextWriter());
+}
+
+void closedQuorumListWriter(BitsetType)(
+		const ref BitsetStore!BitsetType store, string filename)
+{
+	auto f = File(filename, "w");
+	closedQuorumListWriter!BitsetType(store, f.lockingTextWriter());
 }

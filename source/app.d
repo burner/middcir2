@@ -517,7 +517,7 @@ void main(string[] args) {
 	//gridVLattice(3,3);
 	//gridVLattice(4,2);
 	//gridVLattice(2,4);
-	gridVLattice(4,4);
+	gridVLattice(5,5);
 	//LatticeXX();
 	//LatticeXY();
 }
