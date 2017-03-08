@@ -149,20 +149,40 @@ Result calcACforPathBased(BitsetType,F,G)(ref F paths, ref const(G) graph,
 		getConfig().permutationStart(),
 		getConfig().permutationStop(numNodes)
 	);
+	long earlyCnt = 0;
+	long notEarly;
 	foreach(perm; permu) {
 		//logf("%s %s", permu.numNodes, perm);
+		auto subsetRead = read.search(perm);
+		if(!subsetRead.isNull()) {
+			(*subsetRead).subsets ~= perm;
+		}
+		auto subsetWrite = write.search(perm);
+		if(!subsetWrite.isNull()) {
+			(*subsetWrite).subsets ~= perm;
+		}
+
+		if(!subsetRead.isNull() && !subsetWrite.isNull()) {
+			logf("early %d notEarly %d", earlyCnt++, notEarly);
+			continue;
+		}
+
+		++notEarly;
+
 		paths.execute(graph, perm);
 
 		verticalPaths.removeAll();
 		horizontalPaths.removeAll();
 		diagonalPaths.removeAll();
 
-		testPathsBetween!BitsetType(paths, top, bottom, verticalPaths, tmpPathStore);	
-		testPathsBetween!BitsetType(paths, left, right, horizontalPaths, tmpPathStore);	
+		testPathsBetween!BitsetType(paths, top, bottom, verticalPaths, 
+			tmpPathStore);	
+		testPathsBetween!BitsetType(paths, left, right, horizontalPaths, 
+			tmpPathStore);	
 
 		foreach(ref int[2] diagonalPair; diagonalPairs) {
-			PathResult!BitsetType dia = testDiagonal!BitsetType(paths, diagonalPair[0],
-					diagonalPair[1], tmpPathStore
+			PathResult!BitsetType dia = testDiagonal!BitsetType(paths, 
+				diagonalPair[0], diagonalPair[1], tmpPathStore
 			);
 
 			if(dia.validPath == ValidPath.yes) {
