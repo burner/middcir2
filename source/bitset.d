@@ -88,7 +88,7 @@ Bitset!T bitset(T,R)(ref Array!R r) if(isIntegral!T) {
 	Bitset!T ret;
 
 	foreach(ref it; r) {
-		ret.set(it);
+		ret.set(cast(size_t)it);
 	}
 
 	return ret;

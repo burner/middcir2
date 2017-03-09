@@ -39,8 +39,8 @@ void parseConfig(string[] args) {
 
 	getWriteableConfig().permutationCountStart = permuStart;
 	getWriteableConfig().permutationCountStop = permuStop;
-	logf("%s %s", getConfig().permutationCountStart,
-			getConfig().permutationCountStop);
+	//logf("%s %s", getConfig().permutationCountStart,
+	//		getConfig().permutationCountStop);
 }
 
 private Config __theConfig;

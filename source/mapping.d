@@ -234,10 +234,10 @@ class Mapping(int SizeLnt, int SizePnt) {
 		import std.math : lround;
 		import permutation;
 		auto permu = Permutations(upTo);
-		const size_t quorumSetALen = min(quorumSetA.length, 
+		const size_t quorumSetALen = cast(size_t)min(quorumSetA.length, 
 				max(1, lround(quorumSetA.length * this.quorumTestFraction.value))
 		);
-		const size_t quorumSetBLen = min(quorumSetB.length, 
+		const size_t quorumSetBLen = cast(size_t)min(quorumSetB.length, 
 				max(1, lround(quorumSetB.length * this.quorumTestFraction.value))
 		);
 		logf(false, "%5.6f %s <= %s || %s <= %s", 
@@ -249,7 +249,7 @@ class Mapping(int SizeLnt, int SizePnt) {
 			int numBitsInPerm = popcnt(perm.store);
 			floyd.execute(*this.pnt, perm);
 
-			foreach(const ref it; quorumSetA[0UL .. quorumSetALen]) {
+			foreach(const ref it; quorumSetA[cast(size_t)0UL .. quorumSetALen]) {
 				if(numBitsInPerm >= popcnt(it.bitset.store)) {
 					this.reconnectQuorum(it.bitset, rsltQuorumSetA, perm);
 					foreach(sub; it.subsets[]) {
@@ -258,7 +258,7 @@ class Mapping(int SizeLnt, int SizePnt) {
 				}
 			}
 
-			foreach(const ref it; quorumSetB[0UL .. quorumSetBLen]) {
+			foreach(const ref it; quorumSetB[cast(size_t)0UL .. quorumSetBLen]) {
 				if(numBitsInPerm >= popcnt(it.bitset.store)) {
 					this.reconnectQuorum(it.bitset, rsltQuorumSetB, perm);
 					foreach(sub; it.subsets[]) {

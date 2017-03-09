@@ -146,7 +146,7 @@ long binomial(long n, long k) pure nothrow @nogc {
 		206253075, 141120525, 84672315, 44352165, 20160075, 7888725, 2629575, 736281, 
 		169911, 31465, 4495, 465, 31, 1 ],
 	];
-	return binotable[n][k];
+	return binotable[cast(size_t)n][cast(size_t)k];
 }
 
 unittest {

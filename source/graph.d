@@ -60,8 +60,9 @@ struct Graph(int Size) {
 			this.nodePositions.insertBack(vec3d());
 		}
 		foreach(ref it; j["nodes"].get!(JSONValue[])) {
-			this.nodes[it["id"].get!long()].store = cast(NodeType)(it["adjacency"].get!long());
-			this.nodePositions[it["id"].get!long()] = vec3d(
+			this.nodes[cast(size_t)it["id"].get!long()].store = 
+				cast(NodeType)(cast(size_t)it["adjacency"].get!long());
+			this.nodePositions[cast(size_t)it["id"].get!long()] = vec3d(
 					it["x"].get!double(),
 					it["y"].get!double(), 
 					0.0

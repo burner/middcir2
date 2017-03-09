@@ -70,7 +70,7 @@ bool areGraphsIsomorph(int Size)(const Graph!Size a, const Graph!Size b) {
 					//writefln("NODE FAIL");
 					goto next;
 				}
-				lowIdx = a.nodes[it].lowestBit(lowIdx + 1UL);
+				lowIdx = a.nodes[it].lowestBit(cast(size_t)(lowIdx + 1UL));
 			}
 			++idx;
 		}

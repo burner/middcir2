@@ -170,8 +170,8 @@ struct CrossingImpl(int Size) {
 			//);
 			for(int j = 0; j < setCount[i]; ++j) {
 				//logf("j %s", j);
-				(*store[i]).insertBack(
-					uniqueBorder[(startIdx + j) % uniqueBorder.length]
+				(*store[cast(size_t)i]).insertBack(
+					uniqueBorder[cast(size_t)((startIdx + j) % uniqueBorder.length)]
 				);
 			}
 		}

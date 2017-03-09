@@ -48,13 +48,13 @@ class StatsRunner(int Size) {
 		assert(!this.graphs.empty);
 		bool[size_t] ids;
 		foreach(g; this.graphs[]) {
-			if(g.id in ids) {
+			if(cast(size_t)(g.id) in ids) {
 				throw new Exception(format(
 						"id %d already present check file %s",
 						g.id, graphsFilename
 					));
 			}
-			ids[g.id] = true;
+			ids[cast(size_t)g.id] = true;
 		}
 
 		this.start = start;
@@ -131,8 +131,8 @@ class StatsRunner(int Size) {
 		auto dimensions = bestGridDiffs(size);
 	
 		foreach(rc; dimensions) {
-			this.lattices ~= Lattice(rc[0], rc[1]);
-			this.grids ~= Grid(rc[0], rc[1]);
+			this.lattices ~= Lattice(cast(size_t)rc[0], cast(size_t)rc[1]);
+			this.grids ~= Grid(cast(size_t)rc[0], cast(size_t)rc[1]);
 		}
 	}
 	

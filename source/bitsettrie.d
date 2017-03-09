@@ -67,8 +67,8 @@ class TrieNode(T) {
 			format(sink, indent, "%02d:", this.bitSetPos);
 		}
 		if(this.arrayIdx != -1) {
-			format(sink, 0, "%s [", trie.array[this.arrayIdx].bitset.toString2());
-			foreach(it; trie.array[this.arrayIdx].subsets) {
+			format(sink, 0, "%s [", trie.array[cast(size_t)this.arrayIdx].bitset.toString2());
+			foreach(it; trie.array[cast(size_t)this.arrayIdx].subsets) {
 				format(sink, 0, "%s ", it.toString2());
 			}
 			format(sink, 0, "]");
@@ -115,12 +115,12 @@ struct Trie(T) {
 					if(id != -1) {
 						const bFS = this.bluntForceSearch(bs);
 						assert(bFS != -1);
-						assert(this.array[bFS].bitset.count() ==
-								this.array[id].bitset.count(),
+						assert(this.array[cast(size_t)bFS].bitset.count() ==
+								this.array[cast(size_t)id].bitset.count(),
 							format("\nbs  %s\nid  %s\nbFS %s", 
 								bs.toString2(),
-								this.array[id].bitset.toString2(),
-								this.array[bFS].bitset.toString2()
+								this.array[cast(size_t)id].bitset.toString2(),
+								this.array[cast(size_t)bFS].bitset.toString2()
 							)
 						);
 						//this.array[id].subsets ~= bs;
@@ -165,14 +165,14 @@ struct Trie(T) {
 
 		long id = this.search(bs);
 		if(id != -1) {
-			this.array[id].subsets ~= bs;
+			this.array[cast(size_t)id].subsets ~= bs;
 		} else {
 			long ne = bs.lowestBit(0);
 			const count = bs.count();
-			if(this.follow[count][ne] is null) {
-				this.follow[count][ne] = new TrieNode!T(ne, -1);
+			if(this.follow[cast(size_t)count][cast(size_t)ne] is null) {
+				this.follow[cast(size_t)count][cast(size_t)ne] = new TrieNode!T(cast(size_t)ne, -1);
 			}
-			this.follow[count][ne].insert(this, bs);
+			this.follow[cast(size_t)count][cast(size_t)ne].insert(this, bs);
 		}
 		//this.sanityCheck();
 	}
@@ -391,15 +391,15 @@ unittest {
 		sumBaa += 1 + baa[idx].subsets.length;
 
 		long ts = it.bitset.count();
-		trieSort[ts] ~= it.bitset;
+		trieSort[cast(size_t)ts] ~= it.bitset;
 		foreach(jt; it.subsets) {
-			trieSort[ts] ~= jt;
+			trieSort[cast(size_t)ts] ~= jt;
 		}
 
-		long bc = baa[idx].bitset.count();
-		baaSort[bc] ~= baa[idx].bitset;
-		foreach(jt; baa[idx].subsets) {
-			baaSort[bc] ~= jt;
+		long bc = baa[cast(size_t)idx].bitset.count();
+		baaSort[cast(size_t)bc] ~= baa[cast(size_t)idx].bitset;
+		foreach(jt; baa[cast(size_t)idx].subsets) {
+			baaSort[cast(size_t)bc] ~= jt;
 		}
 
 		++idx;

@@ -17,7 +17,7 @@ struct PermutationImpl(BitsetType) {
 
 	/** nN how many total, nR how many to select */
 	this(int nN, int nR) {
-		logf("n %d r %d", nN, nR);
+		//logf("n %d r %d", nN, nR);
 		import std.array;
 		this.empty = (nN < 1 || nR > nN); 
 		this.generated = 0;
@@ -43,7 +43,7 @@ struct PermutationImpl(BitsetType) {
 	@property Bitset!BitsetType front() const {
 		Bitset!BitsetType ret;
 		foreach(it; this.curr) {
-			ret.set(it);
+			ret.set(cast(size_t)it);
 		}
 		return ret;
 	}
@@ -52,10 +52,10 @@ struct PermutationImpl(BitsetType) {
 		// find what to increment
 		this.empty = true;
 		for(Integer i = R - 1; i >= 0; --i) {
-			if(this.curr[i] < N - R + i) {
-				Integer j = this.curr[i] + 1;
+			if(this.curr[cast(size_t)i] < N - R + i) {
+				Integer j = this.curr[cast(size_t)i] + 1;
 				while(i < R) {
-					this.curr[i] = j;
+					this.curr[cast(size_t)i] = j;
 					++i;
 					++j;
 				}
@@ -77,7 +77,7 @@ struct PermutationsImpl(BitsetType) {
 	PermutationImpl!BitsetType cur;
 
 	this(const int numNodes, const int startCnt, const int stopCnt) {
-		logf("%s %s %s", numNodes, startCnt, stopCnt);
+		//logf("%s %s %s", numNodes, startCnt, stopCnt);
 		this.numNodes = numNodes;
 		this.curNodes = startCnt;
 		this.stopCount = stopCnt;

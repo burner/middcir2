@@ -174,7 +174,7 @@ struct BitsetArrayArrayIterator(T,S) {
 	ref BitsetArray!(T) opUnary(string s)() if(s == "*") { return getData(); }
 
 	ref BitsetArray!(T) getData() {
-		return (*this.ptr).array[this.curPos];
+		return (*this.ptr).array[cast(size_t)this.curPos];
 	}
 
 	void increment() {
@@ -279,7 +279,7 @@ struct BitsetArrayArray(T) {
 		return this.array[];
 	}
 
-	auto opSlice(const ulong low, const ulong high) const {
+	auto opSlice(const size_t low, const size_t high) const {
 		return this.array[low .. high];
 	}
 
