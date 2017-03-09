@@ -1,7 +1,7 @@
 double availability(S)(const int numAvail, const S numNodes, double p) pure {
 	import std.math : pow;
 	return pow(p, cast(double)numAvail) * pow((1.0 - p), cast(double)(numNodes - numAvail)) 
-		//* 1000
+		* 1000
 		;
 }
 

@@ -1,5 +1,7 @@
 module config;
 
+import std.experimental.logger;
+
 immutable double stepCount = 0.01;
 
 struct Config {
@@ -8,6 +10,7 @@ struct Config {
 	int permutationCountStop = -1;
 
 	int permutationStart() const {
+		logf("%s", this.permutationCountStart);
 		if(this.permutationCountStart == -1) {
 			return 1;
 		} else {
@@ -16,6 +19,7 @@ struct Config {
 	}
 
 	int permutationStop(int given) const {
+		logf("%s", this.permutationCountStop);
 		if(this.permutationCountStop == -1) {
 			return given;
 		} else {
@@ -26,10 +30,17 @@ struct Config {
 }
 
 void parseConfig(string[] args) {
+	int permuStart = -1;
+	int permuStop = -1;
 	import std.getopt;
 	auto rslt = getopt(args, 
-		"permutationStart|t", &getWriteableConfig().permutationCountStart,
-		"permutationStop|p", &getWriteableConfig().permutationCountStop);
+		"permutationStart|t", &permuStart,
+		"permutationStop|p", &permuStop);
+
+	getWriteableConfig().permutationCountStart = permuStart;
+	getWriteableConfig().permutationCountStop = permuStop;
+	logf("%s %s", getConfig().permutationCountStart,
+			getConfig().permutationCountStop);
 }
 
 private Config __theConfig;

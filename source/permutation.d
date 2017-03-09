@@ -77,6 +77,7 @@ struct PermutationsImpl(BitsetType) {
 	PermutationImpl!BitsetType cur;
 
 	this(const int numNodes, const int startCnt, const int stopCnt) {
+		logf("%s %s %s", numNodes, startCnt, stopCnt);
 		this.numNodes = numNodes;
 		this.curNodes = startCnt;
 		this.stopCount = stopCnt;
@@ -89,8 +90,10 @@ struct PermutationsImpl(BitsetType) {
 	}
 
 	@property bool empty() const {
+		//logf("cn %d sC+1 %d", this.curNodes, this.stopCount+1);
 		return (this.curNodes >= this.numNodes && this.cur.empty)
-			|| this.curNodes >= this.stopCount;
+			|| (this.curNodes >= this.stopCount+1 /*&& this.cur.empty*/)
+			;
 	}
 
 	@property Bitset!BitsetType front() const {
