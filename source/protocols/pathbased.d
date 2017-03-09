@@ -128,10 +128,11 @@ void testEmptyIntersection(ref const(Array!(int[2])) a) {
 	}
 }
 
-Result calcACforPathBased(BitsetType,F,G)(ref F paths, ref const(G) graph, 
+Result calcACforPathBasedFast(BitsetType,F,G)(ref F paths, ref const(G) graph, 
 		const(Array!int) bottom, const(Array!int) top, const(Array!int) left, 
 		const(Array!int) right, const(Array!(int[2])) diagonalPairs, 
-		ref BitsetStore!BitsetType read, ref BitsetStore!BitsetType write, const uint numNodes)
+		ref BitsetStore!BitsetType read, ref BitsetStore!BitsetType write,
+		const uint numNodes)
 {
 	import std.conv : to;
 	import std.stdio : writefln;
@@ -149,8 +150,6 @@ Result calcACforPathBased(BitsetType,F,G)(ref F paths, ref const(G) graph,
 		getConfig().permutationStart(),
 		getConfig().permutationStop(numNodes)
 	);
-	long earlyCnt = 0;
-	long notEarly;
 	foreach(perm; permu) {
 		//logf("%s %s", permu.numNodes, perm);
 		auto subsetRead = read.search(perm);
@@ -163,12 +162,8 @@ Result calcACforPathBased(BitsetType,F,G)(ref F paths, ref const(G) graph,
 		}
 
 		if(!subsetRead.isNull() && !subsetWrite.isNull()) {
-			logf("early %d notEarly %d", earlyCnt++, notEarly,
-			);
 			continue;
 		}
-
-		++notEarly;
 
 		paths.execute(graph, perm);
 
@@ -191,11 +186,79 @@ Result calcACforPathBased(BitsetType,F,G)(ref F paths, ref const(G) graph,
 			}
 		}
 
-		PathResult!BitsetType readQuorum = selectReadQuorum!BitsetType(verticalPaths,
-				horizontalPaths, diagonalPaths
+		if(!subsetRead.isNull()) {
+			PathResult!BitsetType readQuorum = selectReadQuorum!BitsetType(
+					verticalPaths, horizontalPaths, diagonalPaths
+			);
+
+			if(readQuorum.validPath == ValidPath.yes) {
+				read.insert(readQuorum.minPath, perm);
+			}
+		}
+
+		if(!subsetWrite.isNull()) {
+			PathResult!BitsetType writeQuorum = selectWriteQuorum!BitsetType(
+					verticalPaths, horizontalPaths, diagonalPaths
+			);
+
+			if(writeQuorum.validPath == ValidPath.yes) {
+				write.insert(writeQuorum.minPath, perm);
+			}
+		}
+	}
+
+	return calcAvailForTree!BitsetType(to!int(numNodes), read, write);
+}
+
+Result calcACforPathBased(BitsetType,F,G)(ref F paths, ref const(G) graph, 
+		const(Array!int) bottom, const(Array!int) top, const(Array!int) left, 
+		const(Array!int) right, const(Array!(int[2])) diagonalPairs, 
+		ref BitsetStore!BitsetType read, ref BitsetStore!BitsetType write, const uint numNodes)
+{
+	import std.conv : to;
+	import std.stdio : writefln;
+	import permutation;
+	import config;
+
+	Array!BitsetType tmpPathStore;
+
+	Array!(Bitset!BitsetType) verticalPaths;
+	Array!(Bitset!BitsetType) horizontalPaths;
+	Array!(Bitset!BitsetType) diagonalPaths;
+
+	auto permu = PermutationsImpl!BitsetType(
+		numNodes,
+		getConfig().permutationStart(),
+		getConfig().permutationStop(numNodes)
+	);
+	foreach(perm; permu) {
+		//logf("%s %s", permu.numNodes, perm);
+		paths.execute(graph, perm);
+
+		verticalPaths.removeAll();
+		horizontalPaths.removeAll();
+		diagonalPaths.removeAll();
+
+		testPathsBetween!BitsetType(paths, top, bottom, verticalPaths, 
+			tmpPathStore);	
+		testPathsBetween!BitsetType(paths, left, right, horizontalPaths, 
+			tmpPathStore);	
+
+		foreach(ref int[2] diagonalPair; diagonalPairs) {
+			PathResult!BitsetType dia = testDiagonal!BitsetType(paths, 
+				diagonalPair[0], diagonalPair[1], tmpPathStore
+			);
+
+			if(dia.validPath == ValidPath.yes) {
+				diagonalPaths.insertBack(dia.minPath);
+			}
+		}
+
+		PathResult!BitsetType readQuorum = selectReadQuorum!BitsetType(
+				verticalPaths, horizontalPaths, diagonalPaths
 		);
-		PathResult!BitsetType writeQuorum = selectWriteQuorum!BitsetType(verticalPaths,
-				horizontalPaths, diagonalPaths
+		PathResult!BitsetType writeQuorum = selectWriteQuorum!BitsetType(
+				verticalPaths, horizontalPaths, diagonalPaths
 		);
 
 		if(readQuorum.validPath == ValidPath.yes) {
