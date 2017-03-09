@@ -186,7 +186,7 @@ Result calcACforPathBasedFast(BitsetType,F,G)(ref F paths, ref const(G) graph,
 			}
 		}
 
-		if(!subsetRead.isNull()) {
+		if(subsetRead.isNull()) {
 			PathResult!BitsetType readQuorum = selectReadQuorum!BitsetType(
 					verticalPaths, horizontalPaths, diagonalPaths
 			);
@@ -196,7 +196,7 @@ Result calcACforPathBasedFast(BitsetType,F,G)(ref F paths, ref const(G) graph,
 			}
 		}
 
-		if(!subsetWrite.isNull()) {
+		if(subsetWrite.isNull()) {
 			PathResult!BitsetType writeQuorum = selectWriteQuorum!BitsetType(
 					verticalPaths, horizontalPaths, diagonalPaths
 			);
@@ -226,11 +226,12 @@ Result calcACforPathBased(BitsetType,F,G)(ref F paths, ref const(G) graph,
 	Array!(Bitset!BitsetType) horizontalPaths;
 	Array!(Bitset!BitsetType) diagonalPaths;
 
-	auto permu = PermutationsImpl!BitsetType(
-		numNodes,
-		getConfig().permutationStart(),
-		getConfig().permutationStop(numNodes)
-	);
+	//auto permu = PermutationsImpl!BitsetType(
+	//	numNodes,
+	//	getConfig().permutationStart(),
+	//	getConfig().permutationStop(numNodes)
+	//);
+	auto permu = PermutationsImpl!BitsetType(numNodes);
 	foreach(perm; permu) {
 		//logf("%s %s", permu.numNodes, perm);
 		paths.execute(graph, perm);

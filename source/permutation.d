@@ -90,7 +90,7 @@ struct PermutationsImpl(BitsetType) {
 
 	@property bool empty() const {
 		return (this.curNodes >= this.numNodes && this.cur.empty)
-			|| this.curNodes + 1 >= this.stopCount;
+			|| this.curNodes >= this.stopCount;
 	}
 
 	@property Bitset!BitsetType front() const {

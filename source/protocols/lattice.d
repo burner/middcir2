@@ -141,13 +141,13 @@ struct LatticeImpl(int Size) {
 		auto paths = floyd!(typeof(this.graph),64)(this.graph);
 
 		const uint numNodes = to!uint(this.width * this.height);
-		//auto ret = calcACforPathBased!BSType(paths, this.graph, bottom, top, left,
-		//	right, diagonalPairs, this.read, this.write, numNodes
-		//);
-
-		auto ret = calcACforPathBasedFast!BSType(paths, this.graph, bottom, top, 
-			left, right, diagonalPairs, this.read, this.write, numNodes
+		auto ret = calcACforPathBased!BSType(paths, this.graph, bottom, top, left,
+			right, diagonalPairs, this.read, this.write, numNodes
 		);
+
+		//auto ret = calcACforPathBasedFast!BSType(paths, this.graph, bottom, top, 
+		//	left, right, diagonalPairs, this.read, this.write, numNodes
+		//);
 
 		bool test;
 		debug {

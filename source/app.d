@@ -59,9 +59,9 @@ void crossingVLattice() {
 		auto tlRslt = tl.calcAC();
 		auto rsltTL = ResultPlot(tl.name(), tlRslt);
 
-		auto crossings = Crossings(tl.getGraph());
-		auto crossingsRslt = crossings.calcAC();
-		auto crossingsTL = ResultPlot(format("Crossing%dx%d", i, i), crossingsRslt);
+		//auto crossings = Crossings(tl.getGraph());
+		//auto crossingsRslt = crossings.calcAC();
+		//auto crossingsTL = ResultPlot(format("Crossing%dx%d", i, i), crossingsRslt);
 	}
 }
 
@@ -191,7 +191,7 @@ void gridAgainstGrid(int nc, int nr) {
 }
 
 void gridVLattice(int nc, int nr) {
-	logf("grid");
+	/*logf("grid");
 	auto grid = GridFormula(nc, nr);
 	auto gridRslt = grid.calcAC();
 	auto rsltGrid = ResultPlot(grid.name(), gridRslt);
@@ -199,16 +199,17 @@ void gridVLattice(int nc, int nr) {
 	logf("mcs");
 	auto mcs = MCSFormula(nc * nr);
 	auto mcsRslt = mcs.calcAC();
-	auto rsltMCS = ResultPlot(format("MCS-%d", nc * nr) , mcsRslt);
+	auto rsltMCS = ResultPlot(format("MCS-%d", nc * nr) , mcsRslt);*/
 
 	logf("lattice");
 	auto tl = LatticeImpl!64(nc, nr);
 	auto tlRslt = tl.calcAC();
 	auto rsltTL = ResultPlot(tl.name(), tlRslt);
-	closedQuorumListWriter!ulong(tl.write);
+	//closedQuorumListWriter!ulong(tl.write);
 
 	/*gnuPlot(format("Results/GridVLattice%sX%s", nr, nc), "", rsltGrid,
 			rsltMCS, rsltTL);*/
+	gnuPlot(format("Results/GridVLattice%sX%s", nr, nc), "", rsltTL);
 }
 
 void lattice(int nc, int nr) {
@@ -530,7 +531,7 @@ void main(string[] args) {
 	//gridVLattice(3,3);
 	//gridVLattice(4,2);
 	//gridVLattice(2,4);
-	gridVLattice(5,5);
+	gridVLattice(4,4);
 	//LatticeXX();
 	//LatticeXY();
 }
