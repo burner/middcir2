@@ -83,7 +83,9 @@ struct Crossings {
 	}
 }
 
-struct Crossing {
+alias Crossing = CrossingImpl!32;
+
+struct CrossingImpl(int Size) {
 	import core.bitop : popcnt;
 	import floydmodule;
 	import bitfiddle;
