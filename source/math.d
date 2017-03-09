@@ -48,7 +48,8 @@ double oldAvailability(S)(const S numNodes, const size_t numAvail, const size_t 
 {
 	import availabilitylookuptable;
 	const double realP = cast(double)(p) * stepWidth;
-	return pow(realP, cast(double)numAvail) * pow((1.0 - realP), cast(double)(numNodes - numAvail));
+	return (pow(realP, cast(double)numAvail) * pow((1.0 - realP), cast(double)(numNodes - numAvail))) 
+		* 1000;
 }
 
 unittest {

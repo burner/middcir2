@@ -88,6 +88,11 @@ struct GridImpl(int Size) {
 		}
 
 		auto ret = calcAvailForTree!uint(to!int(this.width * this.height), this.read, this.write);
+		for(int idx= 0; idx < 101; ++idx) {
+			ret.readCosts[idx] *= 1000.0;
+			ret.writeCosts[idx] *= 1000.0;
+		}
+
 		bool test;
 		debug {
 			test = true;

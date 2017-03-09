@@ -126,6 +126,13 @@ struct MCSFormula {
 			ret.readCosts[idx] = this.half;
 		}
 
+		for(int idx= 0; idx < 101; ++idx) {
+			ret.readAvail[idx] /= 1000;
+			ret.writeAvail[idx] /= 1000;
+			ret.readCosts[idx] /= 1000;
+			ret.writeCosts[idx] /= 1000;
+		}
+
 		return ret;
 	}
 
