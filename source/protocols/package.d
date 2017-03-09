@@ -161,6 +161,12 @@ private void calcAvailForTreeImpl(BitsetType)(const int numNodes,
 	for(int idx = 0; idx < 101; ++idx) {
 		costs[idx] /= avail[idx];
 	}
+
+	for(int idx= 0; idx < 101; ++idx) {
+		costs[idx] /= 1000;
+		avail[idx] /= 1000;
+
+	}
 }
 
 void closedQuorumListWriter(BitsetType,Out)(const ref BitsetStore!BitsetType store,
