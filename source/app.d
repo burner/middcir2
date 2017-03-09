@@ -52,6 +52,19 @@ void MCSForm() {
 			rsltPlot[6]);
 }
 
+void crossingVLattice() {
+	for(int i = 3; i < 7; ++i) {
+		logf("%d x %d", i, i);
+		auto tl = LatticeImpl!64(i, i);
+		auto tlRslt = tl.calcAC();
+		auto rsltTL = ResultPlot(tl.name(), tlRslt);
+
+		auto crossings = Crossings(tl.getGraph());
+		auto crossingsRslt = crossings.calcAC();
+		auto crossingsTL = ResultPlot(format("Crossing%dx%d", i, i), crossingsRslt);
+	}
+}
+
 void LatticeXX() {
 	import std.typecons : Tuple, tuple;
 	const NN = 3;
