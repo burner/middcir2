@@ -13,30 +13,52 @@ import bitsetmodule;
 import graph;
 import protocols;
 
-struct Crossings {
-	Crossing bestCrossing;
+struct CrossingsConfig {
+	int sumStart;
+	int sumStop;
+}
+
+alias Crossings = CrossingsImpl!32;
+
+struct CrossingsImpl(int Size) {
+	alias BSType = TypeFromSize!Size;
+
+	CrossingImpl!Size bestCrossing;
 	Result bestResult;
 	double bestSum;
 
-	Graph!32 graph;
+	Graph!Size graph;
 
-	this(ref Graph!32 graph) {
+	CrossingsConfig config;
+
+	this(ref Graph!Size graph) {
+		this(graph, CrossingsConfig(0, 101));
+	}
+
+	this(ref Graph!Size graph, CrossingsConfig cc) {
 		this.graph = graph;
 		this.bestSum = 0.0;
+		this.config = cc;
 	}
 
-	static double sumResult(ref Result curRslt, const double writeBalance = 0.5) {
+	double sumResult(ref Result curRslt, const double writeBalance = 0.5) const 
+	{
 		import utils : sum;
 
-		return sum(curRslt.writeAvail)  * writeBalance + 
-			sum(curRslt.readAvail) * 1.0 - writeBalance;
+		return 
+			sum(
+				curRslt.writeAvail[this.config.sumStart ..  this.config.sumStop]
+			)  * writeBalance 
+			+ sum(
+				curRslt.readAvail[this.config.sumStart ..  this.config.sumStop]
+			) * 1.0 - writeBalance;
 	}
 
-	@property ref BitsetStore!uint read() {
+	@property ref BitsetStore!BSType read() {
 		return this.bestCrossing.read;
 	}
 
-	@property ref BitsetStore!uint write() {
+	@property ref BitsetStore!BSType write() {
 		return this.bestCrossing.write;
 	}
 
@@ -44,18 +66,19 @@ struct Crossings {
 		import std.algorithm.mutation : bringToFront;
 		Array!int border = this.graph.computeBorder();
 		Array!int uniqueBorder;
-		makeArrayUnique(border, uniqueBorder);
+
+		makeArrayUnique!BSType(border, uniqueBorder);
 		bringToFront(uniqueBorder[0 .. 1], uniqueBorder[1 .. $]);
 
 		for(int i = 0; i < uniqueBorder.length; ++i) {
 			//logf("[%(%s, %)]", uniqueBorder[]);
 			if(i == 0) {
-				this.bestCrossing = Crossing(this.graph);
+				this.bestCrossing = CrossingImpl!Size(this.graph);
 				this.bestResult = this.bestCrossing.calcAC(uniqueBorder);
 				this.bestSum = sumResult(this.bestResult);
 				logf("%f", this.bestSum);
 			} else {
-				auto tmp = Crossing(this.graph);
+				auto tmp = CrossingImpl!Size(this.graph);
 				auto tmpRslt = tmp.calcAC(uniqueBorder);
 				double tmpSum = sumResult(tmpRslt);
 
@@ -91,8 +114,10 @@ struct CrossingImpl(int Size) {
 	import bitfiddle;
 	import utils : removeAll, testQuorumIntersection, testAllSubsetsSmaller;
 
-	BitsetStore!uint read;
-	BitsetStore!uint write;
+	alias BSType = TypeFromSize!Size;
+
+	BitsetStore!BSType read;
+	BitsetStore!BSType write;
 
 	Array!int bottom;
 	Array!int top;
@@ -100,9 +125,9 @@ struct CrossingImpl(int Size) {
 	Array!int right;
 	Array!(int[2]) diagonalPairs;
 
-	Graph!32 graph;
+	Graph!Size graph;
 
-	this(ref Graph!32 graph) {
+	this(ref Graph!Size graph) {
 		this.graph = graph;
 	}
 
@@ -111,8 +136,8 @@ struct CrossingImpl(int Size) {
 		ref Array!(int[2]) diagonalPairs)
 	{
 		{
-			auto tl = bitset!uint(bitset!uint(top).store & bitset!uint(left).store);
-			auto br = bitset!uint(bitset!uint(bottom).store & bitset!uint(right).store);
+			auto tl = bitset!BSType(bitset!BSType(top).store & bitset!BSType(left).store);
+			auto br = bitset!BSType(bitset!BSType(bottom).store & bitset!BSType(right).store);
 
 			for(size_t a; a < tl.size(); ++a) {
 				if(tl.test(a)) {
@@ -126,8 +151,8 @@ struct CrossingImpl(int Size) {
 		}
 
 		{
-			auto tr = bitset!uint(bitset!uint(top).store & bitset!uint(right).store);
-			auto bl = bitset!uint(bitset!uint(bottom).store & bitset!uint(left).store);
+			auto tr = bitset!BSType(bitset!BSType(top).store & bitset!BSType(right).store);
+			auto bl = bitset!BSType(bitset!BSType(bottom).store & bitset!BSType(left).store);
 			for(size_t a; a < tr.size(); ++a) {
 				if(tr.test(a)) {
 					for(size_t b; b < bl.size(); ++b) {
@@ -195,7 +220,7 @@ struct CrossingImpl(int Size) {
 		auto paths = floyd(this.graph);
 
 		const uint numNodes = to!uint(this.graph.length);
-		auto ret = calcACforPathBased!uint(paths, this.graph, bottom, top, left, right,
+		auto ret = calcACforPathBased!BSType(paths, this.graph, bottom, top, left, right,
 			diagonalPairs, this.read, this.write, numNodes
 		);
 
@@ -217,7 +242,7 @@ struct CrossingImpl(int Size) {
 	Result calcAC() {
 		Array!int border = this.graph.computeBorder();
 		Array!int uniqueBorder;
-		makeArrayUnique(border, uniqueBorder);
+		makeArrayUnique!BSType(border, uniqueBorder);
 		return this.calcAC(uniqueBorder);
 	}
 
@@ -231,8 +256,8 @@ struct CrossingImpl(int Size) {
 	}
 }
 
-void makeArrayUnique(ref Array!int notUnique, ref Array!int unique) {
-	Bitset!uint set;
+void makeArrayUnique(BSType)(ref Array!int notUnique, ref Array!int unique) {
+	Bitset!BSType set;
 	foreach(it; notUnique) {
 		if(!set.test(it)) {
 			unique.insertBack(it);

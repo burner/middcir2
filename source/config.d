@@ -10,7 +10,7 @@ struct Config {
 	int permutationCountStop = -1;
 
 	int permutationStart() const {
-		logf("%s", this.permutationCountStart);
+		//logf("%s", this.permutationCountStart);
 		if(this.permutationCountStart == -1) {
 			return 1;
 		} else {
@@ -19,7 +19,7 @@ struct Config {
 	}
 
 	int permutationStop(int given) const {
-		logf("%s", this.permutationCountStop);
+		//logf("%s", this.permutationCountStop);
 		if(this.permutationCountStop == -1) {
 			return given;
 		} else {

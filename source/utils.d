@@ -147,7 +147,7 @@ void sortBitsetStore(T)(ref BitsetStore!T store) {
 	sort(store, &lessImpl);
 }
 
-double sum(const(double[101]) arr) {
+double sum(const(double[]) arr) {
 	import std.math : isNaN;
 
 	double rslt = 0.0;

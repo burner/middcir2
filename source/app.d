@@ -52,16 +52,43 @@ void MCSForm() {
 			rsltPlot[6]);
 }
 
-void crossingVLattice() {
-	for(int i = 3; i < 7; ++i) {
+void crossingVCrossing() {
+	for(int i = 4; i < 5; ++i) {
 		logf("%d x %d", i, i);
 		auto tl = LatticeImpl!64(i, i);
 		auto tlRslt = tl.calcAC();
 		auto rsltTL = ResultPlot(tl.name(), tlRslt);
 
-		//auto crossings = Crossings(tl.getGraph());
+		auto crossings1 = CrossingsImpl!64(tl.getGraph(), 
+			CrossingsConfig(0, 10)
+		);
+		auto crossingsRslt1 = crossings1.calcAC();
+		auto crossingsTL1 = ResultPlot(format("Crossing90%dx%d", i, i), crossingsRslt1);
+
+		//auto crossings = CrossingsImpl!64(tl.getGraph());
 		//auto crossingsRslt = crossings.calcAC();
 		//auto crossingsTL = ResultPlot(format("Crossing%dx%d", i, i), crossingsRslt);
+		gnuPlot(format("Results/CrossingCrossing%d", i), "", crossingsTL1, rsltTL);
+		logf("\nT %(%d, %)\nB %(%d, %)\nL %(%d, %)\nR %(%d, %)",
+			crossings1.bestCrossing.top[],
+			crossings1.bestCrossing.bottom[],
+			crossings1.bestCrossing.left[],
+			crossings1.bestCrossing.right[]);
+	}
+}
+
+void crossingVLattice() {
+	for(int i = 4; i < 5; ++i) {
+		logf("%d x %d", i, i);
+		auto tl = LatticeImpl!64(i, i);
+		auto tlRslt = tl.calcAC();
+		auto rsltTL = ResultPlot(tl.name(), tlRslt);
+
+		auto crossings = CrossingsImpl!64(tl.getGraph());
+		auto crossingsRslt = crossings.calcAC();
+		auto crossingsTL = ResultPlot(format("Crossing%dx%d", i, i), crossingsRslt);
+		gnuPlot(format("Results/LatticeCrossing%d", i), "", rsltTL,
+				crossingsTL);
 	}
 }
 
@@ -209,7 +236,6 @@ void gridVLattice(int nc, int nr) {
 
 	gnuPlot(format("Results/GridVLattice%sX%s", nr, nc), "", rsltGrid,
 			rsltMCS, rsltTL);
-	//gnuPlot(format("Results/GridVLattice%sX%s", nr, nc), "", rsltTL);
 }
 
 void lattice(int nc, int nr) {
@@ -531,7 +557,9 @@ void main(string[] args) {
 	//gridVLattice(3,3);
 	//gridVLattice(4,2);
 	//gridVLattice(2,4);
-	gridVLattice(4,4);
+	//crossingVLattice();
+	crossingVCrossing();
+	//gridVLattice(6,6);
 	//LatticeXX();
 	//LatticeXY();
 }

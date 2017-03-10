@@ -17,7 +17,7 @@ struct PermutationImpl(BitsetType) {
 
 	/** nN how many total, nR how many to select */
 	this(int nN, int nR) {
-		//logf("n %d r %d", nN, nR);
+		logf("n %d r %d", nN, nR);
 		import std.array;
 		this.empty = (nN < 1 || nR > nN); 
 		this.generated = 0;
