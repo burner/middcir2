@@ -558,8 +558,8 @@ void main(string[] args) {
 	//gridVLattice(4,2);
 	//gridVLattice(2,4);
 	//crossingVLattice();
-	crossingVCrossing();
-	//gridVLattice(6,6);
+	//crossingVCrossing();
+	gridVLattice(6,6);
 	//LatticeXX();
 	//LatticeXY();
 }
