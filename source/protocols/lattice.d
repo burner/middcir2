@@ -52,8 +52,13 @@ struct LatticeImpl(int Size) {
 
 	alias BSType = TypeFromSize!Size;
 
-	BitsetStore!BSType read;
-	BitsetStore!BSType write;
+	static if(Size == 64) {
+		BitsetArrayArrayRC!BSType read;
+		BitsetArrayArrayRC!BSType write;
+	} else {
+		BitsetStore!BSType read;
+		BitsetStore!BSType write;
+	}
 
 	size_t width;
 	size_t height;
@@ -67,6 +72,17 @@ struct LatticeImpl(int Size) {
 		this.height = height;
 		this.graph = LGraph(cast(int)(this.width * this.height));
 		this.createNodeAndEdges();
+
+		static if(Size == 64) {
+			logf("init BSAARC");
+			import std.format : format;
+			this.read = BitsetArrayArrayRC!BSType(
+				format("TMP/Lattice%dX%dRead/", width, height)
+			);
+			this.write = BitsetArrayArrayRC!BSType(
+				format("TMP/Lattice%dX%dWrite/", width, height)
+			);
+		}
 	}
 
 	void createNodeAndEdges() {
@@ -141,11 +157,11 @@ struct LatticeImpl(int Size) {
 		auto paths = floyd!(typeof(this.graph),64)(this.graph);
 
 		const uint numNodes = to!uint(this.width * this.height);
-		//auto ret = calcACforPathBased!BSType(paths, this.graph, bottom, top, left,
+		//auto ret = calcACforPathBased!(typeof(this.read),BSType)(paths, this.graph, bottom, top, left,
 		//	right, diagonalPairs, this.read, this.write, numNodes
 		//);
 
-		auto ret = calcACforPathBasedFast!BSType(paths, this.graph, bottom, top, 
+		auto ret = calcACforPathBasedFast!(typeof(this.read),BSType)(paths, this.graph, bottom, top, 
 			left, right, diagonalPairs, this.read, this.write, numNodes
 		);
 

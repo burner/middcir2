@@ -84,7 +84,7 @@ Bitset!T bitset(T)(T t) if(isIntegral!T) {
 	return Bitset!T(t);
 }
 
-Bitset!T bitset(T,R)(ref Array!R r) if(isIntegral!T) {
+Bitset!T bitset(T,R)(ref const(Array!R) r) if(isIntegral!T) {
 	Bitset!T ret;
 
 	foreach(ref it; r) {

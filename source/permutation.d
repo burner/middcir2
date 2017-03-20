@@ -17,7 +17,7 @@ struct PermutationImpl(BitsetType) {
 
 	/** nN how many total, nR how many to select */
 	this(int nN, int nR) {
-		logf("n %d r %d", nN, nR);
+		//logf("n %d r %d", nN, nR);
 		import std.array;
 		this.empty = (nN < 1 || nR > nN); 
 		this.generated = 0;
@@ -83,6 +83,7 @@ struct PermutationsImpl(BitsetType) {
 		this.stopCount = stopCnt;
 
 		this.cur = PermutationImpl!BitsetType(this.numNodes, this.curNodes);
+		logf("c %d n %d", this.curNodes, this.numNodes);
 	}
 
 	this(const int numNodes) {
@@ -92,7 +93,7 @@ struct PermutationsImpl(BitsetType) {
 	@property bool empty() const {
 		//logf("cn %d sC+1 %d", this.curNodes, this.stopCount+1);
 		return (this.curNodes >= this.numNodes && this.cur.empty)
-			|| (this.curNodes >= this.stopCount+1 /*&& this.cur.empty*/)
+			|| (this.curNodes >= this.stopCount + 1/*&& this.cur.empty*/)
 			;
 	}
 
@@ -105,6 +106,7 @@ struct PermutationsImpl(BitsetType) {
 		if(this.cur.empty) {
 			++this.curNodes;
 			this.cur = PermutationImpl!BitsetType(this.numNodes, this.curNodes);
+			logf("c %d n %d", this.curNodes, this.numNodes);
 		}
 	}
 }

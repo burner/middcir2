@@ -239,9 +239,20 @@ void gridVLattice(int nc, int nr) {
 }
 
 void lattice(int nc, int nr) {
-	auto tl = Lattice(nc, nr);
+	logf("lattice %d x %d from %d to %d", nc, nr,
+		getConfig().permutationStart, getConfig().permutationStop);
+	auto tl = LatticeImpl!64(nc, nr);
 	auto tlRslt = tl.calcAC();
 	auto rsltTL = ResultPlot(tl.name(), tlRslt);
+
+	/*closedQuorumListWriter(tl.read, 
+		format("./CQL/Lattice_%02d_%02d/read_%02d_%02d.json", nc, nr, 
+			getConfig().permutationStart(), getConfig().permutationStop()));
+
+	closedQuorumListWriter(tl.write, 
+		format("./CQL/Lattice_%02d_%02d/write_%02d_%02d.json", nc, nr, 
+			getConfig().permutationStart(), getConfig().permutationStop()));
+	*/
 
 	gnuPlot(format("Results/Lattice%sX%s", nr, nc), "", rsltTL);
 }
@@ -528,6 +539,14 @@ void runMappings(string graphsFilename, string[] args) {
 	}*/
 }
 
+void buildSublist(string folderName) {
+	import sublistjoiner;
+
+	auto slj = SubListJoinerImpl!64(folderName);
+	auto sljRslt = slj.calcAC();
+	gnuPlot("Results/LatticeJoin", "", ResultPlot("SLJ", sljRslt));
+}
+
 void main(string[] args) {
 	parseConfig(args);
 	//lattice(4,4);
@@ -559,7 +578,9 @@ void main(string[] args) {
 	//gridVLattice(2,4);
 	//crossingVLattice();
 	//crossingVCrossing();
-	gridVLattice(6,6);
+	//gridVLattice(6,6);
+	lattice(4,4);
 	//LatticeXX();
 	//LatticeXY();
+	//buildSublist("CQL/Lattice_03_03");
 }

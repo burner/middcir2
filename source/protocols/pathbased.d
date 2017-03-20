@@ -128,11 +128,11 @@ void testEmptyIntersection(ref const(Array!(int[2])) a) {
 	}
 }
 
-Result calcACforPathBasedFast(BitsetType,F,G)(ref F paths, ref const(G) graph, 
-		const(Array!int) bottom, const(Array!int) top, const(Array!int) left, 
-		const(Array!int) right, const(Array!(int[2])) diagonalPairs, 
-		ref BitsetStore!BitsetType read, ref BitsetStore!BitsetType write,
-		const uint numNodes)
+Result calcACforPathBasedFast(BitsetStoreType,BitsetType,F,G)(ref F paths, 
+		ref const(G) graph, const(Array!int) bottom, const(Array!int) top,
+		const(Array!int) left, const(Array!int) right,
+	   	const(Array!(int[2])) diagonalPairs, ref BitsetStoreType read, 
+		ref BitsetStoreType write, const uint numNodes)
 {
 	import std.conv : to;
 	import std.stdio : writefln;
@@ -145,13 +145,42 @@ Result calcACforPathBasedFast(BitsetType,F,G)(ref F paths, ref const(G) graph,
 	Array!(Bitset!BitsetType) horizontalPaths;
 	Array!(Bitset!BitsetType) diagonalPaths;
 
+	Bitset!BitsetType topTest = bitset!BitsetType(top);
+	Bitset!BitsetType bottomTest = bitset!BitsetType(bottom);
+	Bitset!BitsetType leftTest = bitset!BitsetType(left);
+	Bitset!BitsetType rightTest = bitset!BitsetType(right);
+	size_t andBreak;
+	size_t andWrite;
+
 	auto permu = PermutationsImpl!BitsetType(
 		numNodes,
 		getConfig().permutationStart(),
 		getConfig().permutationStop(numNodes)
 	);
+	auto last = 0;
 	foreach(perm; permu) {
-		//logf("%s %s", permu.numNodes, perm);
+	//for(auto perm = permu.front; !permu.empty; permu.popFront()) {
+		auto cur = popcnt(perm.store);
+		if(cur > last+2) {
+			logf("to file %s", cur);
+			read.toFile();
+			write.toFile();
+			last = cur;
+		}
+		//logf("%s %s", permu.numNodes, graph.length);
+		bool tPossible = (topTest.store & perm.store) != 0;
+		bool bPossible = (bottomTest.store & perm.store) != 0;
+		bool lPossible = (leftTest.store & perm.store) != 0;
+		bool rPossible = (rightTest.store & perm.store) != 0;
+
+		bool vPossible = tPossible && bPossible;
+		bool hPossible = lPossible && rPossible;
+
+		if(!vPossible && !hPossible) {
+			++andBreak;
+			continue;
+		}
+
 		auto subsetRead = read.search(perm);
 		if(!subsetRead.isNull()) {
 			(*subsetRead).subsets ~= perm;
@@ -196,7 +225,10 @@ Result calcACforPathBasedFast(BitsetType,F,G)(ref F paths, ref const(G) graph,
 			}
 		}
 
-		if(subsetWrite.isNull()) {
+		if(!vPossible || !hPossible) {
+			++andWrite;
+		}
+		if(subsetWrite.isNull() && vPossible && hPossible) {
 			PathResult!BitsetType writeQuorum = selectWriteQuorum!BitsetType(
 					verticalPaths, horizontalPaths, diagonalPaths
 			);
@@ -206,14 +238,18 @@ Result calcACforPathBasedFast(BitsetType,F,G)(ref F paths, ref const(G) graph,
 			}
 		}
 	}
+	logf("andBreak %s andWrite %s", andBreak, andWrite);
+	read.toFile();
+	write.toFile();
 
-	return calcAvailForTree!BitsetType(to!int(numNodes), read, write);
+	return calcAvailForTree!BitsetStoreType(to!int(numNodes), read, write);
 }
 
-Result calcACforPathBased(BitsetType,F,G)(ref F paths, ref const(G) graph, 
-		const(Array!int) bottom, const(Array!int) top, const(Array!int) left, 
-		const(Array!int) right, const(Array!(int[2])) diagonalPairs, 
-		ref BitsetStore!BitsetType read, ref BitsetStore!BitsetType write, const uint numNodes)
+Result calcACforPathBased(BitsetStoreType,BitsetType,F,G)(ref F paths, 
+		ref const(G) graph, const(Array!int) bottom, const(Array!int) top, 
+		const(Array!int) left, const(Array!int) right, 
+		const(Array!(int[2])) diagonalPairs, ref BitsetStoreType read, 
+		ref BitsetStoreType write, const uint numNodes)
 {
 	import std.conv : to;
 	import std.stdio : writefln;
@@ -271,5 +307,5 @@ Result calcACforPathBased(BitsetType,F,G)(ref F paths, ref const(G) graph,
 		}
 	}
 
-	return calcAvailForTree!BitsetType(to!int(numNodes), read, write);
+	return calcAvailForTree!BitsetStoreType(to!int(numNodes), read, write);
 }

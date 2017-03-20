@@ -48,22 +48,22 @@ void compare(A,B,CMP)(const ref A a, const ref B b, CMP cmp) {
 	}
 }
 
-void testQuorumIntersection(ref BitsetStore!uint read, 
-		ref BitsetStore!uint write) 
+void testQuorumIntersection(BSS)(ref BSS read, 
+		ref BSS write) 
 {
-	testQuorumIntersectionImpl!uint(read, write);
-	testQuorumIntersectionImpl!uint(write, write);
+	testQuorumIntersectionImpl(read, write);
+	testQuorumIntersectionImpl(write, write);
 }
 
-void testQuorumIntersection(ref BitsetStore!ulong read, 
+/*void testQuorumIntersection(ref BitsetStore!ulong read, 
 		ref BitsetStore!ulong write) 
 {
 	testQuorumIntersectionImpl!ulong(read, write);
 	testQuorumIntersectionImpl!ulong(write, write);
-}
+}*/
 
-void testQuorumIntersectionImpl(BitsetType)(ref BitsetStore!BitsetType read, 
-		ref BitsetStore!BitsetType write) 
+void testQuorumIntersectionImpl(BSS)(ref BSS read, 
+		ref BSS write) 
 {
 	auto rbegin = read.begin();
 	auto rend = read.end();
@@ -81,12 +81,14 @@ void testQuorumIntersectionImpl(BitsetType)(ref BitsetStore!BitsetType read,
 			enforce(inter != 0, format("%s %s", rit.bitset, wit.bitset));
 			assert(inter != 0, format("%s %s", rit.bitset, wit.bitset));
 
-			foreach(ref ritsub; rit.subsets) {
+			auto rss = getSubsets(rit, read);
+			foreach(ref ritsub; rss) {
 				inter = ritsub.store & wit.bitset.store;
 				enforce(inter != 0, format("%s %s", ritsub, wit.bitset));
 				assert(inter != 0, format("%s %s", ritsub, wit.bitset));
 
-				foreach(ref witsub; wit.subsets) {
+				auto wss = getSubsets(wit, write);
+				foreach(ref witsub; wss) {
 					inter = ritsub.store & witsub.store;
 					enforce(inter != 0, format("%s %s", ritsub, witsub));
 					assert(inter != 0, format("%s %s", ritsub, witsub));
@@ -108,17 +110,12 @@ void testSemetry(ref Result rslt) {
 	compare(rslt.readAvail, writeAvailReverse, &pointFive);
 }
 
-void testAllSubsetsSmaller(ref BitsetStore!uint read, ref BitsetStore!uint write) {
-	testAllSubsetsSmallerImpl!uint(read);
-	testAllSubsetsSmallerImpl!uint(write);
+void testAllSubsetsSmaller(BSS)(ref BSS read, ref BSS write) {
+	testAllSubsetsSmallerImpl(read);
+	testAllSubsetsSmallerImpl(write);
 }
 
-void testAllSubsetsSmaller(ref BitsetStore!ulong read, ref BitsetStore!ulong write) {
-	testAllSubsetsSmallerImpl!ulong(read);
-	testAllSubsetsSmallerImpl!ulong(write);
-}
-
-void testAllSubsetsSmallerImpl(BitsetType)(ref BitsetStore!BitsetType store) {
+void testAllSubsetsSmallerImpl(BSS)(ref BSS store) {
 	//import core.bitop : popcnt;
 	import bitsetmodule : popcnt;
 
@@ -126,7 +123,8 @@ void testAllSubsetsSmallerImpl(BitsetType)(ref BitsetStore!BitsetType store) {
 	auto end = store.end();
 
 	while(it != end) {
-		foreach(ref ssit; (*it).subsets) {
+		auto iss = getSubsets((*it), store);
+		foreach(ref ssit; iss) {
 			assert(popcnt(ssit.store) >= popcnt((*it).bitset.store));
 		}
 		++it;
@@ -171,3 +169,10 @@ void format(S,Args...)(S sink, const(ulong) indent, string str,
 	formattedWrite(sink, str, args);
 }
 
+auto arrayDup(T)(ref const(Array!T) arr) {
+	Array!T ret;
+	foreach(it; arr) {
+		ret.insertBack(it);
+	}
+	return ret;
+}

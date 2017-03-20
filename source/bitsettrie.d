@@ -195,11 +195,11 @@ struct Trie(T) {
 	}
 
 	auto begin() {
-		return BitsetArrayArrayIterator!(T,typeof(this))(&this, 0);
+		return BitsetArrayArrayIterator!(BitsetArray!T,typeof(this))(&this, 0);
 	}
 
 	auto end() {
-		return BitsetArrayArrayIterator!(T,typeof(this))(&this, this.array.length);
+		return BitsetArrayArrayIterator!(BitsetArray!T,typeof(this))(&this, this.array.length);
 	}
 
 	@property size_t length() const {

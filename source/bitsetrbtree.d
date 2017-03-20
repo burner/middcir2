@@ -5,6 +5,7 @@ import std.exception : enforce;
 import std.typecons : isIntegral, Nullable;
 import std.format : format;
 import std.stdio;
+import std.experimental.logger;
 
 import rbtree;
 import bitsetmodule;
@@ -58,8 +59,16 @@ BitsetArray!T bitsetArray(T)(T t) if(isIntegral!T) {
 	return BitsetArray!T(bitset(t));
 }
 
+BitsetArrayRC!T bitsetArrayRC(T)(T t) if(isIntegral!T) {
+	return BitsetArrayRC!T(bitset(t));
+}
+
 BitsetArray!(T.StoreType) bitsetArray(T)(T t) if(!isIntegral!T) {
 	return BitsetArray!(T.StoreType)(t);
+}
+
+BitsetArrayRC!(T.StoreType) bitsetArrayRC(T)(T t) if(!isIntegral!T) {
+	return BitsetArrayRC!(T.StoreType)(t);
 }
 
 struct BitsetRBTree(T) {
@@ -171,9 +180,9 @@ struct BitsetArrayArrayIterator(T,S) {
 
 	void opUnary(string s)() if(s == "++") { increment(); }
 	void opUnary(string s)() if(s == "--") { decrement(); }
-	ref BitsetArray!(T) opUnary(string s)() if(s == "*") { return getData(); }
+	ref T opUnary(string s)() if(s == "*") { return getData(); }
 
-	ref BitsetArray!(T) getData() {
+	ref T getData() {
 		return (*this.ptr).array[cast(size_t)this.curPos];
 	}
 
@@ -189,7 +198,7 @@ struct BitsetArrayArrayIterator(T,S) {
 		return this.ptr == rhs.ptr && this.curPos == rhs.curPos;
 	}
 
-	@property BitsetArray!(T) front() {
+	@property T front() {
 		return this.getData();
 	}
 
@@ -203,6 +212,8 @@ struct BitsetArrayArrayIterator(T,S) {
 }
 
 struct BitsetArrayArray(T) {
+	import exceptionhandling;
+	import config;
 	Array!(BitsetArray!(T)) array;
 
 	void insert(Bitset!T key, Bitset!T value) {
@@ -213,8 +224,10 @@ struct BitsetArrayArray(T) {
 			));
 			(*it).subsets ~= value;
 		} else {
-			assert(key == value);
-			enforce(key == value);
+			if(getConfig().permutationStart == -1) {
+				assert(key == value, format("%s %s", key, value));
+				//ensure(key == value);
+			}
 			this.array.insert(bitsetArray(key));
 		}
 	}
@@ -267,12 +280,14 @@ struct BitsetArrayArray(T) {
 		return typeof(return).init;
 	}
 
+	void toFile() { }
+
 	auto begin() {
-		return BitsetArrayArrayIterator!(T,typeof(this))(&this, 0);
+		return BitsetArrayArrayIterator!(BitsetArray!(T),typeof(this))(&this, 0);
 	}
 
 	auto end() {
-		return BitsetArrayArrayIterator!(T,typeof(this))(&this, this.length);
+		return BitsetArrayArrayIterator!(BitsetArray!(T),typeof(this))(&this, this.length);
 	}
 
 	auto opSlice() const {
@@ -310,7 +325,11 @@ struct BitsetArrayArray(T) {
 		}
 		return ret;
 	}
+
+	void toFile(string prefix) {
+	}
 }
+
 unittest {
 	BitsetArrayArray!ushort array;
 	auto a = Bitset!(ushort)(cast(ushort)(0b0000_1111_0000_1111));
@@ -346,5 +365,200 @@ unittest {
 		assert((*iter).bitset == array[i].bitset);
 		++iter;
 		++i;
+	}
+}
+
+struct BitsetArrayRC(T) {
+	import std.format : format;
+
+	Bitset!T bitset;
+	Array!(Bitset!(T)) subsets;
+
+	this(T value) {
+		this(Bitset!T(value));
+	}
+
+	this(Bitset!T value) {
+		this.bitset = value;
+	}
+
+	void toString(scope void delegate(const(char)[]) sink) const {
+		import std.format : formattedWrite;
+		this.bitset.toString2(sink);
+		//formattedWrite(sink, "%b len(%s) [", this.bitset.store,
+		formattedWrite(sink, " len(%s) [", this.subsets.length);
+		foreach(ref it; this.subsets) {
+			formattedWrite(sink, "%s ", it.toString2());
+		}
+		formattedWrite(sink, "]");
+	}
+
+	auto dup() const {
+		import std.traits;
+		import utils : arrayDup;
+
+		Unqual!(typeof(this)) ret;
+		ret.bitset = this.bitset;
+		ret.subsets = arrayDup(this.subsets);
+		return ret;
+	}
+
+	void toFile(string prefix) {
+		import std.format : formattedWrite;
+		string fn = format("%s%d.subsets", prefix, this.bitset.store);
+		auto f = File(fn, "a");
+		//logf("%s", fn);
+
+		auto ltw = f.lockingTextWriter();
+		foreach(it; this.subsets) {
+			formattedWrite(ltw, "%d ", it.store);
+		}
+
+		this.subsets.clear();
+	}
+
+	Array!(Bitset!(T)) subsetsFromFile(string prefix) const {
+		import std.algorithm.iteration : splitter;
+		import std.file : readText;
+		import std.string : strip;
+		import std.conv : to;
+		auto t = readText(format("%s%d.subsets", prefix, this.bitset.store)).strip();
+		Array!(Bitset!(T)) ret;
+		foreach(it; t.splitter(' ')) {
+			ret.insertBack(Bitset!(T)(to!T(it)));
+		}
+		return ret;
+	}
+}
+
+auto getSubsets(BSA,BitsetStoreType)(auto ref BSA bsa, 
+		auto ref BitsetStoreType tree) 
+{
+	import std.traits : Unqual;
+	static if(is(Unqual!BSA == BitsetArray!uint)
+				|| is(Unqual!BSA == BitsetArray!ushort)
+				|| is(Unqual!BSA == BitsetArray!ulong)) 
+	{
+		return bsa.subsets;
+	} else static if(is(Unqual!BSA == BitsetArrayRC!uint)
+				|| is(Unqual!BSA == BitsetArrayRC!ushort)
+				|| is(Unqual!BSA == BitsetArrayRC!ulong)) 
+	{
+		return bsa.subsetsFromFile(tree.prefix);
+	}
+}
+
+struct BitsetArrayArrayRC(T) {
+	import exceptionhandling;
+	import config;
+	Array!(BitsetArrayRC!(T)) array;
+	string prefix;
+
+	this(string prefix) {
+		this.prefix = prefix;
+	}
+
+	void insert(Bitset!T key, Bitset!T value) {
+		auto it = this.search(key);
+		if(!it.isNull()) {
+			assert(value != (*it).bitset, format("bs(%b) it(%b)", value.store,
+					(*it).bitset.store
+			));
+			(*it).subsets ~= value;
+		} else {
+			if(getConfig().permutationStart == -1) {
+				assert(key == value, format("%s %s", key, value));
+				//ensure(key == value);
+			}
+			this.array.insert(bitsetArrayRC(key));
+		}
+	}
+
+	void insert(T t) {
+		auto bs = Bitset!T(t);
+		this.insert(bs);
+	}
+
+	void insert(Bitset!T bs) {
+		auto it = this.search(bs);
+		if(!it.isNull()) {
+			//writefln("%b %b", (*it).bitset.store, bs.store);
+			// TODO figure out if this is really a valid assertion
+			assert(bs != (*it).bitset, format("bs(%b) it(%b)", bs.store,
+					(*it).bitset.store
+			));
+			(*it).subsets ~= bs;
+		} else {
+			this.array.insert(bitsetArrayRC(bs));
+		}
+	}
+
+	Nullable!(BitsetArrayRC!(T)*) search(Bitset!T bs) {
+		auto a = bitsetArray(bs);
+		foreach(ref it; this.array) {
+			if(bs.hasSubSet(it.bitset)) {
+				return typeof(return)(&it);
+			} 
+		}
+		return typeof(return).init;
+	}
+
+	auto begin() {
+		return BitsetArrayArrayIterator!(BitsetArrayRC!(T),typeof(this))(&this, 0);
+	}
+
+	auto end() {
+		return BitsetArrayArrayIterator!(BitsetArrayRC!(T),typeof(this))(&this, this.length);
+	}
+
+	auto opSlice() const {
+		return this.array[];
+	}
+
+	auto opSlice(const size_t low, const size_t high) const {
+		return this.array[low .. high];
+	}
+
+	@property size_t length() const {
+		return this.array.length;
+	}
+
+	string toString() const {
+		import std.array : appender;
+		import std.format : formattedWrite;
+		auto app = appender!(string)();
+		foreach(ref it; this.array[]) {
+			formattedWrite(app, "%s\n", it);
+		}
+
+		return app.data;
+	}	
+
+	ref BitsetArrayRC!(T) opIndex(const size_t idx) {
+		return this.array[idx];
+	}
+
+	auto dup() const {
+		import std.traits : Unqual;
+		Unqual!(typeof(this)) ret;
+		foreach(it; this.array[]) {
+			ret.array.insertBack(it.dup);
+		}
+		return ret;
+	}
+
+	void toFile() {
+		import std.file : mkdirRecurse;
+		import std.string : lastIndexOf;
+		ptrdiff_t folder = this.prefix.lastIndexOf('.');
+		if(folder == -1) {
+			folder = this.prefix.length;
+		}
+		mkdirRecurse(this.prefix[0 .. folder]);
+		//logf("toFile %s", this.array.length);
+		foreach(it; this.array[]) {
+			//logf("%s", it.bitset.store);
+			it.toFile(this.prefix);
+		}
 	}
 }

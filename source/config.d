@@ -18,6 +18,10 @@ struct Config {
 		}
 	}
 
+	int permutationStop() const {
+		return this.permutationCountStop;
+	}
+
 	int permutationStop(int given) const {
 		//logf("%s", this.permutationCountStop);
 		if(this.permutationCountStop == -1) {

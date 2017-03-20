@@ -220,7 +220,8 @@ struct CrossingImpl(int Size) {
 		auto paths = floyd(this.graph);
 
 		const uint numNodes = to!uint(this.graph.length);
-		auto ret = calcACforPathBased!BSType(paths, this.graph, bottom, top, left, right,
+		auto ret = calcACforPathBased!(typeof(this.read),BSType)(paths, 
+			this.graph, bottom, top, left, right,
 			diagonalPairs, this.read, this.write, numNodes
 		);
 

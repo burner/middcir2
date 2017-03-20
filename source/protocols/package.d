@@ -45,12 +45,12 @@ struct Result {
 	}
 }
 
-Result calcAvailForTree(BitsetType)(const int numNodes,
-		ref BitsetStore!BitsetType read, ref BitsetStore!BitsetType write)
+Result calcAvailForTree(BitsetStoreType)(const int numNodes,
+		ref BitsetStoreType read, ref BitsetStoreType write)
 {
 	auto ret = Result();
-	calcAvailForTreeImpl!BitsetType(numNodes, read, ret.readAvail, ret.readCosts);
-	calcAvailForTreeImpl!BitsetType(numNodes, write, ret.writeAvail, ret.writeCosts);
+	calcAvailForTreeImpl!BitsetStoreType(numNodes, read, ret.readAvail, ret.readCosts);
+	calcAvailForTreeImpl!BitsetStoreType(numNodes, write, ret.writeAvail, ret.writeCosts);
 
 	return ret;
 }
@@ -107,8 +107,8 @@ auto resultProtocolUnique(P)(P proto, const(MappingParameter) mp,
 	return Unique!(ResultProtocol!P)(new ResultProtocol!P(proto, mp, pnt));
 }
 
-private void calcAvailForTreeImpl(BitsetType)(const int numNodes,
-		ref BitsetStore!BitsetType tree, ref double[101] avail,
+private void calcAvailForTreeImpl(BitsetStoreType)(const int numNodes,
+		ref BitsetStoreType tree, ref double[101] avail,
 	   	ref double[101] costs)
 {
 	import std.format : format;
@@ -144,7 +144,8 @@ private void calcAvailForTreeImpl(BitsetType)(const int numNodes,
 			double bino = binomial(numNodes, minQuorumNodeCnt);
 			costs[idx] += minQuorumNodeCnt * availBsa;
 
-			foreach(jt; bsa.subsets) {
+			auto subsets = getSubsets(bsa, tree);
+			foreach(jt; subsets) {
 				auto availJt = availability(numNodes, jt, idx, stepCount);
 				avail[idx] += availJt;
 				costs[idx] += minQuorumNodeCnt * availJt;
@@ -163,32 +164,31 @@ private void calcAvailForTreeImpl(BitsetType)(const int numNodes,
 	}
 
 	for(int idx= 0; idx < 101; ++idx) {
-		costs[idx] /= 1000;
 		avail[idx] /= 1000;
-
 	}
 }
 
-void closedQuorumListWriter(BitsetType,Out)(const ref BitsetStore!BitsetType store,
+void closedQuorumListWriterImpl(BSS,Out)(const ref BSS store,
 	   	Out writer) 
 {
 	import std.format : formattedWrite;
 
-	formattedWrite(writer, "{\n\tlist : [\n");
+	formattedWrite(writer, "{\n\t\"list\" : [\n");
 	bool outerFirst = true;
 	foreach(ref it; store.array[]) {
 		if(outerFirst) {
 			formattedWrite(writer, 
-				"\t\t{head : %d, supersets : [", it.bitset.store
+				"\t\t{\"head\" : %d, \"supersets\" : [", it.bitset.store
 			);
 			outerFirst = false;
 		} else {
 			formattedWrite(writer, 
-				"\t\t,{head : %d, supersets : [", it.bitset.store
+				"\t\t,{\"head\" : %d, \"supersets\" : [", it.bitset.store
 			);
 		}
 		bool first = true;
-		foreach(ref jt; it.subsets[]) {
+		auto iss = getSubsets(it, store);
+		foreach(ref jt; iss) {
 			if(first) {
 				formattedWrite(writer, "\n\t\t\t%d", jt.store);
 				first = false;
@@ -206,16 +206,27 @@ void closedQuorumListWriter(BitsetType,Out)(const ref BitsetStore!BitsetType sto
 	formattedWrite(writer, "\t]\n}\n");
 }
 
-void closedQuorumListWriter(BitsetType)(
-		const ref BitsetStore!BitsetType store) 
+void closedQuorumListWriter(BSS)(
+		const ref BSS store) 
 {
 	import std.stdio : stdout;
-	closedQuorumListWriter!BitsetType(store, stdout.lockingTextWriter());
+	closedQuorumListWriterImpl(store, stdout.lockingTextWriter());
 }
 
-void closedQuorumListWriter(BitsetType)(
-		const ref BitsetStore!BitsetType store, string filename)
+void closedQuorumListWriter(BSS)(
+		const ref BSS store, string filename)
 {
+	import std.string : lastIndexOf;
+	import std.file : exists, isDir, mkdirRecurse;
+	import std.stdio : File;
+
+	auto ls = filename.lastIndexOf('/');
+	assert(ls != -1);
+	auto fn = filename[0 .. ls+1];
+	if(!exists(fn) || !isDir(fn)) {
+		mkdirRecurse(fn);
+	}
+
 	auto f = File(filename, "w");
-	closedQuorumListWriter!BitsetType(store, f.lockingTextWriter());
+	closedQuorumListWriterImpl(store, f.lockingTextWriter());
 }
