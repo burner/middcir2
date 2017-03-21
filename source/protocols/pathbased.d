@@ -20,8 +20,10 @@ struct PathResult(BitsetType) {
 	ValidPath validPath;
 }
 
-PathResult!BitsetType selectReadQuorum(BitsetType)(ref const(Array!(Bitset!BitsetType)) vert,
-		ref const(Array!(Bitset!BitsetType)) hori, ref const(Array!(Bitset!BitsetType)) diagonal)
+PathResult!BitsetType selectReadQuorum(BitsetType)(
+		ref const(Array!(Bitset!BitsetType)) vert,
+		ref const(Array!(Bitset!BitsetType)) hori, 
+		ref const(Array!(Bitset!BitsetType)) diagonal)
 {
 	auto ret = PathResult!BitsetType(bitsetAll!BitsetType(), ValidPath.no);
 
@@ -49,8 +51,10 @@ PathResult!BitsetType selectReadQuorum(BitsetType)(ref const(Array!(Bitset!Bitse
 	return ret;
 }
 
-PathResult!BitsetType selectWriteQuorum(BitsetType)(ref const(Array!(Bitset!BitsetType)) vert,
-		ref const(Array!(Bitset!BitsetType)) hori, ref const(Array!(Bitset!BitsetType)) diagonal)
+PathResult!BitsetType selectWriteQuorum(BitsetType)(
+		ref const(Array!(Bitset!BitsetType)) vert,
+		ref const(Array!(Bitset!BitsetType)) hori, 
+		ref const(Array!(Bitset!BitsetType)) diagonal)
 {
 	auto ret = PathResult!BitsetType(bitsetAll!BitsetType(), ValidPath.no);
 
@@ -165,6 +169,12 @@ Result calcACforPathBasedFast(BitsetStoreType,BitsetType,F,G)(ref F paths,
 			logf("to file %s", cur);
 			read.toFile();
 			write.toFile();
+			foreach(ref it; read[]) {
+				assert(it.subsets.length == 0);
+			}
+			foreach(ref it; write[]) {
+				assert(it.subsets.length == 0);
+			}
 			last = cur;
 		}
 		//logf("%s %s", permu.numNodes, graph.length);
@@ -242,7 +252,9 @@ Result calcACforPathBasedFast(BitsetStoreType,BitsetType,F,G)(ref F paths,
 	read.toFile();
 	write.toFile();
 
-	return calcAvailForTree!BitsetStoreType(to!int(numNodes), read, write);
+	auto tmpRet = calcAvailForTree!BitsetStoreType(to!int(numNodes), read, write);
+	logf("after calcAvail");
+	return tmpRet;
 }
 
 Result calcACforPathBased(BitsetStoreType,BitsetType,F,G)(ref F paths, 

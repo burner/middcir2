@@ -49,8 +49,12 @@ Result calcAvailForTree(BitsetStoreType)(const int numNodes,
 		ref BitsetStoreType read, ref BitsetStoreType write)
 {
 	auto ret = Result();
-	calcAvailForTreeImpl!BitsetStoreType(numNodes, read, ret.readAvail, ret.readCosts);
-	calcAvailForTreeImpl!BitsetStoreType(numNodes, write, ret.writeAvail, ret.writeCosts);
+	calcAvailForTreeImpl!BitsetStoreType(numNodes, read, ret.readAvail, 
+		ret.readCosts
+	);
+	calcAvailForTreeImpl!BitsetStoreType(numNodes, write, ret.writeAvail, 
+		ret.writeCosts
+	);
 
 	return ret;
 }
@@ -113,10 +117,11 @@ private void calcAvailForTreeImpl(BitsetStoreType)(const int numNodes,
 {
 	import std.format : format;
 	import std.algorithm.sorting : sort;
-	//import core.bitop : popcnt;
 
 	import config : stepCount;
 	import math : availability, binomial, isNaN, popcnt;
+
+	bool[long] allreadyVisited;
 
 	auto it = tree.begin();
 	auto end = tree.end();
@@ -126,6 +131,13 @@ private void calcAvailForTreeImpl(BitsetStoreType)(const int numNodes,
 	bool[101] test;
 	while(it != end) {
 		const bsa = *it;
+		auto subsets = getSubsets(bsa, tree);
+		logf("%d subsets.length %d", (*it).bitset.store,
+			subsets.length
+		);
+
+		assert((*it).bitset.store !in allreadyVisited);
+		allreadyVisited[(*it).bitset.store] = true;
 
 		numQuorums += 1;
 		numQuorums += bsa.subsets.length;
@@ -144,7 +156,6 @@ private void calcAvailForTreeImpl(BitsetStoreType)(const int numNodes,
 			double bino = binomial(numNodes, minQuorumNodeCnt);
 			costs[idx] += minQuorumNodeCnt * availBsa;
 
-			auto subsets = getSubsets(bsa, tree);
 			foreach(jt; subsets) {
 				auto availJt = availability(numNodes, jt, idx, stepCount);
 				avail[idx] += availJt;

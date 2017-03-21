@@ -70,24 +70,24 @@ void testQuorumIntersectionImpl(BSS)(ref BSS read,
 
 	while(rbegin != rend) {
 		auto rit = *rbegin;
+		auto rss = getSubsets(rit, read);
 
 		auto wbegin = write.begin();
 		auto wend = write.end();
 
 		while(wbegin != wend) {
 			auto wit = *wbegin;
+			auto wss = getSubsets(wit, write);
 
 			ulong inter = rit.bitset.store & wit.bitset.store;
 			enforce(inter != 0, format("%s %s", rit.bitset, wit.bitset));
 			assert(inter != 0, format("%s %s", rit.bitset, wit.bitset));
 
-			auto rss = getSubsets(rit, read);
 			foreach(ref ritsub; rss) {
 				inter = ritsub.store & wit.bitset.store;
 				enforce(inter != 0, format("%s %s", ritsub, wit.bitset));
 				assert(inter != 0, format("%s %s", ritsub, wit.bitset));
 
-				auto wss = getSubsets(wit, write);
 				foreach(ref witsub; wss) {
 					inter = ritsub.store & witsub.store;
 					enforce(inter != 0, format("%s %s", ritsub, witsub));

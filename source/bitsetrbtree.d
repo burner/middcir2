@@ -414,7 +414,9 @@ struct BitsetArrayRC(T) {
 			formattedWrite(ltw, "%d ", it.store);
 		}
 
-		this.subsets.clear();
+		//this.subsets.clear();
+		Array!(Bitset!(T)) tmp;
+		this.subsets = tmp;
 	}
 
 	Array!(Bitset!(T)) subsetsFromFile(string prefix) const {
@@ -422,7 +424,8 @@ struct BitsetArrayRC(T) {
 		import std.file : readText;
 		import std.string : strip;
 		import std.conv : to;
-		auto t = readText(format("%s%d.subsets", prefix, this.bitset.store)).strip();
+		auto t = readText(format("%s%d.subsets", prefix, this.bitset.store))
+			.strip();
 		Array!(Bitset!(T)) ret;
 		foreach(it; t.splitter(' ')) {
 			ret.insertBack(Bitset!(T)(to!T(it)));
@@ -504,11 +507,13 @@ struct BitsetArrayArrayRC(T) {
 	}
 
 	auto begin() {
-		return BitsetArrayArrayIterator!(BitsetArrayRC!(T),typeof(this))(&this, 0);
+		return BitsetArrayArrayIterator!(BitsetArrayRC!(T),typeof(this))
+			(&this, 0);
 	}
 
 	auto end() {
-		return BitsetArrayArrayIterator!(BitsetArrayRC!(T),typeof(this))(&this, this.length);
+		return BitsetArrayArrayIterator!(BitsetArrayRC!(T),typeof(this))
+			(&this, this.length);
 	}
 
 	auto opSlice() const {
@@ -556,7 +561,7 @@ struct BitsetArrayArrayRC(T) {
 		}
 		mkdirRecurse(this.prefix[0 .. folder]);
 		//logf("toFile %s", this.array.length);
-		foreach(it; this.array[]) {
+		foreach(ref it; this.array[]) {
 			//logf("%s", it.bitset.store);
 			it.toFile(this.prefix);
 		}
