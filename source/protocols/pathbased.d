@@ -165,17 +165,22 @@ Result calcACforPathBasedFast(BitsetStoreType,BitsetType,F,G)(ref F paths,
 	foreach(perm; permu) {
 	//for(auto perm = permu.front; !permu.empty; permu.popFront()) {
 		auto cur = popcnt(perm.store);
-		if(cur > last+2) {
-			logf("to file %s", cur);
-			read.toFile();
-			write.toFile();
-			foreach(ref it; read[]) {
-				assert(it.subsets.length == 0);
+		static if(is(Unqual!BSA == BitsetArrayRC!uint)
+				|| is(Unqual!BSA == BitsetArrayRC!ushort)
+				|| is(Unqual!BSA == BitsetArrayRC!ulong)) 
+		{
+			if(cur > last+2) {
+				logf("to file %s", cur);
+				read.toFile();
+				write.toFile();
+				foreach(ref it; read[]) {
+					assert(it.subsets.length == 0);
+				}
+				foreach(ref it; write[]) {
+					assert(it.subsets.length == 0);
+				}
+				last = cur;
 			}
-			foreach(ref it; write[]) {
-				assert(it.subsets.length == 0);
-			}
-			last = cur;
 		}
 		//logf("%s %s", permu.numNodes, graph.length);
 		bool tPossible = (topTest.store & perm.store) != 0;
