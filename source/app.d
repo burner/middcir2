@@ -579,7 +579,7 @@ void main(string[] args) {
 	//crossingVLattice();
 	//crossingVCrossing();
 	//gridVLattice(6,6);
-	lattice(4,4);
+	lattice(5,5);
 	//LatticeXX();
 	//LatticeXY();
 	//buildSublist("CQL/Lattice_03_03");
