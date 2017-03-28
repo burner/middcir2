@@ -496,6 +496,15 @@ struct BitsetArrayArrayRC(T) {
 		}
 	}
 
+	void insertUnique(Bitset!T key) {
+		auto it = this.search(key);
+		if(!it.isNull()) {
+			fatalf("%s already exists", key.store);
+		} else {
+			this.array.insert(bitsetArrayRC(key));
+		}
+	}
+
 	Nullable!(BitsetArrayRC!(T)*) search(Bitset!T bs) {
 		auto a = bitsetArray(bs);
 		foreach(ref it; this.array) {

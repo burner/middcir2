@@ -68,21 +68,71 @@ struct LatticeImpl(int Size) {
 	LGraph graph;
 
 	this(size_t width, size_t height) {
+		import config;
+		import std.file : isDir, exists;
 		this.width = width;
 		this.height = height;
 		this.graph = LGraph(cast(int)(this.width * this.height));
 		this.createNodeAndEdges();
 
 		static if(Size == 64) {
-			logf("init BSAARC");
 			import std.format : format;
-			this.read = BitsetArrayArrayRC!BSType(
-				format("TMP/Lattice%dX%dRead/", width, height)
-			);
-			this.write = BitsetArrayArrayRC!BSType(
-				format("TMP/Lattice%dX%dWrite/", width, height)
-			);
+			import std.conv : to;
+
+			string rf = format("TMP/Lattice%dX%dRead/", width, height);
+			string wf = format("TMP/Lattice%dX%dWrite/", width, height);
+
+			logf("init BSAARC");
+			this.read = BitsetArrayArrayRC!BSType(rf);
+			this.write = BitsetArrayArrayRC!BSType(wf);
+
+			if(getConfig().continueLattice) {
+				logf("continue lattice");
+				size_t maxNodes = 1;
+				if(exists(rf) && isDir(rf)) {
+					size_t rmn = loadFrom(rf, this.read);
+					logf("read maxNodes %s", rmn);
+					if(rmn > maxNodes) {
+						maxNodes = rmn;
+					}
+				}
+				if(exists(wf) && isDir(wf)) {
+					size_t wmn = loadFrom(wf, this.write);
+					logf("write maxNodes %s", wmn);
+					if(wmn > maxNodes) {
+						maxNodes = wmn;
+					}
+				}
+				logf("rq %s wq %s", this.read.length, this.write.length);
+				getWriteableConfig().permutationCountStart =
+					to!(int)(maxNodes);
+			}
 		}
+	}
+
+	static size_t loadFrom(string folderName, ref BitsetArrayArrayRC!BSType store) {
+		import std.file : dirEntries, SpanMode;
+		import std.string : indexOf, lastIndexOf;
+		import std.conv : to;
+		size_t ret = 1;
+		foreach(string name; dirEntries(folderName, SpanMode.depth)) {
+			//logf("%s/%s", folderName, name);
+			auto i = name.indexOf('.');
+			auto s = name.lastIndexOf('/');
+			if(i != -1 && s != -1) {
+				string sname = name[s + 1 .. i];
+				//logf("sname %s", sname);
+				auto bs = Bitset!BSType(to!BSType(sname));
+				size_t c = bs.count();
+				if(c > ret) {
+					ret = c;
+				}
+				store.insertUnique(bs);
+			} else {
+				logf("damaged filename %s/%s", folderName, name);
+			}
+		}
+		return ret;
 	}
 
 	void createNodeAndEdges() {

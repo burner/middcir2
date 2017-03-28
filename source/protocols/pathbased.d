@@ -139,6 +139,7 @@ Result calcACforPathBasedFast(BitsetStoreType,BitsetType,F,G)(ref F paths,
 		ref BitsetStoreType write, const uint numNodes)
 {
 	import std.conv : to;
+	import std.traits : Unqual;
 	import std.stdio : writefln;
 	import permutation;
 	import config;
@@ -163,11 +164,10 @@ Result calcACforPathBasedFast(BitsetStoreType,BitsetType,F,G)(ref F paths,
 	);
 	auto last = 0;
 	foreach(perm; permu) {
-	//for(auto perm = permu.front; !permu.empty; permu.popFront()) {
 		auto cur = popcnt(perm.store);
-		static if(is(Unqual!BSA == BitsetArrayRC!uint)
-				|| is(Unqual!BSA == BitsetArrayRC!ushort)
-				|| is(Unqual!BSA == BitsetArrayRC!ulong)) 
+		static if(is(Unqual!BitsetStoreType == BitsetArrayArrayRC!uint)
+				|| is(Unqual!BitsetStoreType == BitsetArrayArrayRC!ushort)
+				|| is(Unqual!BitsetStoreType == BitsetArrayArrayRC!ulong)) 
 		{
 			if(cur > last+2) {
 				logf("to file %s", cur);

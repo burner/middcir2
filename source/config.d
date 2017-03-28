@@ -8,6 +8,7 @@ struct Config {
 	bool runMultiThreaded = false;
 	int permutationCountStart = -1;
 	int permutationCountStop = -1;
+	bool continueLattice = false;
 
 	int permutationStart() const {
 		//logf("%s", this.permutationCountStart);
@@ -36,11 +37,14 @@ struct Config {
 void parseConfig(string[] args) {
 	int permuStart = -1;
 	int permuStop = -1;
+	bool continueLattice = false;
 	import std.getopt;
 	auto rslt = getopt(args, 
+		"continueLattice|c", &continueLattice,
 		"permutationStart|t", &permuStart,
 		"permutationStop|p", &permuStop);
 
+	getWriteableConfig().continueLattice = continueLattice;
 	getWriteableConfig().permutationCountStart = permuStart;
 	getWriteableConfig().permutationCountStop = permuStop;
 	//logf("%s %s", getConfig().permutationCountStart,
