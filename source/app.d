@@ -20,6 +20,7 @@ import utils;
 import graph;
 import mapping;
 import stats;
+import statsanalysis;
 import config;
 
 //version(release) {
@@ -583,4 +584,5 @@ void main(string[] args) {
 	//LatticeXX();
 	//LatticeXY();
 	//buildSublist("CQL/Lattice_03_03");
+	statsAna!16("6nodegraphs.json");
 }

@@ -38,7 +38,7 @@ DiameterResult diameter(int Size)(ref Graph!Size graph) {
 	static assert(isRandomAccessRange!(typeof(s)));
 	static assert(hasSlicing!(typeof(s)));
 	sort(s);
-	logf("%(%s %)", store[]);
+	//logf("%(%s %)", store[]);
 
 	return DiameterResult(
 		cast(double)(sum(store[])) / store.length,
@@ -50,7 +50,44 @@ DiameterResult diameter(int Size)(ref Graph!Size graph) {
 }
 
 unittest {
-	auto g = makeSix!32();
-	auto r = diameter(g);
-	logf("%s", r);
+	import exceptionhandling;
+	{
+		auto g = makeSix!32();
+		auto r = diameter(g);
+		assertEqual(r.average, 2.42857);
+		assertEqual(r.median, 2.0);
+		assertEqual(r.max, 4.0);
+	}
+
+	{
+		auto g = makeTwoTimesTwo();
+		auto r = diameter(g);
+		assertEqual(r.average, 2.0);
+		assertEqual(r.median, 2.0);
+		assertEqual(r.max, 2.0);
+	}
+
+	{
+		auto g = makeNine!32();
+		auto r = diameter(g);
+		assertEqual(r.average, 2.62222);
+		assertEqual(r.median, 2.0);
+		assertEqual(r.max, 4.0);
+	}
+
+	{
+		auto g = makeLineOfFour();
+		auto r = diameter(g);
+		assertEqual(r.average, 2.4);
+		assertEqual(r.median, 2.0);
+		assertEqual(r.max, 4.0);
+	}
+
+	{
+		auto g = makeLine!16(5);
+		auto r = diameter(g);
+		assertEqual(r.max, 5.0);
+		assertEqual(r.average, 2.66667);
+		assertEqual(r.median, 2.0);
+	}
 }

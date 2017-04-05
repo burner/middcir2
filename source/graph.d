@@ -329,6 +329,9 @@ struct Graph(int Size) {
 	}
 
 	void toString(A)(ref A app) const {
+		if(this.id != long.min) {
+			formattedWrite(app, "%d:\n", this.id);
+		}
 		for(int i = 0; i < this.length; ++i) {
 			if(i < this.nodePositions.length) {
 				formattedWrite(app, "%2s(%3.1f,%3.1f):", i,
@@ -614,18 +617,19 @@ Graph!16 makeTwoTimesTwo() {
 	return ret;
 }
 
-Graph!16 makeLineOfFour() {
-	auto ret = Graph!16(4);
-	ret.setNodePos(0, vec3d(0.0, 0.0, 0.0));
-	ret.setNodePos(1, vec3d(1.0, 0.0, 0.0));
-	ret.setNodePos(2, vec3d(2.0, 0.0, 0.0));
-	ret.setNodePos(3, vec3d(3.0, 0.0, 0.0));
-
-	ret.setEdge(0, 1);
-	ret.setEdge(1, 2);
-	ret.setEdge(2, 3);
-
+Graph!Size makeLine(int Size)(int len) {
+	auto ret = Graph!Size(len);
+	for(int i = 0; i < len; ++i) {
+		ret.setNodePos(1, vec3d(i, 0.0, 0.0));
+		if(i > 0) {
+			ret.setEdge(i-1, i);
+		}
+	}
 	return ret;
+}
+
+Graph!16 makeLineOfFour() {
+	return makeLine!(16)(4);
 }
 
 Graph!Size makeSix(int Size)() {

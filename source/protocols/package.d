@@ -9,6 +9,15 @@ import graph;
 
 import protocols.crossing;
 
+Result getResult() {
+	Result ret;
+	ret.readAvail[] = 0.0;
+	ret.writeAvail[] = 0.0;
+	ret.readCosts[] = 0.0;
+	ret.writeCosts[] = 0.0;
+	return ret;
+}
+
 struct Result {
 	double[101] readAvail;
 	double[101] writeAvail;
@@ -16,17 +25,29 @@ struct Result {
 	double[101] readCosts;
 	double[101] writeCosts;
 
-	static Result opCall() {
-		Result ret;
-		ret.readAvail[] = 0.0;
-		ret.writeAvail[] = 0.0;
-		ret.readCosts[] = 0.0;
-		ret.writeCosts[] = 0.0;
-		return ret;
+	this(string avail, string costs) {
+		import std.format : formattedRead;
+		import std.algorithm.iteration : splitter;
+		auto asp = avail.splitter();
+		auto csp = costs.splitter();
+
+		for(int i = 0; i < 101; ++i) {
+			double dummy;
+			string a = asp.front;
+			string c = csp.front;
+			formattedRead(a, "%f %f %f", &dummy,
+					&(this.readAvail[i]), &(this.writeAvail[i]));
+			formattedRead(c, "%f %f %f", &dummy,
+					&(this.writeCosts[i]), &(this.writeCosts[i]));
+			asp.popFront();
+			csp.popFront();
+		}
+		assert(asp.empty);
+		assert(csp.empty);
 	}
 
 	Result dup() {
-		auto ret = Result();
+		auto ret = getResult();
 
 		foreach(idx, it; this.readAvail) {
 			ret.readAvail[idx] = it;
@@ -48,7 +69,7 @@ struct Result {
 Result calcAvailForTree(BitsetStoreType)(const int numNodes,
 		ref BitsetStoreType read, ref BitsetStoreType write)
 {
-	auto ret = Result();
+	auto ret = getResult();
 	calcAvailForTreeImpl!BitsetStoreType(numNodes, read, ret.readAvail, 
 		ret.readCosts
 	);
