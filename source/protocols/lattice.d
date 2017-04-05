@@ -67,6 +67,21 @@ struct LatticeImpl(int Size) {
 
 	LGraph graph;
 
+	static string readWriteFolder(string prefix, string rw, size_t width, 
+			size_t height, bool output, size_t numNodes) 
+	{
+		import std.format : format;
+		import config;
+
+		if(output && getConfig().permutationStart() != 1) {
+			return format("%s%dX%d%s%d-%d/", prefix, width, height, rw,
+				getConfig().permutationStart(),
+				getConfig().permutationStop(cast(int)numNodes));
+		} else {
+			return format("%s%dX%d%s", prefix, width, height, rw);
+		}
+	}
+
 	this(size_t width, size_t height) {
 		import config;
 		import std.file : isDir, exists;
@@ -74,22 +89,32 @@ struct LatticeImpl(int Size) {
 		this.height = height;
 		this.graph = LGraph(cast(int)(this.width * this.height));
 		this.createNodeAndEdges();
+		size_t numNodes = this.width * this.height;
 
 		static if(Size == 64) {
 			import std.format : format;
 			import std.conv : to;
 
-			string rf = format("TMP/Lattice%dX%dRead/", width, height);
-			string wf = format("TMP/Lattice%dX%dWrite/", width, height);
+			//string rf = format("TMP/Lattice%dX%dRead/", width, height);
+			//string wf = format("TMP/Lattice%dX%dWrite/", width, height);
+			string rf = readWriteFolder("TMP/Lattice", "Read/", width, height,
+					false, numNodes);
+			string wf = readWriteFolder("TMP/Lattice", "Write/", width,
+					height, false, numNodes);
+			string rfOut = readWriteFolder("TMP/Lattice", "Read/", width,
+					height, true, numNodes);
+			string wfOut = readWriteFolder("TMP/Lattice", "Write/", width,
+					height, true, numNodes);
 
-			logf("init BSAARC");
-			this.read = BitsetArrayArrayRC!BSType(rf);
-			this.write = BitsetArrayArrayRC!BSType(wf);
+			logf("init BSAARC %s %s\n%s %s", rf, wf, rfOut, wfOut);
+			this.read = BitsetArrayArrayRC!BSType(rfOut);
+			this.write = BitsetArrayArrayRC!BSType(wfOut);
 
 			if(getConfig().continueLattice) {
 				logf("continue lattice");
 				size_t maxNodes = 1;
 				if(exists(rf) && isDir(rf)) {
+					logf("read %s", rf);
 					size_t rmn = loadFrom(rf, this.read);
 					logf("read maxNodes %s", rmn);
 					if(rmn > maxNodes) {
@@ -97,6 +122,7 @@ struct LatticeImpl(int Size) {
 					}
 				}
 				if(exists(wf) && isDir(wf)) {
+					logf("write %s", wf);
 					size_t wmn = loadFrom(wf, this.write);
 					logf("write maxNodes %s", wmn);
 					if(wmn > maxNodes) {
@@ -104,8 +130,10 @@ struct LatticeImpl(int Size) {
 					}
 				}
 				logf("rq %s wq %s", this.read.length, this.write.length);
-				getWriteableConfig().permutationCountStart =
-					to!(int)(maxNodes);
+				if(getConfig().permutationStart == -1) {
+					getWriteableConfig().permutationCountStart =
+						to!(int)(maxNodes + 1);
+				}
 			}
 		}
 	}
@@ -121,13 +149,14 @@ struct LatticeImpl(int Size) {
 			auto s = name.lastIndexOf('/');
 			if(i != -1 && s != -1) {
 				string sname = name[s + 1 .. i];
-				//logf("sname %s", sname);
+				//logf("foldername %s sname %s", folderName, sname);
 				auto bs = Bitset!BSType(to!BSType(sname));
 				size_t c = bs.count();
-				if(c > ret) {
-					ret = c;
+				if(store.insertUnique(bs)) {
+					if(c > ret) {
+						ret = c;
+					}
 				}
-				store.insertUnique(bs);
 			} else {
 				logf("damaged filename %s/%s", folderName, name);
 			}

@@ -132,9 +132,9 @@ private void calcAvailForTreeImpl(BitsetStoreType)(const int numNodes,
 	while(it != end) {
 		const bsa = *it;
 		auto subsets = getSubsets(bsa, tree);
-		logf("%d subsets.length %d", (*it).bitset.store,
-			subsets.length
-		);
+		//logf("%d subsets.length %d", (*it).bitset.store,
+		//	subsets.length
+		//);
 
 		assert((*it).bitset.store !in allreadyVisited);
 		allreadyVisited[(*it).bitset.store] = true;

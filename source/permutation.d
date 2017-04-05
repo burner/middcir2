@@ -83,7 +83,7 @@ struct PermutationsImpl(BitsetType) {
 		this.stopCount = stopCnt;
 
 		this.cur = PermutationImpl!BitsetType(this.numNodes, this.curNodes);
-		logf("c %d n %d", this.curNodes, this.numNodes);
+		//logf("c %d n %d", this.curNodes, this.numNodes);
 	}
 
 	this(const int numNodes) {
@@ -106,7 +106,7 @@ struct PermutationsImpl(BitsetType) {
 		if(this.cur.empty) {
 			++this.curNodes;
 			this.cur = PermutationImpl!BitsetType(this.numNodes, this.curNodes);
-			logf("c %d n %d", this.curNodes, this.numNodes);
+			//logf("c %d n %d", this.curNodes, this.numNodes);
 		}
 	}
 }

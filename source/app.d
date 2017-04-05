@@ -254,7 +254,7 @@ void lattice(int nc, int nr) {
 			getConfig().permutationStart(), getConfig().permutationStop()));
 	*/
 
-	gnuPlot(format("Results/Lattice%sX%s", nr, nc), "", rsltTL);
+	//gnuPlot(format("Results/Lattice%sX%s", nr, nc), "", rsltTL);
 }
 
 void latticeMapped() {
@@ -579,7 +579,7 @@ void main(string[] args) {
 	//crossingVLattice();
 	//crossingVCrossing();
 	//gridVLattice(6,6);
-	lattice(6,6);
+	//lattice(6,6);
 	//LatticeXX();
 	//LatticeXY();
 	//buildSublist("CQL/Lattice_03_03");

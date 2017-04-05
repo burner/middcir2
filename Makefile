@@ -1,6 +1,9 @@
 all:
 	dub --compiler=ldc
 
+build:
+	dub build --compiler=ldc
+
 release:
 	dub --compiler=ldc --build=release
 
@@ -14,7 +17,7 @@ debug:
 	dub --compiler=dmd --build=debug
 
 test:
-	dub test -debug --compiler=dmd --coverage
+	dub test -debug --compiler=dmd
 
 testcoverage:
 	dub test -debug --coverage --compiler=dmd 

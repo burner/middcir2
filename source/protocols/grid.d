@@ -196,10 +196,15 @@ unittest {
 	auto gridF = GridFormula(3,3);
 	auto gridFRslt = gridF.calcAC();
 
+	auto grc = gridRslt.readCosts[];
+	auto gwc = gridRslt.writeCosts[];
+	grc[] /= 1000.0;
+	gwc[] /= 1000.0;
+
 	compare(gridFRslt.readAvail, gridRslt.readAvail, &equal);
 	compare(gridFRslt.writeAvail, gridRslt.writeAvail, &equal);
-	compare(gridFRslt.readCosts, gridRslt.readCosts, &equal);
-	compare(gridFRslt.writeCosts, gridRslt.writeCosts, &equal);
+	compare(gridFRslt.readCosts, grc, &equal);
+	compare(gridFRslt.writeCosts, gwc, &equal);
 }
 
 unittest {
@@ -223,10 +228,15 @@ unittest {
 	auto gridF = GridFormula(3,3);
 	auto gridFRslt = gridF.calcAC();
 
+	auto grc = gridRslt.readCosts[];
+	auto gwc = gridRslt.writeCosts[];
+	grc[] /= 1000.0;
+	gwc[] /= 1000.0;
+
 	compare(gridFRslt.readAvail, gridRslt.readAvail, &equal);
 	compare(gridFRslt.writeAvail, gridRslt.writeAvail, &equal);
-	compare(gridFRslt.readCosts, gridRslt.readCosts, &equal);
-	compare(gridFRslt.writeCosts, gridRslt.writeCosts, &equal);
+	compare(gridFRslt.readCosts, grc, &equal);
+	compare(gridFRslt.writeCosts, gwc, &equal);
 }
 
 unittest {
@@ -237,6 +247,11 @@ unittest {
 			int numRows = numColumn;
 			auto grid = Grid(numColumn,numRows);
 			auto gridRslt = grid.calcAC();
+
+			auto grc = gridRslt.readCosts[];
+			auto gwc = gridRslt.writeCosts[];
+			grc[] /= 1000.0;
+			gwc[] /= 1000.0;
 
 			auto gridF = GridFormula(numColumn,numRows);
 			auto gridFRslt = gridF.calcAC();
@@ -273,10 +288,10 @@ unittest {
 			expect(compare(gridFRslt.writeAvail, gridRslt.writeAvail, &equal),
 				"numColumn %s, numRows %s", numColumn, numRows
 			);
-			expect(compare(gridFRslt.readCosts, gridRslt.readCosts, &equal),
+			expect(compare(gridFRslt.readCosts, grc, &equal),
 				"numColumn %s, numRows %s", numColumn, numRows
 			);
-			expect(compare(gridFRslt.writeCosts, gridRslt.writeCosts, &equal),
+			expect(compare(gridFRslt.writeCosts, gwc, &equal),
 				"numColumn %s, numRows %s", numColumn, numRows
 			);
 		//}
