@@ -1,5 +1,6 @@
 module protocols;
 
+import std.conv : text;
 import std.container : Array;
 import std.experimental.logger;
 
@@ -28,25 +29,37 @@ struct Result {
 	this(string avail, string costs) {
 		import std.format : formattedRead;
 		import std.algorithm.iteration : splitter;
-		auto asp = avail.splitter();
-		auto csp = costs.splitter();
+		import std.math : approxEqual;
+		import std.array : empty;
+		if(avail.empty) {
+			logf("no avail");
+			return;
+		}
+		if(costs.empty) {
+			logf("no costs");
+			return;
+		}
+		auto asp = avail.splitter("\n");
+		auto csp = costs.splitter("\n");
 
+		double dummy;
 		for(int i = 0; i < 101; ++i) {
-			double dummy;
 			string a = asp.front;
 			string c = csp.front;
+			//logf("%d %s\n\n%s", i, a, c);
 			formattedRead(a, "%f %f %f", &dummy,
 					&(this.readAvail[i]), &(this.writeAvail[i]));
 			formattedRead(c, "%f %f %f", &dummy,
-					&(this.writeCosts[i]), &(this.writeCosts[i]));
-			asp.popFront();
-			csp.popFront();
+					&(this.readCosts[i]), &(this.writeCosts[i]));
+			if(i < 100) {
+				asp.popFront();
+				csp.popFront();
+			}
 		}
-		assert(asp.empty);
-		assert(csp.empty);
+		assert(approxEqual(dummy, 1.0));
 	}
 
-	Result dup() {
+	Result dup() const {
 		auto ret = getResult();
 
 		foreach(idx, it; this.readAvail) {
