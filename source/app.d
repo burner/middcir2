@@ -468,19 +468,22 @@ void genRandomGraphs() {
 	auto rnd = Random(1337);
 
 	GraphGenConfig ggc;
-	ggc.numNodes = 9;
+	ggc.numNodes = 7;
 	ggc.minEdges = 1;
 	ggc.maxEdges = 3;
 
 	log("Here");
-	auto gg = graphGenerator!16(16, 1024, ggc, rnd);
+	auto gg = graphGenerator!16(32, 1024, ggc, rnd);
+	int id;
 	while(!gg.empty) {
-		writeln(gg.front.toString());
-		graphs.insertBack(gg.front);
+		auto f = gg.front;
+		f.id = id++;
+		writeln(f.toString());
+		graphs.insertBack(f);
 		gg.popFront(graphs);
 	}
 
-	graphsToJSON("129graphs.json", graphs);
+	graphsToJSON("graphs7nodes.json", graphs);
 }
 
 void addGraphsToFile(int Size)(const string filename, long numGraphsToAdd) {
@@ -571,7 +574,7 @@ void main(string[] args) {
 	//genRandomGraphs();
 	//addGraphsToFile();
 	//runMappings("6nodegraphs.json", args);
-	//runMappings("9nodegraphs.json", args);
+	//runMappings("graphs7nodes.json", args);
 	//MCSForm();
 	//GridFormXY();
 	//gridVLattice(3,3);
@@ -584,5 +587,5 @@ void main(string[] args) {
 	//LatticeXX();
 	//LatticeXY();
 	//buildSublist("CQL/Lattice_03_03");
-	statsAna!16("6nodegraphs.json");
+	statsAna!16("graphs7nodes.json");
 }

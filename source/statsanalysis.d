@@ -10,7 +10,8 @@ import graph;
 import protocols;
 
 struct DiameterAverage(int Size) {
-	static immutable string FolderName = "DiameterAverage";
+	static immutable string XLabel = "DiameterAverage";
+	static immutable string sortPredicate = "a.diameter.average < b.diameter.average";
 	static auto select = function(const(GraphStats!Size) g) {
 		return g.diameter.average;
 	};
@@ -22,9 +23,14 @@ set terminal eps color
 set border linewidth 1.5
 set grid back lc rgb "black"
 set ylabel 'Node Availability'
+set yrange [-0.05:1.1]
+set ylabel 'Operation Availability'
+set xlabel '%2$s'
 set border 3 back lc rgb "black"
 set palette defined (0 0 0 0.5, 1 0 0 1, 2 0 0.5 1, 3 0 1 1, 4 0.5 1 0.5, 5 1 1 0, 6 1 0.5 0, 7 1 0 0, 8 0.5 0 0)
 set grid
+set output '%1$s.eps'
+plot "%1$sgnuplot.data" using 1:2:3 with image
 `;
 
 immutable readOverWriteLevel = [0.01, 0.1, 0.25, 0.50, 0.75, 0.90, 0.99];
@@ -155,8 +161,11 @@ void protocolToOutput(int Size)(string folder,
 	import std.meta : AliasSeq;
 	foreach(Selector; AliasSeq!(DiameterAverage!Size)) {
 		foreach(idx, it; readOverWriteLevel) {
-			string folderROW = format("%s/%s/%.2f/", folder, Selector.FolderName, it);
+			string folderROW = format("%s/%s/%.2f/", folder, Selector.XLabel, it);
 			mkdirRecurse(folderROW);
+
+			genGnuplotScripts(folderROW, Selector.XLabel);
+			genGnuplotMakefile(folderROW);
 
 			foreach(type; [ResultArraySelect.ReadAvail,ResultArraySelect.WriteAvail,
 					ResultArraySelect.ReadCosts,ResultArraySelect.WriteCosts])
@@ -181,6 +190,35 @@ void protocolToOutput(int Size)(string folder,
 			}
 		}
 	}
+}
+
+void genGnuplotScripts(string folder, string xlabel) {
+	import std.format : format, formattedWrite;
+
+	foreach(it; ["readavail", "writeavail", "readcosts", "writecosts"]) {
+		auto f = File(format("%s%s.gp", folder, it), "w");
+		formattedWrite(f.lockingTextWriter(), gnuplotString, it, xlabel);
+	}
+}
+
+void genGnuplotMakefile(string folder) {
+	import std.format : format, formattedWrite;
+
+	auto f = File(format("%sMakefile", folder), "w");
+	formattedWrite(f.lockingTextWriter(),
+		"all: readavail writeavail readcosts writecosts\n"
+		"readavail:\n" ~
+		"	gnuplot readavail.gp\n" ~
+		"	epstopdf readavail.eps\n" ~
+		"writeavail:\n" ~
+		"	gnuplot writeavail.gp\n" ~
+		"	epstopdf writeavail.eps\n" ~
+		"readcosts:\n" ~
+		"	gnuplot readcosts.gp\n" ~
+		"	epstopdf readcosts.eps\n" ~
+		"writecosts:\n" ~
+		"	gnuplot writecosts.gp\n" ~
+		"	epstopdf writecosts.eps\n");
 }
 
 void protocolToOutputImpl(int Size,Selector,LTW)(LTW ltw,
@@ -234,5 +272,5 @@ void statsAna(int Size)(string jsonFileName) {
 	sort!"a.diameter.average < b.diameter.average"(graphs.mcs[]);
 	logf("%(%s\n\n%)", graphs.mcs[]);
 	auto mcs = uniqueGraphs!(Size,DiameterAverage!Size)(graphs.mcs);
-	protocolToOutput!(Size)("Stats6", mcs);
+	protocolToOutput!(Size)("Stats7", mcs);
 }
