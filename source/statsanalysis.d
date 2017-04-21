@@ -206,7 +206,7 @@ void genGnuplotMakefile(string folder) {
 
 	auto f = File(format("%sMakefile", folder), "w");
 	formattedWrite(f.lockingTextWriter(),
-		"all: readavail writeavail readcosts writecosts\n"
+		"all: readavail writeavail readcosts writecosts\n" ~
 		"readavail:\n" ~
 		"	gnuplot readavail.gp\n" ~
 		"	epstopdf readavail.eps\n" ~
@@ -263,14 +263,29 @@ Array!(GraphStats!Size) uniqueGraphs(int Size,Selector)(
 }
 
 void statsAna(int Size)(string jsonFileName) {
+	import std.meta : AliasSeq;
 	auto graphs = loadGraphs!Size(jsonFileName);
 
 	foreach(ref it; graphs.mcs) {
 		it.diameter = diameter!Size(it.graph);
 	}
+	foreach(ref it; graphs.grid) {
+		it.diameter = diameter!Size(it.graph);
+	}
+	foreach(ref it; graphs.lattice) {
+		it.diameter = diameter!Size(it.graph);
+	}
 
-	sort!"a.diameter.average < b.diameter.average"(graphs.mcs[]);
-	logf("%(%s\n\n%)", graphs.mcs[]);
-	auto mcs = uniqueGraphs!(Size,DiameterAverage!Size)(graphs.mcs);
-	protocolToOutput!(Size)("Stats7", mcs);
+	foreach(A; AliasSeq!(DiameterAverage!Size)) {
+		sort!(A.sortPredicate)(graphs.mcs[]);
+		sort!(A.sortPredicate)(graphs.grid[]);
+		sort!(A.sortPredicate)(graphs.lattice[]);
+		//logf("%(%s\n\n%)", graphs.mcs[]);
+		auto mcs = uniqueGraphs!(Size,A)(graphs.mcs);
+		auto grid = uniqueGraphs!(Size,A)(graphs.grid);
+		auto lattice = uniqueGraphs!(Size,A)(graphs.lattice);
+		protocolToOutput!(Size)("Stats7/MCS", mcs);
+		protocolToOutput!(Size)("Stats7/Grid", grid);
+		protocolToOutput!(Size)("Stats7/Lattice", lattice);
+	}
 }
