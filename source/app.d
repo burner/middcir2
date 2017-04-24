@@ -468,12 +468,12 @@ void genRandomGraphs() {
 	auto rnd = Random(1337);
 
 	GraphGenConfig ggc;
-	ggc.numNodes = 7;
+	ggc.numNodes = 8;
 	ggc.minEdges = 1;
-	ggc.maxEdges = 3;
+	ggc.maxEdges = 4;
 
 	log("Here");
-	auto gg = graphGenerator!16(32, 1024, ggc, rnd);
+	auto gg = graphGenerator!16(64, 1024, ggc, rnd);
 	int id;
 	while(!gg.empty) {
 		auto f = gg.front;
@@ -483,7 +483,7 @@ void genRandomGraphs() {
 		gg.popFront(graphs);
 	}
 
-	graphsToJSON("graphs7nodes.json", graphs);
+	graphsToJSON("graphs8nodes.json", graphs);
 }
 
 void addGraphsToFile(int Size)(const string filename, long numGraphsToAdd) {
@@ -574,7 +574,7 @@ void main(string[] args) {
 	//genRandomGraphs();
 	//addGraphsToFile();
 	//runMappings("6nodegraphs.json", args);
-	//runMappings("graphs7nodes.json", args);
+	//runMappings("graphs8nodes.json", args);
 	//MCSForm();
 	//GridFormXY();
 	//gridVLattice(3,3);

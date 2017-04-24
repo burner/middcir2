@@ -157,7 +157,7 @@ void protocolToOutput(int Size)(string folder,
 		const(Array!(GraphStats!Size)) protocol)
 {
 	import std.file : mkdirRecurse;
-	import std.format : format;
+	import std.format : format, formattedWrite;
 	import std.meta : AliasSeq;
 	foreach(Selector; AliasSeq!(DiameterAverage!Size)) {
 		foreach(idx, it; readOverWriteLevel) {
@@ -166,6 +166,7 @@ void protocolToOutput(int Size)(string folder,
 
 			genGnuplotScripts(folderROW, Selector.XLabel);
 			genGnuplotMakefile(folderROW);
+			genLatexFile(folderROW);
 
 			foreach(type; [ResultArraySelect.ReadAvail,ResultArraySelect.WriteAvail,
 					ResultArraySelect.ReadCosts,ResultArraySelect.WriteCosts])
@@ -189,6 +190,84 @@ void protocolToOutput(int Size)(string folder,
 				protocolToOutputImpl!(Size,Selector)(ltw, protocol, idx, type);
 			}
 		}
+
+		string mfn = format("%s/%s/", folder, Selector.XLabel);
+		subLevelFiles(mfn);
+	}
+	subLevelFilesSelector!Size(folder ~ "/");
+}
+
+void subLevelFilesSelector(int Size)(string folder) {
+	import std.meta : AliasSeq;
+	import std.format : formattedWrite;
+	{
+		auto m = File(folder ~ "Makefile", "w");
+		auto mLtw = m.lockingTextWriter();
+		formattedWrite(mLtw, "all:\n");
+		foreach(Selector; AliasSeq!(DiameterAverage!Size)) {
+			formattedWrite(mLtw, "\t$(MAKE) -C %s\n", Selector.XLabel);
+		}
+		formattedWrite(mLtw, "\trubber --pdf latex.tex\n");
+	}
+
+	{
+		auto l = File(folder ~ "latex.tex", "w");
+		auto lltw = l.lockingTextWriter();
+		formattedWrite(lltw, "\\documentclass[crop=false,class=scrbook]{standalone}\n");
+		formattedWrite(lltw, "\\usepackage{standalone}\n");
+		formattedWrite(lltw, "\\usepackage{graphicx}\n");
+		formattedWrite(lltw, "\\usepackage[cm]{fullpage}\n");
+		formattedWrite(lltw, "\\usepackage{subcaption}\n");
+		foreach(Selector; AliasSeq!(DiameterAverage!Size)) {
+			formattedWrite(lltw, "%% rubber: path ./%s/\n", Selector.XLabel);
+			foreach(it; readOverWriteLevel) {
+				formattedWrite(lltw, "%% rubber: path ./%s/%.2f\n",
+					Selector.XLabel, it
+				);
+			}
+		}
+		formattedWrite(lltw, 
+`\begin{document}
+\section{%s}
+`, folder);
+		foreach(Selector; AliasSeq!(DiameterAverage!Size)) {
+			formattedWrite(lltw, "\\input{%s/latex}\n", Selector.XLabel);
+		}
+		formattedWrite(lltw, "\\end{document}\n");
+	}
+}
+
+void subLevelFiles(string folder) {
+	import std.format : formattedWrite;
+	{
+		auto m = File(folder ~ "Makefile", "w");
+		auto mLtw = m.lockingTextWriter();
+		formattedWrite(mLtw, "all:\n");
+		foreach(it; readOverWriteLevel) {
+			formattedWrite(mLtw, "\t$(MAKE) -C %.2f\n", it);
+		}
+		formattedWrite(mLtw, "\trubber --pdf latex.tex\n");
+	}
+
+	{
+		auto l = File(folder ~ "latex.tex", "w");
+		auto lltw = l.lockingTextWriter();
+		formattedWrite(lltw, "\\documentclass[crop=false,class=scrbook]{standalone}\n");
+		formattedWrite(lltw, "\\usepackage{standalone}\n");
+		formattedWrite(lltw, "\\usepackage{graphicx}\n");
+		formattedWrite(lltw, "\\usepackage[cm]{fullpage}\n");
+		formattedWrite(lltw, "\\usepackage{subcaption}\n");
+		foreach(it; readOverWriteLevel) {
+			formattedWrite(lltw, "%% rubber: path ./%.2f\n", it);
+		}
+		formattedWrite(lltw, 
+`\begin{document}
+\section{%s}
+`, folder);
+		foreach(it; readOverWriteLevel) {
+			formattedWrite(lltw, "\\input{%.2f/latex}\n", it);
+		}
+		formattedWrite(lltw, "\\end{document}\n");
 	}
 }
 
@@ -200,13 +279,55 @@ void genGnuplotScripts(string folder, string xlabel) {
 		formattedWrite(f.lockingTextWriter(), gnuplotString, it, xlabel);
 	}
 }
+void genLatexFile(string folder) {
+	import std.format : format, formattedWrite;
+	auto f = File(folder ~ "latex.tex", "w");
+	auto ltw = f.lockingTextWriter();
+	formattedWrite(ltw, "\\documentclass[crop=false,class=scrbook]{standalone}\n");
+	formattedWrite(ltw, "\\usepackage{graphicx}\n");
+	formattedWrite(ltw, "\\usepackage[cm]{fullpage}\n");
+	formattedWrite(ltw, "\\usepackage{subcaption}\n");
+	formattedWrite(ltw, 
+`\begin{document}
+	\subsection{%s}
+	\begin{figure}
+		\begin{subfigure}[b]{0.5\textwidth}
+			\centering
+			\includegraphics[width=1.05\textwidth]{readavail.pdf}
+			\caption{Read Availability}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.5\textwidth}
+			\centering
+			\includegraphics[width=1.05\textwidth]{writeavail.pdf}
+			\caption{Read Availability}
+		\end{subfigure}
+		\caption{Availability}
+	\end{figure}
+	\begin{figure}
+		\begin{subfigure}[b]{0.5\textwidth}
+			\centering
+			\includegraphics[width=1.05\textwidth]{readcosts.pdf}
+			\caption{Read Availability}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.5\textwidth}
+			\centering
+			\includegraphics[width=1.05\textwidth]{writecosts.pdf}
+			\caption{Read Availability}
+		\end{subfigure}
+		\caption{Costs}
+	\end{figure}
+\end{document}
+`, folder);
+
+}
 
 void genGnuplotMakefile(string folder) {
 	import std.format : format, formattedWrite;
 
 	auto f = File(format("%sMakefile", folder), "w");
 	formattedWrite(f.lockingTextWriter(),
-		"all: readavail writeavail readcosts writecosts\n" ~
+		"all: readavail writeavail readcosts writecosts latex\n" ~
+		"	pdflatex latex.tex\n" ~	
 		"readavail:\n" ~
 		"	gnuplot readavail.gp\n" ~
 		"	epstopdf readavail.eps\n" ~
@@ -218,7 +339,51 @@ void genGnuplotMakefile(string folder) {
 		"	epstopdf readcosts.eps\n" ~
 		"writecosts:\n" ~
 		"	gnuplot writecosts.gp\n" ~
-		"	epstopdf writecosts.eps\n");
+		"	epstopdf writecosts.eps\n" ~
+		"latex:\n");
+}
+
+void topLevelFiles(int Size)(string folder) {
+	import std.meta : AliasSeq;
+	import std.format : formattedWrite;
+	{
+		auto m = File(folder ~ "Makefile", "w");
+		auto mLtw = m.lockingTextWriter();
+		formattedWrite(mLtw, "all:\n");
+		formattedWrite(mLtw, "\t$(MAKE) -C MCS\n");
+		formattedWrite(mLtw, "\t$(MAKE) -C Grid\n");
+		formattedWrite(mLtw, "\t$(MAKE) -C Lattice\n");
+		formattedWrite(mLtw, "\trubber --pdf latex.tex\n");
+	}
+
+	{
+		auto l = File(folder ~ "latex.tex", "w");
+		auto lltw = l.lockingTextWriter();
+		formattedWrite(lltw, "\\documentclass[crop=false,class=scrbook]{standalone}\n");
+		formattedWrite(lltw, "\\usepackage{standalone}\n");
+		formattedWrite(lltw, "\\usepackage{graphicx}\n");
+		formattedWrite(lltw, "\\usepackage[cm]{fullpage}\n");
+		formattedWrite(lltw, "\\usepackage{subcaption}\n");
+		foreach(proto; ["MCS", "Lattice", "Grid"]) {
+			formattedWrite(lltw, "%% rubber: path ./%s/\n", proto);
+			foreach(Selector; AliasSeq!(DiameterAverage!Size)) {
+				formattedWrite(lltw, "%% rubber: path ./%s/%s/\n", proto, Selector.XLabel);
+				foreach(it; readOverWriteLevel) {
+					formattedWrite(lltw, "%% rubber: path ./%s/%s/%.2f\n",
+						proto, Selector.XLabel, it
+					);
+				}
+			}
+		}
+		formattedWrite(lltw, 
+`\begin{document}
+`);
+		foreach(proto; ["MCS", "Lattice", "Grid"]) {
+			formattedWrite(lltw, "\\chapter{%s}\n", proto);
+			formattedWrite(lltw, "\\input{%s/latex}\n", proto);
+		}
+		formattedWrite(lltw, "\\end{document}\n");
+	}
 }
 
 void protocolToOutputImpl(int Size,Selector,LTW)(LTW ltw,
@@ -288,4 +453,5 @@ void statsAna(int Size)(string jsonFileName) {
 		protocolToOutput!(Size)("Stats7/Grid", grid);
 		protocolToOutput!(Size)("Stats7/Lattice", lattice);
 	}
+	topLevelFiles!Size("Stats7/");
 }
