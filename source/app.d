@@ -552,7 +552,7 @@ void buildSublist(string folderName) {
 }
 
 void main(string[] args) {
-	parseConfig(args);
+	//parseConfig(args);
 	//lattice(4,4);
 	//gridAgainstGrid(4,4);
 	//MCSAgainstMCS(15);
@@ -575,6 +575,7 @@ void main(string[] args) {
 	//addGraphsToFile();
 	//runMappings("6nodegraphs.json", args);
 	//runMappings("graphs8nodes.json", args);
+	//runMappings("9nodegraphs.json", args);
 	//MCSForm();
 	//GridFormXY();
 	//gridVLattice(3,3);
@@ -587,5 +588,6 @@ void main(string[] args) {
 	//LatticeXX();
 	//LatticeXY();
 	//buildSublist("CQL/Lattice_03_03");
-	statsAna!16("graphs7nodes.json");
+	//statsAna!16("graphs7nodes.json");
+	statsAna!32("graphs7nodes.json");
 }

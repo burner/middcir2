@@ -14,6 +14,9 @@ import protocols.grid;
 import protocols.lattice;
 import protocols.crossing;
 
+import config : PlatformAlign;
+
+align(8)
 class StatsRunner(int Size) {
 	import core.memory : GC;
 	import std.file : exists, rmdir, mkdir, isDir;
@@ -21,6 +24,7 @@ class StatsRunner(int Size) {
 	import graphgen;
 	import std.format : format;
 
+	align(8) {
 	const(string) graphsFilename;
 	const(string) graphsResultFolderName;
 	Array!(Graph!Size) graphs;
@@ -38,6 +42,7 @@ class StatsRunner(int Size) {
 
 	int start;
 	int upTo;
+	}
 
 	this(string graphsFilename, int start, int upTo) {
 		this.graphsFilename = graphsFilename;
@@ -148,20 +153,24 @@ class StatsRunner(int Size) {
 
 		foreach(it; this.lattices) {
 			logf("Lattice");
-			auto map = Mappings!(32,Size)(it.graph, g, row, rowc);
-			map.calcAC(it.read, it.write);
-			this.mappingToDataFile(map, "Lattice", path);
-			this.mappingToJson(map, "Lattice", path);
+			{
+				auto map = Mappings!(32,Size)(it.graph, g, row, rowc);
+				map.calcAC(it.read, it.write);
+				this.mappingToDataFile(map, "Lattice", path);
+				this.mappingToJson(map, "Lattice", path);
+			}
 			GC.collect();
 			GC.minimize();
 		}
 
 		foreach(it; this.grids) {
 			logf("Grid");
-			auto map = Mappings!(32,Size)(it.graph, g, row, rowc);
-			map.calcAC(it.read, it.write);
-			this.mappingToDataFile(map, "Grid", path);
-			this.mappingToJson(map, "Grid", path);
+			{
+				auto map = Mappings!(32,Size)(it.graph, g, row, rowc);
+				map.calcAC(it.read, it.write);
+				this.mappingToDataFile(map, "Grid", path);
+				this.mappingToJson(map, "Grid", path);
+			}
 			GC.collect();
 			GC.minimize();
 		}

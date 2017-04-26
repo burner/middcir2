@@ -19,12 +19,15 @@ Result getResult() {
 	return ret;
 }
 
+align(8)
 struct Result {
+	align(8) {
 	double[101] readAvail;
 	double[101] writeAvail;
 
 	double[101] readCosts;
 	double[101] writeCosts;
+	}
 
 	this(string avail, string costs) {
 		import std.format : formattedRead;

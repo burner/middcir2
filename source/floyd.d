@@ -15,9 +15,11 @@ auto floyd(G,int Size = 16)(const ref G graph) {
 
 alias Floyd = FloydImpl!16;
 
+align(8)
 struct FloydImpl(int Size) {
 	import std.container.array;
 
+	align(8) {
 	enum INF = ubyte.max;
 
 	//alias ArrayType = Array!(ubyte);
@@ -30,6 +32,7 @@ struct FloydImpl(int Size) {
 	ArrayArrayType first;
 	//Array!(Array!(ubyte)) distance;
 	//Array!(Array!(ubyte)) first;
+	}
 
 	void init(G)(const ref G graph) {
 		this.reserveArrays(graph.numNodes);

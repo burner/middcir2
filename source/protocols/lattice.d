@@ -40,6 +40,7 @@ unittest {
 
 alias Lattice = LatticeImpl!(32);
 
+align(8)
 struct LatticeImpl(int Size) {
 	import core.bitop : popcnt;
 	import std.container.array : Array;
@@ -52,6 +53,7 @@ struct LatticeImpl(int Size) {
 
 	alias BSType = TypeFromSize!Size;
 
+	align(8) {
 	static if(Size == 64) {
 		BitsetArrayArrayRC!BSType read;
 		BitsetArrayArrayRC!BSType write;
@@ -60,12 +62,13 @@ struct LatticeImpl(int Size) {
 		BitsetStore!BSType write;
 	}
 
+	alias LGraph = Graph!Size;
+
 	size_t width;
 	size_t height;
 
-	alias LGraph = Graph!Size;
-
 	LGraph graph;
+	}
 
 	static string readWriteFolder(string prefix, string rw, size_t width, 
 			size_t height, bool output, size_t numNodes) 

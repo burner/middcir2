@@ -91,3 +91,31 @@ unittest {
 		assertEqual(r.median, 2.0);
 	}
 }
+
+double computeConnectivity(int Size)(ref Graph!Size graph) {
+	import std.container.array;
+	import bitsetmodule;
+	import permutation;
+
+	alias BitsetTypeType = TypeFromSize!Size;
+	alias BitsetType = Bitset!BitsetTypeType;
+
+	auto permu = PermutationsImpl!BitsetTypeType(cast(int)graph.length);
+	auto paths = floyd!(typeof(graph),Size)(graph);
+
+	BitsetType one;
+	one.set();
+	foreach(perm; permu) {
+		BitsetType avail = BitsetType(one.store ^ perm.store);
+		paths.execute(graph, avail);
+		for(uint ai = 0; ai < graph.length; ++ai) {
+			for(uint bi = ai + 1; bi < graph.length; ++bi) {
+				if(!paths.pathExists(ai, bi)) {
+					return avail.flip().count();
+				}
+			}
+		}
+	}	
+
+	return graph.length;
+}

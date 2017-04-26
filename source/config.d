@@ -60,3 +60,8 @@ ref const(Config) getConfig() {
 ref Config getWriteableConfig() {
 	return __theConfig;
 }
+
+version(D_LP64)
+	immutable PlatformAlign = 8;
+else 
+	immutable PlatformAlign = 4;

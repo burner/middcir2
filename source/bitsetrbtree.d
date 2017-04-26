@@ -21,10 +21,13 @@ bool bitsetEqual(T)(const BitsetArray!T l, const BitsetArray!T r) {
 	return r.bitset.hasSubSet(l.bitset);
 }
 
+align(8)
 struct BitsetArray(T) {
+	align(8) {
 	Bitset!T bitset;
 	//Array!(Bitset!(T)) subsets;
 	Bitset!(T)[] subsets;
+	}
 
 	this(T value) {
 		this(Bitset!T(value));
@@ -211,10 +214,13 @@ struct BitsetArrayArrayIterator(T,S) {
 	}
 }
 
+align(8):
 struct BitsetArrayArray(T) {
 	import exceptionhandling;
 	import config;
+	align(8) {
 	Array!(BitsetArray!(T)) array;
+	}
 
 	void insert(Bitset!T key, Bitset!T value) {
 		auto it = this.search(key);
@@ -368,11 +374,14 @@ unittest {
 	}
 }
 
+align(8)
 struct BitsetArrayRC(T) {
 	import std.format : format;
 
+	align(8) {
 	Bitset!T bitset;
 	Array!(Bitset!(T)) subsets;
+	}
 
 	this(T value) {
 		this(Bitset!T(value));
@@ -451,11 +460,14 @@ auto getSubsets(BSA,BitsetStoreType)(auto ref BSA bsa,
 	}
 }
 
+align(8)
 struct BitsetArrayArrayRC(T) {
 	import exceptionhandling;
 	import config;
+	align(8) {
 	Array!(BitsetArrayRC!(T)) array;
 	string prefix;
+	}
 
 	this(string prefix) {
 		this.prefix = prefix;

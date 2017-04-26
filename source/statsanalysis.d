@@ -4,16 +4,49 @@ import std.container.array;
 import std.experimental.logger;
 import std.algorithm.sorting : sort;
 import std.stdio : File;
+import std.meta : AliasSeq;
 
 import graphmeasures;
 import graph;
 import protocols;
+
+alias Measures(int Size) = 
+	AliasSeq!(
+		//DiameterAverage!Size, DiameterMedian!Size, DiameterMax!Size
+		Connectivity!Size
+	);
+
+struct Connectivity(int Size) {
+	static immutable string XLabel = "Connectivity";
+	static immutable string sortPredicate = "a.connectivity < b.connectivity";
+	static auto select = function(const(GraphStats!Size) g) {
+		import std.math : isNaN;
+		assert(!isNaN(g.connectivity));
+		return g.connectivity;
+	};
+}
 
 struct DiameterAverage(int Size) {
 	static immutable string XLabel = "DiameterAverage";
 	static immutable string sortPredicate = "a.diameter.average < b.diameter.average";
 	static auto select = function(const(GraphStats!Size) g) {
 		return g.diameter.average;
+	};
+}
+
+struct DiameterMedian(int Size) {
+	static immutable string XLabel = "DiameterMedian";
+	static immutable string sortPredicate = "a.diameter.median < b.diameter.median";
+	static auto select = function(const(GraphStats!Size) g) {
+		return g.diameter.median;
+	};
+}
+
+struct DiameterMax(int Size) {
+	static immutable string XLabel = "DiameterMax";
+	static immutable string sortPredicate = "a.diameter.max < b.diameter.max";
+	static auto select = function(const(GraphStats!Size) g) {
+		return g.diameter.max;
 	};
 }
 
@@ -43,9 +76,12 @@ enum ResultArraySelect : size_t {
 }
 
 struct GraphStats(int Size) {
+	// Make sure to copy all
 	Graph!Size graph;
 	DiameterResult diameter;
+	double connectivity;
 	Result[7] results;
+	// Make sure to copy all
 
 	this(Graph!Size g, string filename, string protocol) {
 		this.graph = g;
@@ -55,6 +91,7 @@ struct GraphStats(int Size) {
 
 	this(const(GraphStats!Size) old) {
 		this.diameter = old.diameter;
+		this.connectivity = old.connectivity;
 		for(size_t i = 0; i < old.results.length; ++i) {
 			this.results[i] = old.results[i].dup();
 		}
@@ -153,87 +190,55 @@ ProtocolStats!Size loadGraphs(int Size)(string filename) {
 	return ret;
 }
 
-void protocolToOutput(int Size)(string folder, 
+void protocolToOutput(int Size,Selector)(string folder, 
 		const(Array!(GraphStats!Size)) protocol)
 {
 	import std.file : mkdirRecurse;
 	import std.format : format, formattedWrite;
-	import std.meta : AliasSeq;
-	foreach(Selector; AliasSeq!(DiameterAverage!Size)) {
-		foreach(idx, it; readOverWriteLevel) {
-			string folderROW = format("%s/%s/%.2f/", folder, Selector.XLabel, it);
-			mkdirRecurse(folderROW);
+	foreach(idx, it; readOverWriteLevel) {
+		string folderROW = format("%s/%s/%.2f/", folder, Selector.XLabel, it);
+		mkdirRecurse(folderROW);
 
-			genGnuplotScripts(folderROW, Selector.XLabel);
-			genGnuplotMakefile(folderROW);
-			genLatexFile(folderROW);
+		genGnuplotScripts(folderROW, Selector.XLabel);
+		genGnuplotMakefile(folderROW);
 
-			foreach(type; [ResultArraySelect.ReadAvail,ResultArraySelect.WriteAvail,
-					ResultArraySelect.ReadCosts,ResultArraySelect.WriteCosts])
-			{
-				File f;
-				final switch(type) {
-					case ResultArraySelect.ReadAvail:
- 						f = File(folderROW ~ "readavailgnuplot.data", "w");	
-						break;
-					case ResultArraySelect.WriteAvail:
- 						f = File(folderROW ~ "writeavailgnuplot.data", "w");	
-						break;
-					case ResultArraySelect.ReadCosts:
- 						f = File(folderROW ~ "readcostsgnuplot.data", "w");	
-						break;
-					case ResultArraySelect.WriteCosts:
- 						f = File(folderROW ~ "writecostsgnuplot.data", "w");	
-						break;
-				}
-				auto ltw = f.lockingTextWriter();
-				protocolToOutputImpl!(Size,Selector)(ltw, protocol, idx, type);
+		foreach(type; [ResultArraySelect.ReadAvail,ResultArraySelect.WriteAvail,
+				ResultArraySelect.ReadCosts,ResultArraySelect.WriteCosts])
+		{
+			File f;
+			final switch(type) {
+				case ResultArraySelect.ReadAvail:
+ 					f = File(folderROW ~ "readavailgnuplot.data", "w");	
+					break;
+				case ResultArraySelect.WriteAvail:
+ 					f = File(folderROW ~ "writeavailgnuplot.data", "w");	
+					break;
+				case ResultArraySelect.ReadCosts:
+ 					f = File(folderROW ~ "readcostsgnuplot.data", "w");	
+					break;
+				case ResultArraySelect.WriteCosts:
+ 					f = File(folderROW ~ "writecostsgnuplot.data", "w");	
+					break;
 			}
+			auto ltw = f.lockingTextWriter();
+			protocolToOutputImpl!(Size,Selector)(ltw, protocol, idx, type);
 		}
-
-		string mfn = format("%s/%s/", folder, Selector.XLabel);
-		subLevelFiles(mfn);
 	}
+
+	string mfn = format("%s/%s/", folder, Selector.XLabel);
+	subLevelFiles(mfn);
 	subLevelFilesSelector!Size(folder ~ "/");
 }
 
 void subLevelFilesSelector(int Size)(string folder) {
-	import std.meta : AliasSeq;
 	import std.format : formattedWrite;
 	{
 		auto m = File(folder ~ "Makefile", "w");
 		auto mLtw = m.lockingTextWriter();
 		formattedWrite(mLtw, "all:\n");
-		foreach(Selector; AliasSeq!(DiameterAverage!Size)) {
+		foreach(Selector; Measures!Size) {
 			formattedWrite(mLtw, "\t$(MAKE) -C %s\n", Selector.XLabel);
 		}
-		formattedWrite(mLtw, "\trubber --pdf latex.tex\n");
-	}
-
-	{
-		auto l = File(folder ~ "latex.tex", "w");
-		auto lltw = l.lockingTextWriter();
-		formattedWrite(lltw, "\\documentclass[crop=false,class=scrbook]{standalone}\n");
-		formattedWrite(lltw, "\\usepackage{standalone}\n");
-		formattedWrite(lltw, "\\usepackage{graphicx}\n");
-		formattedWrite(lltw, "\\usepackage[cm]{fullpage}\n");
-		formattedWrite(lltw, "\\usepackage{subcaption}\n");
-		foreach(Selector; AliasSeq!(DiameterAverage!Size)) {
-			formattedWrite(lltw, "%% rubber: path ./%s/\n", Selector.XLabel);
-			foreach(it; readOverWriteLevel) {
-				formattedWrite(lltw, "%% rubber: path ./%s/%.2f\n",
-					Selector.XLabel, it
-				);
-			}
-		}
-		formattedWrite(lltw, 
-`\begin{document}
-\section{%s}
-`, folder);
-		foreach(Selector; AliasSeq!(DiameterAverage!Size)) {
-			formattedWrite(lltw, "\\input{%s/latex}\n", Selector.XLabel);
-		}
-		formattedWrite(lltw, "\\end{document}\n");
 	}
 }
 
@@ -246,28 +251,6 @@ void subLevelFiles(string folder) {
 		foreach(it; readOverWriteLevel) {
 			formattedWrite(mLtw, "\t$(MAKE) -C %.2f\n", it);
 		}
-		formattedWrite(mLtw, "\trubber --pdf latex.tex\n");
-	}
-
-	{
-		auto l = File(folder ~ "latex.tex", "w");
-		auto lltw = l.lockingTextWriter();
-		formattedWrite(lltw, "\\documentclass[crop=false,class=scrbook]{standalone}\n");
-		formattedWrite(lltw, "\\usepackage{standalone}\n");
-		formattedWrite(lltw, "\\usepackage{graphicx}\n");
-		formattedWrite(lltw, "\\usepackage[cm]{fullpage}\n");
-		formattedWrite(lltw, "\\usepackage{subcaption}\n");
-		foreach(it; readOverWriteLevel) {
-			formattedWrite(lltw, "%% rubber: path ./%.2f\n", it);
-		}
-		formattedWrite(lltw, 
-`\begin{document}
-\section{%s}
-`, folder);
-		foreach(it; readOverWriteLevel) {
-			formattedWrite(lltw, "\\input{%.2f/latex}\n", it);
-		}
-		formattedWrite(lltw, "\\end{document}\n");
 	}
 }
 
@@ -279,55 +262,13 @@ void genGnuplotScripts(string folder, string xlabel) {
 		formattedWrite(f.lockingTextWriter(), gnuplotString, it, xlabel);
 	}
 }
-void genLatexFile(string folder) {
-	import std.format : format, formattedWrite;
-	auto f = File(folder ~ "latex.tex", "w");
-	auto ltw = f.lockingTextWriter();
-	formattedWrite(ltw, "\\documentclass[crop=false,class=scrbook]{standalone}\n");
-	formattedWrite(ltw, "\\usepackage{graphicx}\n");
-	formattedWrite(ltw, "\\usepackage[cm]{fullpage}\n");
-	formattedWrite(ltw, "\\usepackage{subcaption}\n");
-	formattedWrite(ltw, 
-`\begin{document}
-	\subsection{%s}
-	\begin{figure}
-		\begin{subfigure}[b]{0.5\textwidth}
-			\centering
-			\includegraphics[width=1.05\textwidth]{readavail.pdf}
-			\caption{Read Availability}
-		\end{subfigure}
-		\begin{subfigure}[b]{0.5\textwidth}
-			\centering
-			\includegraphics[width=1.05\textwidth]{writeavail.pdf}
-			\caption{Read Availability}
-		\end{subfigure}
-		\caption{Availability}
-	\end{figure}
-	\begin{figure}
-		\begin{subfigure}[b]{0.5\textwidth}
-			\centering
-			\includegraphics[width=1.05\textwidth]{readcosts.pdf}
-			\caption{Read Availability}
-		\end{subfigure}
-		\begin{subfigure}[b]{0.5\textwidth}
-			\centering
-			\includegraphics[width=1.05\textwidth]{writecosts.pdf}
-			\caption{Read Availability}
-		\end{subfigure}
-		\caption{Costs}
-	\end{figure}
-\end{document}
-`, folder);
-
-}
 
 void genGnuplotMakefile(string folder) {
 	import std.format : format, formattedWrite;
 
 	auto f = File(format("%sMakefile", folder), "w");
 	formattedWrite(f.lockingTextWriter(),
-		"all: readavail writeavail readcosts writecosts latex\n" ~
-		"	pdflatex latex.tex\n" ~	
+		"all: readavail writeavail readcosts writecosts\n" ~
 		"readavail:\n" ~
 		"	gnuplot readavail.gp\n" ~
 		"	epstopdf readavail.eps\n" ~
@@ -339,13 +280,11 @@ void genGnuplotMakefile(string folder) {
 		"	epstopdf readcosts.eps\n" ~
 		"writecosts:\n" ~
 		"	gnuplot writecosts.gp\n" ~
-		"	epstopdf writecosts.eps\n" ~
-		"latex:\n");
+		"	epstopdf writecosts.eps\n");
 }
 
 void topLevelFiles(int Size)(string folder) {
-	import std.meta : AliasSeq;
-	import std.format : formattedWrite;
+	import std.format : format, formattedWrite;
 	{
 		auto m = File(folder ~ "Makefile", "w");
 		auto mLtw = m.lockingTextWriter();
@@ -353,20 +292,20 @@ void topLevelFiles(int Size)(string folder) {
 		formattedWrite(mLtw, "\t$(MAKE) -C MCS\n");
 		formattedWrite(mLtw, "\t$(MAKE) -C Grid\n");
 		formattedWrite(mLtw, "\t$(MAKE) -C Lattice\n");
-		formattedWrite(mLtw, "\trubber --pdf latex.tex\n");
 	}
 
 	{
 		auto l = File(folder ~ "latex.tex", "w");
 		auto lltw = l.lockingTextWriter();
-		formattedWrite(lltw, "\\documentclass[crop=false,class=scrbook]{standalone}\n");
-		formattedWrite(lltw, "\\usepackage{standalone}\n");
+		formattedWrite(lltw, "\\documentclass{scrbook}\n");
 		formattedWrite(lltw, "\\usepackage{graphicx}\n");
+		formattedWrite(lltw, "\\usepackage{float}\n");
+		formattedWrite(lltw, "\\usepackage{hyperref}\n");
 		formattedWrite(lltw, "\\usepackage[cm]{fullpage}\n");
 		formattedWrite(lltw, "\\usepackage{subcaption}\n");
 		foreach(proto; ["MCS", "Lattice", "Grid"]) {
 			formattedWrite(lltw, "%% rubber: path ./%s/\n", proto);
-			foreach(Selector; AliasSeq!(DiameterAverage!Size)) {
+			foreach(Selector; Measures!Size) {
 				formattedWrite(lltw, "%% rubber: path ./%s/%s/\n", proto, Selector.XLabel);
 				foreach(it; readOverWriteLevel) {
 					formattedWrite(lltw, "%% rubber: path ./%s/%s/%.2f\n",
@@ -377,10 +316,47 @@ void topLevelFiles(int Size)(string folder) {
 		}
 		formattedWrite(lltw, 
 `\begin{document}
+\tableofcontents
 `);
 		foreach(proto; ["MCS", "Lattice", "Grid"]) {
-			formattedWrite(lltw, "\\chapter{%s}\n", proto);
-			formattedWrite(lltw, "\\input{%s/latex}\n", proto);
+			formattedWrite(lltw, "\n\n\\chapter{%s}\n", proto);
+			foreach(Selector; Measures!Size) {
+				formattedWrite(lltw, "\n\n\\section{%s}\n", Selector.XLabel);
+				foreach(it; readOverWriteLevel) {
+					string inputfolder = format("%s/%s/%0.2f", /*folder,*/
+							proto, Selector.XLabel, it
+					);
+					formattedWrite(lltw, "\n\n\\subsection{Write over Read %.02f}\n", it);
+					formattedWrite(lltw, 
+`\begin{figure}[H]
+	\begin{subfigure}[b]{0.5\textwidth}
+		\centering
+		\includegraphics[width=1.05\textwidth]{%1$s/readavail.pdf}
+		\caption{Read Availability}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.5\textwidth}
+		\centering
+		\includegraphics[width=1.05\textwidth]{%1$s/writeavail.pdf}
+		\caption{Read Availability}
+	\end{subfigure}
+	\caption{Availability}
+\end{figure}
+\begin{figure}[H]
+	\begin{subfigure}[b]{0.5\textwidth}
+		\centering
+		\includegraphics[width=1.05\textwidth]{%1$s/readcosts.pdf}
+		\caption{Read Availability}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.5\textwidth}
+		\centering
+		\includegraphics[width=1.05\textwidth]{%1$s/writecosts.pdf}
+		\caption{Read Availability}
+	\end{subfigure}
+	\caption{Costs}
+\end{figure}
+`, inputfolder);
+				}
+			}
 		}
 		formattedWrite(lltw, "\\end{document}\n");
 	}
@@ -404,13 +380,39 @@ void protocolToOutputImpl(int Size,Selector,LTW)(LTW ltw,
 Array!(GraphStats!Size) uniqueGraphs(int Size,Selector)(
 		const(Array!(GraphStats!Size)) old)
 {
+	return uniqueGraphsImpl2!(Size,Selector)(old);
+}
+
+Array!(GraphStats!Size) uniqueGraphsImpl2(int Size,Selector)(
+		const(Array!(GraphStats!Size)) old)
+{
+	import std.math : approxEqual;
+	Array!(GraphStats!Size) ret;
+	foreach(ref it; old[]) {
+		if(ret.empty) {
+			ret.insertBack(GraphStats!Size(it));
+		} else {
+			if(approxEqual(Selector.select(ret.back), Selector.select(it))) {
+				logf("dup %.10f %.10f", Selector.select(ret.back), Selector.select(it));
+			} else {
+				ret.insertBack(GraphStats!Size(it));
+			}
+		}
+	}
+	return ret;
+}
+
+Array!(GraphStats!Size) uniqueGraphsImpl1(int Size,Selector)(
+		const(Array!(GraphStats!Size)) old)
+{
+	import std.math : approxEqual;
 	Array!(GraphStats!Size) ret;
 	int addCount = 1;
 	foreach(ref it; old[]) {
 		if(ret.empty) {
 			ret.insertBack(GraphStats!Size(it));
 		} else {
-			if(Selector.select(ret.back) == Selector.select(it)) {
+			if(approxEqual(Selector.select(ret.back), Selector.select(it))) {
 				logf("dup");
 				ret.back.add(it);	
 				++addCount;
@@ -428,30 +430,44 @@ Array!(GraphStats!Size) uniqueGraphs(int Size,Selector)(
 }
 
 void statsAna(int Size)(string jsonFileName) {
-	import std.meta : AliasSeq;
+	import std.format : format;
+	import std.math : isNaN;
 	auto graphs = loadGraphs!Size(jsonFileName);
+	string outdir = format("%s_Ana/", jsonFileName);
 
 	foreach(ref it; graphs.mcs) {
 		it.diameter = diameter!Size(it.graph);
+		it.connectivity = computeConnectivity(it.graph);
+		assert(!isNaN(it.connectivity));
+		logf("%f", it.connectivity);
 	}
 	foreach(ref it; graphs.grid) {
 		it.diameter = diameter!Size(it.graph);
+		it.connectivity = computeConnectivity(it.graph);
+		assert(!isNaN(it.connectivity));
+		logf("%f", it.connectivity);
 	}
 	foreach(ref it; graphs.lattice) {
 		it.diameter = diameter!Size(it.graph);
+		it.connectivity = computeConnectivity(it.graph);
+		assert(!isNaN(it.connectivity));
+		logf("%f", it.connectivity);
 	}
 
-	foreach(A; AliasSeq!(DiameterAverage!Size)) {
+	foreach(A; Measures!Size) {
 		sort!(A.sortPredicate)(graphs.mcs[]);
 		sort!(A.sortPredicate)(graphs.grid[]);
 		sort!(A.sortPredicate)(graphs.lattice[]);
-		//logf("%(%s\n\n%)", graphs.mcs[]);
+		logf("%(%s\n\n%)", graphs.mcs[]);
 		auto mcs = uniqueGraphs!(Size,A)(graphs.mcs);
 		auto grid = uniqueGraphs!(Size,A)(graphs.grid);
 		auto lattice = uniqueGraphs!(Size,A)(graphs.lattice);
-		protocolToOutput!(Size)("Stats7/MCS", mcs);
-		protocolToOutput!(Size)("Stats7/Grid", grid);
-		protocolToOutput!(Size)("Stats7/Lattice", lattice);
+		logf("\n\tmcs.length %s\n\tgird.length %s\n\tlattice.length %s",
+			mcs.length, grid.length, lattice.length
+		);
+		protocolToOutput!(Size,A)(outdir ~ "MCS", mcs);
+		protocolToOutput!(Size,A)(outdir ~ "Grid", grid);
+		protocolToOutput!(Size,A)(outdir ~ "Lattice", lattice);
 	}
-	topLevelFiles!Size("Stats7/");
+	topLevelFiles!Size(outdir);
 }

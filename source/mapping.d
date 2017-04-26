@@ -48,6 +48,7 @@ void decrementRCMapping(RC)(RC* ptr) {
 	assert(ptr !is null);	
 	(*ptr).rc--;
 	if((*ptr).rc == 0) {
+		GC.removeRange(cast(void*)ptr);
 		GC.free(cast(void*)(*ptr).mapping);
 		(*ptr).mapping = null;
 		GC.free(ptr);
@@ -105,8 +106,10 @@ struct MappingResultStore(int SizeLnt, int SizePnt) {
 			ref Result rslt) 
 	{
 		import core.memory : GC;
+		auto mem = GC.malloc(RCMapping!(SizeLnt,SizePnt).sizeof);
+		GC.addRange(mem, RCMapping!(SizeLnt,SizePnt).sizeof);
 		RCMapping!(SizeLnt,SizePnt)* ptr = cast(RCMapping!(SizeLnt,SizePnt)*)(
-			GC.malloc(RCMapping!(SizeLnt,SizePnt).sizeof)
+			mem	
 		);
 		(*ptr).rc = 1;
 		(*ptr).mapping = mapping;
@@ -172,10 +175,14 @@ unittest {
 	static assert(!__traits(compiles, a = b));
 }
 
+import config : PlatformAlign;
+
 /** Mapping will be passed a BitsetStore. It will take this BitsetStore and
 for each element it will try to reconnect the element for every permutation.
 */
+align(8)
 class Mapping(int SizeLnt, int SizePnt) {
+	align(8) {
 	const(Graph!SizeLnt)* lnt;	
 	const(Graph!SizePnt)* pnt;	
 	const(int[]) mapping;
@@ -186,6 +193,7 @@ class Mapping(int SizeLnt, int SizePnt) {
 	BitsetStore!uint write;
 
 	const(QTF) quorumTestFraction;
+	}
 
 	/** 
 	params:
@@ -300,7 +308,9 @@ class Mapping(int SizeLnt, int SizePnt) {
 	}
 }
 
+align(8)
 struct Mappings(int SizeLnt, int SizePnt) {
+	align(8) {
 	Mapping!(SizeLnt,SizePnt) bestMappingLocal;
 
 	Result bestResultLocal;
@@ -315,6 +325,7 @@ struct Mappings(int SizeLnt, int SizePnt) {
 	const(Graph!SizePnt)* pnt;	
 
 	const QTF quorumTestFraction;
+	}
 
 	this(ref const Graph!SizeLnt lnt, ref const Graph!SizePnt pnt, 
 			const QTF quorumTestFraction = QTF(1.0), const ROW readWriteBalance = ROW(0.5)) 
