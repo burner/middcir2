@@ -13,7 +13,9 @@ import protocols;
 alias Measures(int Size) = 
 	AliasSeq!(
 		//DiameterAverage!Size, DiameterMedian!Size, DiameterMax!Size
-		Connectivity!Size
+		Connectivity!Size,
+		DegreeAverage!Size, DegreeMedian!Size, DegreeMin!Size, DegreeMax!Size,
+		BetweenneesAverage!Size, BetweenneesMedian!Size, BetweenneesMin!Size, BetweenneesMax!Size
 	);
 
 struct Connectivity(int Size) {
@@ -50,6 +52,78 @@ struct DiameterMax(int Size) {
 	};
 }
 
+struct DiameterMin(int Size) {
+	static immutable string XLabel = "DiameterMin";
+	static immutable string sortPredicate = "a.diameter.min < b.diameter.min";
+	static auto select = function(const(GraphStats!Size) g) {
+		return g.diameter.min;
+	};
+}
+
+struct DegreeAverage(int Size) {
+	static immutable string XLabel = "DegreeAverage";
+	static immutable string sortPredicate = "a.degree.average < b.degree.average";
+	static auto select = function(const(GraphStats!Size) g) {
+		return g.degree.average;
+	};
+}
+
+struct DegreeMedian(int Size) {
+	static immutable string XLabel = "DegreeMedian";
+	static immutable string sortPredicate = "a.degree.median < b.degree.median";
+	static auto select = function(const(GraphStats!Size) g) {
+		return g.degree.median;
+	};
+}
+
+struct DegreeMin(int Size) {
+	static immutable string XLabel = "DegreeMin";
+	static immutable string sortPredicate = "a.degree.min < b.degree.min";
+	static auto select = function(const(GraphStats!Size) g) {
+		return g.degree.min;
+	};
+}
+
+struct DegreeMax(int Size) {
+	static immutable string XLabel = "DegreeMax";
+	static immutable string sortPredicate = "a.degree.max < b.degree.max";
+	static auto select = function(const(GraphStats!Size) g) {
+		return g.degree.max;
+	};
+}
+
+struct BetweenneesAverage(int Size) {
+	static immutable string XLabel = "BetweenneesAverage";
+	static immutable string sortPredicate = "a.betweenness.average < b.betweenness.average";
+	static auto select = function(const(GraphStats!Size) g) {
+		return g.betweenness.average;
+	};
+}
+
+struct BetweenneesMedian(int Size) {
+	static immutable string XLabel = "BetweenneesMedian";
+	static immutable string sortPredicate = "a.betweenness.median < b.betweenness.median";
+	static auto select = function(const(GraphStats!Size) g) {
+		return g.betweenness.median;
+	};
+}
+
+struct BetweenneesMin(int Size) {
+	static immutable string XLabel = "BetweenneesMin";
+	static immutable string sortPredicate = "a.betweenness.min < b.betweenness.min";
+	static auto select = function(const(GraphStats!Size) g) {
+		return g.betweenness.min;
+	};
+}
+
+struct BetweenneesMax(int Size) {
+	static immutable string XLabel = "BetweenneesMax";
+	static immutable string sortPredicate = "a.betweenness.max < b.betweenness.max";
+	static auto select = function(const(GraphStats!Size) g) {
+		return g.betweenness.max;
+	};
+}
+
 immutable enum gnuplotString =
 `print GPVAL_TERMINALS
 set terminal eps color
@@ -79,6 +153,8 @@ struct GraphStats(int Size) {
 	// Make sure to copy all
 	Graph!Size graph;
 	DiameterResult diameter;
+	DegreeResult degree;
+	BetweennessCentrality betweenness;
 	double connectivity;
 	Result[7] results;
 	// Make sure to copy all
@@ -90,11 +166,15 @@ struct GraphStats(int Size) {
 	}
 
 	this(const(GraphStats!Size) old) {
+		// Make sure to copy all
 		this.diameter = old.diameter;
+		this.degree = old.degree;
+		this.betweenness = old.betweenness;
 		this.connectivity = old.connectivity;
 		for(size_t i = 0; i < old.results.length; ++i) {
 			this.results[i] = old.results[i].dup();
 		}
+		// Make sure to copy all
 	}
 
 	ref const(double[101]) getData(const size_t idx, const ResultArraySelect type) const {
@@ -157,7 +237,7 @@ struct GraphStats(int Size) {
 					&& canFind(f.name, "_costs")
 				);
 			foreach(a, c; lockstep(filesAvail, filesCosts)) {
-				//logf("\n\t%s\n\t%s", a, c);
+				logf("\n\t%s\n\t%s", a, c);
 				this.results[idx] = Result(readText(a), readText(c));	
 				//logf("readAvail %(%.5f, %)", this.results[idx].readAvail[]);
 				//logf("writeAvail %(%.5f, %)", this.results[idx].writeAvail[]);
@@ -283,7 +363,7 @@ void genGnuplotMakefile(string folder) {
 		"	epstopdf writecosts.eps\n");
 }
 
-void topLevelFiles(int Size)(string folder) {
+void topLevelFiles(int Size)(string folder, const size_t numGraphs) {
 	import std.format : format, formattedWrite;
 	{
 		auto m = File(folder ~ "Makefile", "w");
@@ -299,10 +379,19 @@ void topLevelFiles(int Size)(string folder) {
 		auto lltw = l.lockingTextWriter();
 		formattedWrite(lltw, "\\documentclass{scrbook}\n");
 		formattedWrite(lltw, "\\usepackage{graphicx}\n");
+		formattedWrite(lltw, "\\usepackage{standalone}\n");
 		formattedWrite(lltw, "\\usepackage{float}\n");
 		formattedWrite(lltw, "\\usepackage{hyperref}\n");
 		formattedWrite(lltw, "\\usepackage[cm]{fullpage}\n");
 		formattedWrite(lltw, "\\usepackage{subcaption}\n");
+formattedWrite(lltw, `\usepackage{tikz}
+\usepackage{pgfplots}
+\usetikzlibrary{decorations.markings, arrows, decorations.pathmorphing,
+   backgrounds, positioning, fit, shapes.geometric}
+	\tikzstyle{place} = [shape=circle,
+    draw, align=center,minimum width=0.70cm,
+    top color=white, bottom color=blue!20]
+`);
 		foreach(proto; ["MCS", "Lattice", "Grid"]) {
 			formattedWrite(lltw, "%% rubber: path ./%s/\n", proto);
 			foreach(Selector; Measures!Size) {
@@ -320,13 +409,23 @@ void topLevelFiles(int Size)(string folder) {
 `);
 		foreach(proto; ["MCS", "Lattice", "Grid"]) {
 			formattedWrite(lltw, "\n\n\\chapter{%s}\n", proto);
+			for(size_t i; i < numGraphs; ++i) {
+				formattedWrite(lltw,
+`\paragraph{Graph %2%s}
+\begin{figure}[H]
+	\includestandalone{%1$s/%2$d}
+	\caption{%1$s Graph %2$d}
+\end{figure}
+					`, proto, i
+				);
+			}
 			foreach(Selector; Measures!Size) {
 				formattedWrite(lltw, "\n\n\\section{%s}\n", Selector.XLabel);
 				foreach(it; readOverWriteLevel) {
 					string inputfolder = format("%s/%s/%0.2f", /*folder,*/
 							proto, Selector.XLabel, it
 					);
-					formattedWrite(lltw, "\n\n\\subsection{Write over Read %.02f}\n", it);
+					formattedWrite(lltw, "\n\n\\paragraph{Write over Read %.02f}\n", it);
 					formattedWrite(lltw, 
 `\begin{figure}[H]
 	\begin{subfigure}[b]{0.5\textwidth}
@@ -393,7 +492,7 @@ Array!(GraphStats!Size) uniqueGraphsImpl2(int Size,Selector)(
 			ret.insertBack(GraphStats!Size(it));
 		} else {
 			if(approxEqual(Selector.select(ret.back), Selector.select(it))) {
-				logf("dup %.10f %.10f", Selector.select(ret.back), Selector.select(it));
+				//logf("dup %.10f %.10f", Selector.select(ret.back), Selector.select(it));
 			} else {
 				ret.insertBack(GraphStats!Size(it));
 			}
@@ -413,7 +512,7 @@ Array!(GraphStats!Size) uniqueGraphsImpl1(int Size,Selector)(
 			ret.insertBack(GraphStats!Size(it));
 		} else {
 			if(approxEqual(Selector.select(ret.back), Selector.select(it))) {
-				logf("dup");
+				//logf("dup");
 				ret.back.add(it);	
 				++addCount;
 			} else {
@@ -429,27 +528,62 @@ Array!(GraphStats!Size) uniqueGraphsImpl1(int Size,Selector)(
 	return ret;
 }
 
+void graphsToTex(int Size)(string foldername, const ref ProtocolStats!Size pss) {
+	import std.format : format;
+	foreach(pro; ["MCS", "Lattice", "Grid"]) {
+		auto f = format("%s%s/", foldername, pro);
+		if(pro == "MCS") {
+			graphsToTexImpl(f, pss.mcs);
+		} else if(pro == "Lattice") {
+			graphsToTexImpl(f, pss.lattice);
+		} else if(pro == "Grid") {
+			graphsToTexImpl(f, pss.grid);
+		}
+	}
+}
+
+void graphsToTexImpl(int Size)(string foldername, 
+		const ref Array!(GraphStats!Size) gs) 
+{
+	import std.format : format;
+	foreach(const ref it; gs[]) {
+		string fn = format("%s%d.tex", foldername, it.graph.id);
+		auto f = File(fn, "w");
+		auto ltw = f.lockingTextWriter();
+		it.graph.toTikz(ltw);
+	}
+}
+
 void statsAna(int Size)(string jsonFileName) {
 	import std.format : format;
 	import std.math : isNaN;
 	auto graphs = loadGraphs!Size(jsonFileName);
+	assert(graphs.mcs.length == graphs.lattice.length);
+	assert(graphs.grid.length == graphs.lattice.length);
 	string outdir = format("%s_Ana/", jsonFileName);
+	graphsToTex(outdir, graphs);
 
 	foreach(ref it; graphs.mcs) {
 		it.diameter = diameter!Size(it.graph);
 		it.connectivity = computeConnectivity(it.graph);
+		it.degree = degree(it.graph);
+		it.betweenness = betweennessCentrality(it.graph);
 		assert(!isNaN(it.connectivity));
 		logf("%f", it.connectivity);
 	}
 	foreach(ref it; graphs.grid) {
 		it.diameter = diameter!Size(it.graph);
 		it.connectivity = computeConnectivity(it.graph);
+		it.degree = degree(it.graph);
+		it.betweenness = betweennessCentrality(it.graph);
 		assert(!isNaN(it.connectivity));
 		logf("%f", it.connectivity);
 	}
 	foreach(ref it; graphs.lattice) {
 		it.diameter = diameter!Size(it.graph);
 		it.connectivity = computeConnectivity(it.graph);
+		it.degree = degree(it.graph);
+		it.betweenness = betweennessCentrality(it.graph);
 		assert(!isNaN(it.connectivity));
 		logf("%f", it.connectivity);
 	}
@@ -458,7 +592,6 @@ void statsAna(int Size)(string jsonFileName) {
 		sort!(A.sortPredicate)(graphs.mcs[]);
 		sort!(A.sortPredicate)(graphs.grid[]);
 		sort!(A.sortPredicate)(graphs.lattice[]);
-		logf("%(%s\n\n%)", graphs.mcs[]);
 		auto mcs = uniqueGraphs!(Size,A)(graphs.mcs);
 		auto grid = uniqueGraphs!(Size,A)(graphs.grid);
 		auto lattice = uniqueGraphs!(Size,A)(graphs.lattice);
@@ -469,5 +602,5 @@ void statsAna(int Size)(string jsonFileName) {
 		protocolToOutput!(Size,A)(outdir ~ "Grid", grid);
 		protocolToOutput!(Size,A)(outdir ~ "Lattice", lattice);
 	}
-	topLevelFiles!Size(outdir);
+	topLevelFiles!Size(outdir, graphs.mcs.length);
 }

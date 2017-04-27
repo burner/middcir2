@@ -465,7 +465,7 @@ void genRandomGraphs() {
 
 	Array!(Graph!16) graphs;
 
-	auto rnd = Random(1337);
+	auto rnd = Random(13378);
 
 	GraphGenConfig ggc;
 	ggc.numNodes = 8;
@@ -473,7 +473,7 @@ void genRandomGraphs() {
 	ggc.maxEdges = 4;
 
 	log("Here");
-	auto gg = graphGenerator!16(64, 1024, ggc, rnd);
+	auto gg = graphGenerator!16(128*2, 2*1024, ggc, rnd);
 	int id;
 	while(!gg.empty) {
 		auto f = gg.front;
@@ -499,7 +499,7 @@ void addGraphsToFile(int Size)(const string filename, long numGraphsToAdd) {
 	auto rnd = Random();
 
 	GraphGenConfig ggc;
-	ggc.numNodes = 9;
+	ggc.numNodes = 8;
 	ggc.minEdges = 1;
 	ggc.maxEdges = 6;
 	auto gg = graphGenerator!16(numGraphsToAdd, numGraphsToAdd * 3, ggc, rnd);
@@ -525,7 +525,7 @@ void addGraphsToFile(int Size)(const string filename, long numGraphsToAdd) {
 }
 
 void addGraphsToFile() {
-	addGraphsToFile!16("9nodegraphs.json", 32);
+	addGraphsToFile!16("graph8nodes.json", 64);
 }
 
 void runMappings(string graphsFilename, string[] args) {
@@ -589,5 +589,6 @@ void main(string[] args) {
 	//LatticeXY();
 	//buildSublist("CQL/Lattice_03_03");
 	//statsAna!16("graphs7nodes.json");
-	statsAna!32("graphs7nodes.json");
+	statsAna!32("6nodegraphs.json");
+	//statsAna!32("graphs8nodes.json");
 }
