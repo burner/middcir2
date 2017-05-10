@@ -86,7 +86,8 @@ ResultPlot printPNTResults(LTW, RP)(LTW ltw, ref RP resultProtocol) {
 import std.range : ElementType;
 
 version(LDC) {
-ref auto Delay(alias arg, size_t idx)() { return *arg[idx].opDot(); }
+//ref auto Delay(alias arg, size_t idx)() { return *arg[idx].opDot(); }
+ref auto Delay(alias arg, size_t idx)() { return *arg[idx]; }
 } else {
 ref auto Delay(alias arg, size_t idx)() { return *arg[idx]; }
 }

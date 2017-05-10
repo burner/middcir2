@@ -16,6 +16,13 @@ import protocols.crossing;
 
 import config : PlatformAlign;
 
+enum StatsType {
+	all,
+	MCS,
+	Lattice,
+	Grid
+}
+
 align(8)
 class StatsRunner(int Size) {
 	import core.memory : GC;
@@ -42,10 +49,17 @@ class StatsRunner(int Size) {
 
 	int start;
 	int upTo;
+
+	StatsType statsType;
 	}
 
 	this(string graphsFilename, int start, int upTo) {
+		this(graphsFilename, start, upTo, StatsType.all);
+	}
+
+	this(string graphsFilename, int start, int upTo, StatsType statsType) {
 		this.graphsFilename = graphsFilename;
+		this.statsType = statsType;
 		this.graphsResultFolderName = this.graphsFilename ~ "_Results";
 		if(exists(graphsFilename)) {
 			this.graphs = loadGraphsFromJSON!Size(this.graphsFilename);
@@ -121,75 +135,106 @@ class StatsRunner(int Size) {
 	}
 	
 	void runNormal() {
-		foreach(ref it; this.lattices) {
-			this.latticeResults ~= it.calcAC();
+		if(this.statsType == StatsType.all 
+				|| this.statsType == StatsType.Lattice)
+		{
+			foreach(ref it; this.lattices) {
+				logf("Lattice %s %s", it.width, it.height);
+				this.latticeResults ~= it.calcAC();
+			}
 		}
 	
-		foreach(ref it; this.grids) {
-			this.gridResults ~= it.calcAC();
+		if(this.statsType == StatsType.all 
+				|| this.statsType == StatsType.Grid)
+		{
+			foreach(ref it; this.grids) {
+				logf("Grid %s %s", it.width, it.height);
+				this.gridResults ~= it.calcAC();
+			}
 		}
 	
-		this.mcsResult = this.mcs.calcAC();
+		if(this.statsType == StatsType.all 
+				|| this.statsType == StatsType.MCS)
+		{
+			this.mcsResult = this.mcs.calcAC();
+		}
 	}
 	
 	void buildGraphBased(const(ulong) size) {
 		auto dimensions = bestGridDiffs(size);
-	
 		foreach(rc; dimensions) {
-			this.lattices ~= Lattice(cast(size_t)rc[0], cast(size_t)rc[1]);
-			this.grids ~= Grid(cast(size_t)rc[0], cast(size_t)rc[1]);
+			if(this.statsType == StatsType.all 
+					|| this.statsType == StatsType.Lattice)
+			{
+				this.lattices ~= Lattice(cast(size_t)rc[0], cast(size_t)rc[1]);
+			}
+			if(this.statsType == StatsType.all 
+					|| this.statsType == StatsType.Grid)
+			{
+				this.grids ~= Grid(cast(size_t)rc[0], cast(size_t)rc[1]);
+			}
 		}
 	}
 	
 	void runMapping(int Size)(const(Graph!Size) g) const {
-
 		auto path = format("%s/%05d", this.graphsResultFolderName, g.id);
-		if(exists(path)) {
-			logf("Data for graph %s existed, therefore we skip it", path);
-			return;
-		} else {
+		//	logf("Data for graph %s existed, therefore we skip it", path);
+		//} else {
+		if(!exists(path)) {
 			mkdir(path);
 		}
 
-		foreach(it; this.lattices) {
-			logf("Lattice");
-			{
-				auto map = Mappings!(32,Size)(it.graph, g, row, rowc);
-				map.calcAC(it.read, it.write);
-				this.mappingToDataFile(map, "Lattice", path);
-				this.mappingToJson(map, "Lattice", path);
+		if(this.statsType == StatsType.all 
+				|| this.statsType == StatsType.Lattice)
+		{
+			foreach(it; this.lattices) {
+				logf("Lattice");
+				{
+					auto map = Mappings!(32,Size)(it.graph, g, row, rowc);
+					map.calcAC(it.read, it.write);
+					this.mappingToDataFile(map, "Lattice", path, it.width,
+							it.height);
+					this.mappingToJson(map, "Lattice", path, it.width, it.height);
+				}
+				GC.collect();
+				GC.minimize();
 			}
-			GC.collect();
-			GC.minimize();
 		}
 
-		foreach(it; this.grids) {
-			logf("Grid");
-			{
-				auto map = Mappings!(32,Size)(it.graph, g, row, rowc);
-				map.calcAC(it.read, it.write);
-				this.mappingToDataFile(map, "Grid", path);
-				this.mappingToJson(map, "Grid", path);
+		if(this.statsType == StatsType.all 
+				|| this.statsType == StatsType.Grid)
+		{
+			foreach(it; this.grids) {
+				logf("Grid");
+				{
+					auto map = Mappings!(32,Size)(it.graph, g, row, rowc);
+					map.calcAC(it.read, it.write);
+					this.mappingToDataFile(map, "Grid", path, it.width, it.height);
+					this.mappingToJson(map, "Grid", path, it.width, it.height);
+				}
+				GC.collect();
+				GC.minimize();
 			}
-			GC.collect();
-			GC.minimize();
 		}
 
+		if(this.statsType == StatsType.all 
+				|| this.statsType == StatsType.MCS)
 		{
 			logf("MCS");
 			auto map = Mappings!(32,Size)(this.mcs.graph, g, row, rowc);
 			map.calcAC(this.mcs.read, this.mcs.write, true);
-			this.mappingToDataFile(map, "MCS", path);
-			this.mappingToJson(map, "MCS", path);
+			this.mappingToDataFile(map, "MCS", path, 0, 0);
+			this.mappingToJson(map, "MCS", path, 0, 0);
 		}
 	}
 
 	void mappingToJson(M)(ref const(M) map, string type,
-		   	string folderPath) const
+		   	string folderPath, ulong width, ulong height) const
 	{
 		import utils : format;
 		import std.stdio : File;
-		auto pathStr = format("%s/%s.json", folderPath, type);
+		auto pathStr = format("%s/%s_%dx%d.json", folderPath, type, width,
+				height);
 		auto af = File(pathStr, "w");
 		auto app = af.lockingTextWriter();
 
@@ -226,21 +271,21 @@ class StatsRunner(int Size) {
 	}
 
 	void mappingToDataFile(M)(ref const(M) map, string type, 
-			string folderPath) const
+			string folderPath, ulong width, ulong height) const
 	{
 		foreach(it; this.row) {
-			this.mappingToDataFile(map, type, folderPath, it);
+			this.mappingToDataFile(map, type, folderPath, it, width, height);
 		}
 		foreach(it; this.rowc) {
-			this.mappingToDataFile(map, type, folderPath, it);
+			this.mappingToDataFile(map, type, folderPath, it, width, height);
 		}
 	}
 
 	void mappingToDataFile(M)(ref const(M) map, string type, 
-			string folderPath, ROW row) const
+			string folderPath, ROW row, ulong width, ulong height) const
 	{
-		auto pathROWStr = format("%s/%s_row_%.2f_", folderPath, type,
-				row.value
+		auto pathROWStr = format("%s/%s_%dx%d_row_%.2f_", folderPath, type,
+				width, height, row.value
 			);
 
 		foreach(it; this.row) {
@@ -251,10 +296,10 @@ class StatsRunner(int Size) {
 	}
 
 	void mappingToDataFile(M)(ref const(M) map, string type, 
-			string folderPath, ROWC rowc) const
+			string folderPath, ROWC rowc, ulong width, ulong height) const
 	{
-		auto pathROWStr = format("%s/%s_rowc_%.2f_", folderPath, type,
-				rowc.value
+		auto pathROWStr = format("%s/%s_%dx%d_rowc_%.2f_", folderPath, type,
+				width, height, rowc.value
 			);
 
 		foreach(it; this.rowc) {

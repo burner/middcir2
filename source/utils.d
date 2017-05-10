@@ -176,3 +176,56 @@ auto arrayDup(T)(ref const(Array!T) arr) {
 	}
 	return ret;
 }
+
+long[] bestGridDiff(long size) {
+	long[][] all = bestGridDiffs(size);
+	long diff = long.max;
+	long[] ret;
+	foreach(long[] it; all) {
+		long nd;
+		if(it[0] > it[1]) {
+			nd = it[0] - it[1];
+		} else if(it[0] < it[1]) {
+			nd = it[1] - it[0];
+		} else {
+			nd = 0;
+		}
+
+		if(nd < diff) {
+			diff = nd;
+			ret = it;
+		}
+	}
+	return ret;
+}
+
+long[][] bestGridDiffs(long size) {
+	long[][] ret;
+
+	for(long i = 1; i <= size; ++i) {
+		long r = size / i;
+		if(r * i == size) {
+			ret ~= [r,i];
+		}
+	}
+
+	return ret;
+}
+
+unittest {
+	import exceptionhandling;
+
+	auto six = bestGridDiffs(6);
+	assertEqual(six.length, 4);
+	assertEqual(six[0], cast(long[])[6,1]);
+	assertEqual(six[1], cast(long[])[3,2]);
+	assertEqual(six[2], cast(long[])[2,3]);
+	assertEqual(six[3], cast(long[])[1,6]);
+
+	auto nine = bestGridDiffs(9);
+	assertEqual(nine.length, 3);
+	assertEqual(nine[0], cast(long[])[9,1]);
+	assertEqual(nine[1], cast(long[])[3,3]);
+	assertEqual(nine[2], cast(long[])[1,9]);
+}
+

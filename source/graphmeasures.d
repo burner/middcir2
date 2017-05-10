@@ -14,7 +14,7 @@ struct DiameterResult {
 	double max;
 }
 
-DiameterResult diameter(int Size)(ref Graph!Size graph) {
+DiameterResult computeDiameter(int Size)(ref Graph!Size graph) {
 	import std.algorithm.sorting : sort;
 	import std.algorithm.iteration : sum;
 	FloydImpl!Size floyd;
@@ -55,7 +55,7 @@ unittest {
 	import exceptionhandling;
 	{
 		auto g = makeSix!32();
-		auto r = diameter(g);
+		auto r = computeDiameter(g);
 		assertEqual(r.average, 2.42857);
 		assertEqual(r.min, 2.0);
 		assertEqual(r.median, 2.0);
@@ -64,7 +64,7 @@ unittest {
 
 	{
 		auto g = makeTwoTimesTwo();
-		auto r = diameter(g);
+		auto r = computeDiameter(g);
 		assertEqual(r.average, 2.0);
 		assertEqual(r.median, 2.0);
 		assertEqual(r.min, 2.0);
@@ -73,7 +73,7 @@ unittest {
 
 	{
 		auto g = makeNine!32();
-		auto r = diameter(g);
+		auto r = computeDiameter(g);
 		assertEqual(r.average, 2.62222);
 		assertEqual(r.min, 2.0);
 		assertEqual(r.median, 2.0);
@@ -82,7 +82,7 @@ unittest {
 
 	{
 		auto g = makeLineOfFour();
-		auto r = diameter(g);
+		auto r = computeDiameter(g);
 		assertEqual(r.average, 2.4);
 		assertEqual(r.median, 2.0);
 		assertEqual(r.min, 2.0);
@@ -91,7 +91,7 @@ unittest {
 
 	{
 		auto g = makeLine!16(5);
-		auto r = diameter(g);
+		auto r = computeDiameter(g);
 		assertEqual(r.max, 5.0);
 		assertEqual(r.average, 2.66667);
 		assertEqual(r.median, 2.0);
@@ -134,7 +134,7 @@ struct DegreeResult {
 	double max;
 }
 
-DegreeResult degree(int Size)(ref Graph!Size graph) {
+DegreeResult computeDegree(int Size)(ref Graph!Size graph) {
 	import std.container.array : Array;
 	import std.algorithm.sorting : sort;
 	import std.algorithm.iteration : sum;
@@ -164,7 +164,7 @@ DegreeResult degree(int Size)(ref Graph!Size graph) {
 
 unittest {
 	auto g = genTestGraph!16();	
-	DegreeResult dgr = degree(g);
+	DegreeResult dgr = computeDegree(g);
 
 	assert(dgr.average <= dgr.max);
 	assert(dgr.average >= dgr.min);

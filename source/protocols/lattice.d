@@ -7,36 +7,7 @@ import std.typecons : Flag;
 import bitsetmodule;
 import graph;
 import protocols;
-
-long[][] bestGridDiffs(long size) {
-	long[][] ret;
-
-	for(long i = 1; i <= size; ++i) {
-		long r = size / i;
-		if(r * i == size) {
-			ret ~= [r,i];
-		}
-	}
-
-	return ret;
-}
-
-unittest {
-	import exceptionhandling;
-
-	auto six = bestGridDiffs(6);
-	assertEqual(six.length, 4);
-	assertEqual(six[0], cast(long[])[6,1]);
-	assertEqual(six[1], cast(long[])[3,2]);
-	assertEqual(six[2], cast(long[])[2,3]);
-	assertEqual(six[3], cast(long[])[1,6]);
-
-	auto nine = bestGridDiffs(9);
-	assertEqual(nine.length, 3);
-	assertEqual(nine[0], cast(long[])[9,1]);
-	assertEqual(nine[1], cast(long[])[3,3]);
-	assertEqual(nine[2], cast(long[])[1,9]);
-}
+import utils;
 
 alias Lattice = LatticeImpl!(32);
 

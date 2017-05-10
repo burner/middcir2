@@ -532,9 +532,11 @@ void runMappings(string graphsFilename, string[] args) {
 	import std.getopt;
 	int start = 0;
 	int upto = 0;
-	getopt(args, "start", &start, "upto", &upto);
+	StatsType stype = StatsType.all;
+
+	getopt(args, "start", &start, "upto", &upto, "statstype", &stype);
 	
-	auto runner = new StatsRunner!16(graphsFilename, start, upto);
+	auto runner = new StatsRunner!16(graphsFilename, start, upto, stype);
 	runner.runMappings();
 	/*try {
 		runner.runMappingsThreaded();
@@ -589,6 +591,6 @@ void main(string[] args) {
 	//LatticeXY();
 	//buildSublist("CQL/Lattice_03_03");
 	//statsAna!16("graphs7nodes.json");
-	statsAna!32("6nodegraphs.json");
-	//statsAna!32("graphs8nodes.json");
+	//statsAna!32("6nodegraphs.json");
+	statsAna!32("9nodegraphs.json");
 }
