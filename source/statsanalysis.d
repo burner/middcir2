@@ -192,57 +192,62 @@ enum ResultArraySelect : size_t {
 
 struct GraphStats(int Size) {
 	GraphWithProperties!(Size)* graph;
-	Result[7] results;
+	Result[7][2] results;
 
 	this(GraphWithProperties!(Size)* g, string filename, string protocol,
 			LNTDimensions dim) 
 	{
 		this.graph = g;
-		this.loadResults(this.graph.graph.id, filename, "_row_", protocol, dim);
+		this.loadResults(this.graph.graph.id, filename, "_row_", protocol,
+				dim, 0);
 		this.loadResults(this.graph.graph.id, filename, "_rowc_", protocol,
-				dim);
+				dim, 1);
 	}
 
 	this(const(GraphStats!(Size)) old) {
 		this.graph = cast(typeof(this.graph))old.graph;
 		for(size_t i = 0; i < results.length; ++i) {
-			this.results[i] = old.results[i].dup;
+			for(size_t j = 0; j < results[i].length; ++j) {
+				this.results[i][j] = old.results[i][j].dup;
+			}
 		}
 	}
 
-	ref const(double[101]) getData(const size_t idx, const ResultArraySelect type) const {
+	ref const(double[101]) getData(const size_t idx, 
+			const ResultArraySelect type, const size_t ac) const 
+	{
 		final switch(type) {
 			case ResultArraySelect.ReadAvail:
-				return this.results[idx].readAvail;
+				return this.results[ac][idx].readAvail;
 			case ResultArraySelect.WriteAvail:
-				return this.results[idx].writeAvail;
+				return this.results[ac][idx].writeAvail;
 			case ResultArraySelect.ReadCosts:
-				return this.results[idx].readCosts;
+				return this.results[ac][idx].readCosts;
 			case ResultArraySelect.WriteCosts:
-				return this.results[idx].writeCosts;
+				return this.results[ac][idx].writeCosts;
 		}
 	}
 
-	void add(ref const(GraphStats!Size) other) {
+	void add(ref const(GraphStats!Size) other, const size_t ac) {
 		for(size_t i = 0; i < results.length; ++i) {
-			this.results[i].readAvail[] += other.results[i].readAvail[];
-			this.results[i].writeAvail[] += other.results[i].writeAvail[];
-			this.results[i].readCosts[] += other.results[i].readCosts[];
-			this.results[i].writeCosts[] += other.results[i].writeCosts[];
+			this.results[ac][i].readAvail[] += other.results[ac][i].readAvail[];
+			this.results[ac][i].writeAvail[] += other.results[ac][i].writeAvail[];
+			this.results[ac][i].readCosts[] += other.results[ac][i].readCosts[];
+			this.results[ac][i].writeCosts[] += other.results[ac][i].writeCosts[];
 		}
 	}
 
-	void div(int count) {
+	void div(int count, const size_t ac) {
 		for(size_t i = 0; i < results.length; ++i) {
-			this.results[i].readAvail[] /= cast(double)count;
-			this.results[i].writeAvail[] /= cast(double)count;
-			this.results[i].readCosts[] /= cast(double)count;
-			this.results[i].writeCosts[] /= cast(double)count;
+			this.results[ac][i].readAvail[] /= cast(double)count;
+			this.results[ac][i].writeAvail[] /= cast(double)count;
+			this.results[ac][i].readCosts[] /= cast(double)count;
+			this.results[ac][i].writeCosts[] /= cast(double)count;
 		}
 	}
 
 	void loadResults(long id, string filename, string availOrCosts, 
-			string protocol, LNTDimensions dim) 
+			string protocol, LNTDimensions dim, size_t ac) 
 	{
 		import std.array : empty;
 		import std.file : dirEntries, SpanMode, readText;
@@ -279,7 +284,7 @@ struct GraphStats(int Size) {
 				string costs = readText(c);
 				assert(!avail.empty);
 				assert(!costs.empty);
-				this.results[idx] = Result(avail, costs);	
+				this.results[ac][idx] = Result(avail, costs);	
 				//logf("readAvail %(%.5f, %)", this.results[idx].readAvail[]);
 				//logf("writeAvail %(%.5f, %)", this.results[idx].writeAvail[]);
 				//logf("readCosts %(%.5f, %)", this.results[idx].readCosts[]);
@@ -442,10 +447,14 @@ Data!Size uniqueGraphsImpl1(int Size,Selector)(
 								Selector.select(jt))) 
 					{
 						//logf("dup");
-						ret.values.back.add(jt);	
+						for(size_t i = 0; i < 2; ++i) {
+							ret.values.back.add(jt, i);	
+						}
 						++addCount;
 					} else {
-						ret.values.back.div(addCount);
+						for(size_t i = 0; i < 2; ++i) {
+							ret.values.back.div(addCount, i);
+						}
 						addCount = 1;
 						ret.values.insertBack(GraphStats!Size(jt));
 					}
@@ -454,7 +463,9 @@ Data!Size uniqueGraphsImpl1(int Size,Selector)(
 		}
 	}
 	if(addCount > 1) {
-		ret.values.back.div(addCount);
+		for(size_t i = 0; i < 2; ++i) {
+			ret.values.back.div(addCount, i);
+		}
 	}
 	return ret;
 }
