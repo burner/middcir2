@@ -13,7 +13,7 @@ import protocols;
 
 alias Measures(int Size) = 
 	AliasSeq!(
-		//DiameterAverage!Size, DiameterMedian!Size, DiameterMax!Size
+		DiameterAverage!Size, DiameterMedian!Size, DiameterMax!Size,
 		Connectivity!Size,
 		DegreeAverage!Size, DegreeMedian!Size, DegreeMin!Size, DegreeMax!Size,
 		BetweenneesAverage!Size, BetweenneesMedian!Size, BetweenneesMin!Size, BetweenneesMax!Size
@@ -244,6 +244,7 @@ struct GraphStats(int Size) {
 	void loadResults(long id, string filename, string availOrCosts, 
 			string protocol, LNTDimensions dim) 
 	{
+		import std.array : empty;
 		import std.file : dirEntries, SpanMode, readText;
 		import std.format : format;
 		import std.algorithm.iteration : filter;
@@ -274,7 +275,11 @@ struct GraphStats(int Size) {
 				);
 			foreach(a, c; lockstep(filesAvail, filesCosts)) {
 				logf("\n\t%s\n\t%s", a, c);
-				this.results[idx] = Result(readText(a), readText(c));	
+				string avail = readText(a);
+				string costs = readText(c);
+				assert(!avail.empty);
+				assert(!costs.empty);
+				this.results[idx] = Result(avail, costs);	
 				//logf("readAvail %(%.5f, %)", this.results[idx].readAvail[]);
 				//logf("writeAvail %(%.5f, %)", this.results[idx].writeAvail[]);
 				//logf("readCosts %(%.5f, %)", this.results[idx].readCosts[]);
@@ -370,7 +375,12 @@ GraphStatss!(Size) loadResults(int Size)(Array!(GraphWithProperties!Size) graphs
 	import std.format : format;
 	import std.file : exists;
 	typeof(return) ret;
-	Array!LNTDimensions dims = genDims(numNodes);
+	Array!LNTDimensions dims;
+	if(protocol == "MCS") {
+		dims.insertBack(LNTDimensions(0, 0));
+	} else {
+   		dims = genDims(numNodes);
+	}
 	foreach(ref dim; dims[]) {
 		ret.data.insertBack(Data!(Size)(dim, Array!(GraphStats!Size)()));
 		foreach(ref g; graphs[]) {
@@ -455,31 +465,33 @@ void statsAna(int Size)(string jsonFileName) {
 	import statsanalysisoutput;
 
 	string outdir = format("%s_Ana/", jsonFileName);
+	string outdirWithoutSlash = format("%s_Ana", jsonFileName);
 	Array!(GraphWithProperties!Size) graphs = loadGraphs!Size(jsonFileName);
 	logf("%(%s %)", graphs[]);
 	assert(graphs.length > 0);
 	Array!LNTDimensions dims = genDims(graphs[0].graph.length);
-	//ProtocolStats!(Size) rslts = loadResultss(graphs, jsonFileName);
-	ProtocolStats!(Size) rslts;
+	ProtocolStats!(Size) rslts = loadResultss(graphs, jsonFileName);
+	//ProtocolStats!(Size) rslts;
 
 	//assert(rslt.mcs.data.length == rslt.lattice.data.length);
 	//assert(rslt.grid.data.length == rslt.lattice.data.length);
 
-	//Array!LNTDimensions dims = genDims(graphs[0].graph.length);
-	//foreach(A; Measures!Size) {
-	//	foreach(dim; dims) {
-	//		rslt.sort!(A.sortPredicate)();
-	//		auto mcs = uniqueGraphs!(Size,A)(rslt.mcs, dim);
-	//		auto grid = uniqueGraphs!(Size,A)(rslt.grid, dim);
-	//		auto lattice = uniqueGraphs!(Size,A)(rslt.lattice, dim);
-	//		logf("\n\tmcs.length %s\n\tgird.length %s\n\tlattice.length %s",
-	//			mcs.values.length, grid.values.length, lattice.values.length
-	//		);
-	//		protocolToOutput!(Size,A)(outdir ~ "MCS", mcs, dim);
-	//		protocolToOutput!(Size,A)(outdir ~ "Grid", grid, dim);
-	//		protocolToOutput!(Size,A)(outdir ~ "Lattice", lattice, dim);
-	//	}
-	//}
+	foreach(A; Measures!Size) {
+		rslts.sort!(A.sortPredicate)();
+		auto mcsDim = LNTDimensions(0, 0);
+		auto mcs = uniqueGraphs!(Size,A)(rslts.mcs, mcsDim);
+		protocolToOutput!(Size,A)(outdir ~ "MCS", mcs, mcsDim);
+		foreach(dim; dims) {
+			auto grid = uniqueGraphs!(Size,A)(rslts.grid, dim);
+			auto lattice = uniqueGraphs!(Size,A)(rslts.lattice, dim);
+			logf("\n\tmcs.length %s\n\tgird.length %s\n\tlattice.length %s",
+				mcs.values.length, grid.values.length, lattice.values.length
+			);
+			protocolToOutput!(Size,A)(outdir ~ "Grid", grid, dim);
+			protocolToOutput!(Size,A)(outdir ~ "Lattice", lattice, dim);
+		}
+	}
 	topLevelFiles!(Size)(outdir, rslts, graphs, dims);
-	//graphsToTex(outdir, graphs);
+	graphsToTex(outdir, graphs);
+	superMakefile!Size(outdirWithoutSlash, dims);
 }

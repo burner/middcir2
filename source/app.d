@@ -465,10 +465,10 @@ void genRandomGraphs() {
 
 	Array!(Graph!16) graphs;
 
-	auto rnd = Random(13378);
+	auto rnd = Random(23378);
 
 	GraphGenConfig ggc;
-	ggc.numNodes = 8;
+	ggc.numNodes = 6;
 	ggc.minEdges = 1;
 	ggc.maxEdges = 4;
 
@@ -483,7 +483,7 @@ void genRandomGraphs() {
 		gg.popFront(graphs);
 	}
 
-	graphsToJSON("graphs8nodes.json", graphs);
+	graphsToJSON("graphs6nodes.json", graphs);
 }
 
 void addGraphsToFile(int Size)(const string filename, long numGraphsToAdd) {
@@ -591,6 +591,6 @@ void main(string[] args) {
 	//LatticeXY();
 	//buildSublist("CQL/Lattice_03_03");
 	//statsAna!16("graphs7nodes.json");
-	//statsAna!32("6nodegraphs.json");
-	statsAna!32("9nodegraphs.json");
+	statsAna!32("6nodegraphs.json");
+	//statsAna!32("9nodegraphs.json");
 }

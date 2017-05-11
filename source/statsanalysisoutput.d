@@ -20,6 +20,9 @@ set output '%1$s.eps'
 plot "%1$sgnuplot.data" using 1:2:3 with image
 `;
 
+immutable(string[]) protocolString = ["MCS", "Grid", "Lattice"];
+//immutable(string[]) protocolString = ["MCS"];
+
 void subLevelFilesSelector(int Size)(string folder) {
 	import std.format : formattedWrite;
 	{
@@ -27,7 +30,7 @@ void subLevelFilesSelector(int Size)(string folder) {
 		auto mLtw = m.lockingTextWriter();
 		formattedWrite(mLtw, "all:\n");
 		foreach(Selector; Measures!Size) {
-			formattedWrite(mLtw, "\t$(MAKE) -C %s\n", Selector.XLabel);
+			formattedWrite(mLtw, "\t$(MAKE) -j 2 -C %s\n", Selector.XLabel);
 		}
 	}
 }
@@ -40,7 +43,7 @@ void subLevelFiles(string folder, const(LNTDimensions) dim) {
 		auto mLtw = m.lockingTextWriter();
 		formattedWrite(mLtw, "all:\n");
 		foreach(it; readOverWriteLevel) {
-			formattedWrite(mLtw, "\t$(MAKE) -C %.2f\n", it);
+			formattedWrite(mLtw, "\t$(MAKE) -j 2 -C %.2f\n", it);
 		}
 	}
 }
@@ -58,12 +61,14 @@ void graphsToTex(int Size)(string foldername,
 		const ref Array!(GraphWithProperties!Size) pss) 
 {
 	import std.format : format;
+	import std.file : mkdirRecurse;
 	auto f = format("%sGraphs/", foldername);
-	graphsToTexImpl(f, pss.mcs);
+	mkdirRecurse(f);
+	graphsToTexImpl(f, pss);
 }
 
 void graphsToTexImpl(int Size)(string foldername, 
-		const ref Array!(GraphStats!Size) gs) 
+		const ref Array!(GraphWithProperties!Size) gs) 
 {
 	import std.format : format;
 	foreach(const ref it; gs[]) {
@@ -104,9 +109,9 @@ void topLevelFiles(int Size)(string folder,
 		auto m = File(folder ~ "Makefile", "w");
 		auto mLtw = m.lockingTextWriter();
 		formattedWrite(mLtw, "all:\n");
-		formattedWrite(mLtw, "\t$(MAKE) -C MCS\n");
-		formattedWrite(mLtw, "\t$(MAKE) -C Grid\n");
-		formattedWrite(mLtw, "\t$(MAKE) -C Lattice\n");
+		foreach(proto; protocolString) {
+			formattedWrite(mLtw, "\t$(MAKE) -j 2 -C %s\n", proto);
+		}
 	}
 
 	{
@@ -116,7 +121,9 @@ void topLevelFiles(int Size)(string folder,
 		formattedWrite(lltw, "\\usepackage{graphicx}\n");
 		formattedWrite(lltw, "\\usepackage{standalone}\n");
 		formattedWrite(lltw, "\\usepackage{float}\n");
+		formattedWrite(lltw, "\\usepackage{multirow}\n");
 		formattedWrite(lltw, "\\usepackage{hyperref}\n");
+		formattedWrite(lltw, "\\usepackage{placeins}\n");
 		formattedWrite(lltw, "\\usepackage[cm]{fullpage}\n");
 		formattedWrite(lltw, "\\usepackage{subcaption}\n");
 formattedWrite(lltw, `\usepackage{tikz}
@@ -127,11 +134,19 @@ formattedWrite(lltw, `\usepackage{tikz}
     draw, align=center,minimum width=0.70cm,
     top color=white, bottom color=blue!20]
 `);
-		foreach(proto; ["MCS", "Lattice", "Grid"]) {
+		foreach(proto; protocolString) {
 			formattedWrite(lltw, "%% rubber: path ./%s/\n", proto);
 			foreach(Selector; Measures!Size) {
 				formattedWrite(lltw, "%% rubber: path ./%s/%s/\n", proto, Selector.XLabel);
-				foreach(dim; dims[]) {
+
+				Array!LNTDimensions dimsToIter;
+				if(proto == "MCS") {
+					dimsToIter.insertBack(LNTDimensions(0, 0));
+				} else {
+					dimsToIter = dims;
+				}
+
+				foreach(dim; dimsToIter[]) {
 					formattedWrite(lltw, "%% rubber: path ./%s/%s/%dx%d/\n", 
 							proto, Selector.XLabel, dim.width, dim.height
 					);
@@ -147,36 +162,47 @@ formattedWrite(lltw, `\usepackage{tikz}
 `\begin{document}
 \tableofcontents
 `);
-		formattedWrite(lltw, "\\chapter{Graphs}\n");
+		formattedWrite(lltw, "\\part{Graphs}\n");
+	//\resizebox{0.5\textwidth}{5cm}{\includestandalone{Graphs/%1$d}}
 		for(size_t i; i < graphs.length; ++i) {
 			formattedWrite(lltw,
-`\paragraph{Graph %1$d}
+`
+\FloatBarrier
+\subsection{Graph %1$d}
 \begin{tabular}{p{0.5\textwidth} l r}
-\multirow{%d}{*}{
-	\includestandalone{Graphs/%1$d}
-} &
-`, i);
+\multirow{%2$d}{*}{
+	\resizebox{0.5\textwidth}{5cm}{\input{Graphs/%1$d}}
+}
+`, i, Measures!(Size).length);
 			foreach(m; Measures!Size) {
-				formattedWrite(lltw, "%s & %.6f \\\\\n",
+				formattedWrite(lltw, "& %s & %.6f \\\\\n",
 					m.XLabel, m.select(graphs[i])
 				);
 			}
 			formattedWrite(lltw, `
 \end{tabular}`);
 		}
-		foreach(proto; ["MCS", "Lattice", "Grid"]) {
-			formattedWrite(lltw, "\n\n\\chapter{%s}\n", proto);
+		foreach(proto; protocolString) {
+			formattedWrite(lltw, "\n\n\\part{%s}\n", proto);
 			foreach(Selector; Measures!Size) {
-				formattedWrite(lltw, "\n\n\\section{%s}\n", Selector.XLabel);
-				foreach(dim; dims) {
-					formattedWrite(lltw, "\n\n\\subsection{%dx%d}\n",
+				formattedWrite(lltw, "\n\n\\chapter{%s}\n", Selector.XLabel);
+
+				Array!LNTDimensions dimsToIter;
+				if(proto == "MCS") {
+					dimsToIter.insertBack(LNTDimensions(0, 0));
+				} else {
+					dimsToIter = dims;
+				}
+
+				foreach(dim; dimsToIter[]) {
+					formattedWrite(lltw, "\n\n\\section{%dx%d}\n",
 							dim.width, dim.height
 					);
 					foreach(it; readOverWriteLevel) {
-						string inputfolder = format("%s/%s/%0.2f", /*folder,*/
-								proto, Selector.XLabel, it
+						string inputfolder = format("%s/%s/%dx%d/%0.2f", /*folder,*/
+								proto, Selector.XLabel, dim.width, dim.height, it
 						);
-						formattedWrite(lltw, "\n\n\\paragraph{Write over Read %.02f}\n", it);
+						formattedWrite(lltw, "\n\n\\FloatBarrier\n\\subsection{Write over Read %.02f}\n", it);
 						formattedWrite(lltw, 
 `\begin{figure}[H]
 	\begin{subfigure}[b]{0.5\textwidth}
@@ -213,6 +239,72 @@ formattedWrite(lltw, `\usepackage{tikz}
 	}
 }
 
+void superMakefile(int Size)(string folder, Array!(LNTDimensions) dims) {
+	import std.format : format, formattedWrite;
+	auto f = File(format("%s/SuperMakefile", folder), "w");
+	auto ltw = f.lockingTextWriter();
+
+	formattedWrite(ltw, "all:");
+	foreach(proto; protocolString) {
+		Array!LNTDimensions dimsToIter;
+		if(proto == "MCS") {
+			dimsToIter.insertBack(LNTDimensions(0, 0));
+		} else {
+			dimsToIter = dims;
+		}
+		foreach(m; Measures!Size) {
+			foreach(d; dimsToIter[]) {
+				foreach(row; readOverWriteLevel) {
+					foreach(p; ["readavail", "writeavail", "readcosts",
+							"writecosts"])
+					{
+						formattedWrite(ltw, " %s%s%d%d%02d%s",
+							proto, m.XLabel, d.width, d.height,
+							cast(int)(row * 100), p
+						);
+					}
+				}
+			}
+		}
+	}
+	formattedWrite(ltw, "\n\n");
+
+	foreach(proto; protocolString) {
+		Array!LNTDimensions dimsToIter;
+		if(proto == "MCS") {
+			dimsToIter.insertBack(LNTDimensions(0, 0));
+		} else {
+			dimsToIter = dims;
+		}
+		foreach(m; Measures!Size) {
+			foreach(d; dimsToIter[]) {
+				foreach(row; readOverWriteLevel) {
+					foreach(p; ["readavail", "writeavail", "readcosts",
+							"writecosts"])
+					{
+						formattedWrite(ltw, "%s%s%d%d%02d%s:\n",
+							proto, m.XLabel, d.width, d.height,
+							cast(int)(row * 100), p
+						);
+						formattedWrite(ltw, 
+							"\tcd %s/%s/%dx%d/%.2f && gnuplot %s.gp\n",
+							proto, m.XLabel, d.width, d.height,
+							row, p
+						);
+						formattedWrite(ltw, 
+							"\tcd %s/%s/%dx%d/%.2f && epstopdf %s.eps\n",
+							proto, m.XLabel, d.width, d.height,
+							row, p
+						);
+						formattedWrite(ltw, "\n");
+					}
+					formattedWrite(ltw, "\n");
+				}
+			}
+		}
+	}
+}
+
 void protocolToOutputImpl(int Size,Selector,LTW)(LTW ltw,
 		const(Data!Size) protocol, const size_t idx,
 	   	const ResultArraySelect resultSelect)
@@ -237,12 +329,12 @@ void protocolToOutput(int Size,Selector)(string folder,
 	string folderDim = format("%s/%s/Makefile", folder, Selector.XLabel);
 	if(exists(folderDim)) {
 		auto f = File(folderDim, "a");
-		formattedWrite(f.lockingTextWriter(), "\t$(MAKE) -C %dx%d\n",
+		formattedWrite(f.lockingTextWriter(), "\t$(MAKE) -j 2 -C %dx%d\n",
 				dim.width, dim.height);
 	} else {
 		auto f = File(folderDim, "w");
 		formattedWrite(f.lockingTextWriter(), "all:\n");
-		formattedWrite(f.lockingTextWriter(), "\t$(MAKE) -C %dx%d\n",
+		formattedWrite(f.lockingTextWriter(), "\t$(MAKE) -j 2 -C %dx%d\n",
 				dim.width, dim.height);
 
 	}
