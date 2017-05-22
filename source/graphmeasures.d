@@ -7,11 +7,66 @@ import graph;
 import floydmodule;
 import fixedsizearray;
 
+bool equals(T)(T a, T b) {
+	static if(isFloatingPoint!T) {
+		import std.math : approxEqual;
+
+		return approxEqual(a, b);
+	} else {
+		return a == b;
+	}
+}
+
+struct Mode(T) {
+	ElementEncodingType!T max;
+	size_t cnt;
+}
+
+Mode!(R) computeMode(R)(R r) {
+	size_t cnt;
+	size_t maxCnt;
+	ElementEncodingType!R cur;
+	ElementEncodingType!R max;
+
+	size_t idx;
+	foreach(it; r) {
+		if(idx == 0) {
+			cnt = 1;
+			cur = it;
+		} else {
+			if(equals(it, cur)) {
+				++cnt;
+			} else {
+				if(cnt > maxCnt) {
+					maxCnt = cnt;
+					max = cur;
+					cnt = 1;
+				}
+				cur = it;
+			}
+		}
+		++idx;
+	}
+	if(cnt > maxCnt) {
+		maxCnt = cnt;
+		max = cur;
+		cnt = 1;
+	}
+	return Mode!(R)(max, maxCnt);
+}
+
+unittest {
+	auto r = [ 1, 2, 2, 3, 4, 7, 9 ];
+	auto m = computeMode(r);
+	assert(m.max == 2);
+}
+
 struct DiameterResult {
 	double average;
 	double median;
 	double min;
 	double max;
+	double mode;
 }
 
 DiameterResult computeDiameter(int Size)(ref Graph!Size graph) {
@@ -41,13 +96,16 @@ DiameterResult computeDiameter(int Size)(ref Graph!Size graph) {
 	sort(s);
 	//logf("%(%s %)", store[]);
 
+	auto mo = computeMode(s);
+
 	return DiameterResult(
 		cast(double)(sum(store[])) / store.length,
 		cast(double)(store.length % 2 == 1 ? store[store.length / 2] :
 			cast(double)(store[store.length / 2] + 
 			store[(store.length / 2) + 1]) / 2.0),
 		cast(double)store.front,
-		cast(double)store.back
+		cast(double)store.back,
+		mo.max
 	);
 }
 

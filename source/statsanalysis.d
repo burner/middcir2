@@ -14,9 +14,10 @@ import protocols;
 alias Measures(int Size) = 
 	AliasSeq!(
 		DiameterAverage!Size, DiameterMedian!Size, DiameterMax!Size,
-		Connectivity!Size,
-		DegreeAverage!Size, DegreeMedian!Size, DegreeMin!Size, DegreeMax!Size,
-		BetweenneesAverage!Size, BetweenneesMedian!Size, BetweenneesMin!Size, BetweenneesMax!Size
+		DiameterMode!Size,
+		//Connectivity!Size,
+		//DegreeAverage!Size, DegreeMedian!Size, DegreeMin!Size, DegreeMax!Size,
+		//BetweenneesAverage!Size, BetweenneesMedian!Size, BetweenneesMin!Size, BetweenneesMax!Size
 	);
 
 struct Connectivity(int Size) {
@@ -51,6 +52,17 @@ struct DiameterMedian(int Size) {
 	}
 	static auto select(const(GraphWithProperties!Size) g) {
 		return g.diameter.median;
+	}
+}
+
+struct DiameterMode(int Size) {
+	static immutable string XLabel = "DiameterMode";
+	static immutable string sortPredicate = "a.graph.diameter.mode < b.graph.diameter.mode";
+	static auto select(const(GraphStats!Size) g) {
+		return g.graph.diameter.mode;
+	}
+	static auto select(const(GraphWithProperties!Size) g) {
+		return g.diameter.mode;
 	}
 }
 
@@ -403,7 +415,23 @@ GraphStatss!(Size) loadResults(int Size)(Array!(GraphWithProperties!Size) graphs
 Data!Size uniqueGraphs(int Size,Selector)(const(GraphStatss!Size) old,
 	   	const(LNTDimensions) dim)
 {
-	return uniqueGraphsImpl1!(Size,Selector)(old, dim);
+	return uniqueGraphsImpl2!(Size,Selector)(old, dim);
+}
+
+Data!Size uniqueGraphsImplDummy(int Size,Selector)(
+		const(GraphStatss!Size) old, const(LNTDimensions) dim)
+{
+	import std.math : approxEqual;
+	Data!Size ret;
+	foreach(ref it; old.data[]) {
+		if(it.key == dim) {
+			ret.key = it.key;
+			foreach(ref jt; it.values[]) {
+				ret.values.insertBack(GraphStats!Size(jt));
+			}
+		}
+	}
+	return ret;
 }
 
 Data!Size uniqueGraphsImpl2(int Size,Selector)(
@@ -415,7 +443,7 @@ Data!Size uniqueGraphsImpl2(int Size,Selector)(
 		if(it.key == dim) {
 			ret.key = it.key;
 			foreach(ref jt; it.values[]) {
-				if(ret.empty) {
+				if(ret.values.empty) {
 					ret.values.insertBack(GraphStats!Size(jt));
 				} else {
 					if(approxEqual(Selector.select(ret.values.back), Selector.select(jt))) {
