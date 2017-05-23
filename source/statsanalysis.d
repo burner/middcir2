@@ -204,6 +204,11 @@ enum ResultArraySelect : size_t {
 	WriteCosts
 }
 
+enum AvailOrCosts : bool {
+	Avail,
+	Cost
+}
+
 struct GraphStats(int Size) {
 	GraphWithProperties!(Size)* graph;
 	Result[7][2] results;
