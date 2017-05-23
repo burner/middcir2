@@ -10,11 +10,13 @@ import stdx.data.json.value;
 import graphmeasures;
 import graph;
 import protocols;
+import metameasure;
 
 alias Measures(int Size) = 
 	AliasSeq!(
 		DiameterAverage!Size, DiameterMedian!Size, DiameterMax!Size,
 		DiameterMode!Size,
+		MetaMeasure!("MM", Size, BetweenneesAverage!Size, Connectivity!Size, DiameterAverage!Size),
 		//Connectivity!Size,
 		//DegreeAverage!Size, DegreeMedian!Size, DegreeMin!Size, DegreeMax!Size,
 		//BetweenneesAverage!Size, BetweenneesMedian!Size, BetweenneesMin!Size, BetweenneesMax!Size
