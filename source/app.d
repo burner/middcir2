@@ -12,6 +12,7 @@ import protocols.mcs;
 import protocols.grid;
 import protocols.lattice;
 import protocols.crossing;
+import metameasure;
 import plot;
 import planar;
 import plot.gnuplot;
@@ -591,6 +592,7 @@ void main(string[] args) {
 	//LatticeXY();
 	//buildSublist("CQL/Lattice_03_03");
 	//statsAna!16("graphs7nodes.json");
-	statsAna!32("6nodegraphs.json");
+	//statsAna!32("6nodegraphs.json");
 	//statsAna!32("9nodegraphs.json");
+	doLearning!32("6nodegraphs.json");
 }
