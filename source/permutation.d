@@ -16,6 +16,7 @@ struct PermutationImpl(BitsetType) {
 	Integer N;
    	Integer R;
 	FixedSizeArray!(Integer,32) curr;
+	//Integer[] curr;
 
 	/** nN how many total, nR how many to select */
 	this(int nN, int nR) {

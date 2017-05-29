@@ -248,8 +248,8 @@ class StatsRunner(int Size) {
 				format(app, 2, " ");
 			}
 			first = false;
-			format(app, 0, "\"%.2f\" : [%(%d, %)]\n", it.value,
-					map.results.get(it).mapping.mapping
+			format(app, 0, "\"%.2f\" : [%(%s, %)]\n", it.value,
+					map.results.get(it).mapping.mapping[]
 				);
 		}
 		format(app, 1, "},\n");
@@ -262,8 +262,8 @@ class StatsRunner(int Size) {
 				format(app, 2, " ");
 			}
 			first = false;
-			format(app, 0, "\"%.2f\" : [%(%d, %)]\n", it.value,
-					map.results.get(it).mapping.mapping
+			format(app, 0, "\"%.2f\" : [%(%s, %)]\n", it.value,
+					map.results.get(it).mapping.mapping[]
 				);
 		}
 		format(app, 1, "}\n");

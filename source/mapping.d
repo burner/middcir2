@@ -1,6 +1,7 @@
 module mapping;
 
 import core.thread;
+import core.memory : GC;
 
 import std.conv : to;
 import std.stdio;
@@ -20,7 +21,6 @@ import fixedsizearray;
 import protocols.lattice;
 import plot.gnuplot;
 import plot;
-import utils;
 import units;
 
 alias ROW = Quantity!(double, "ReadOverWrite", 0.0, 1.0);
@@ -38,18 +38,57 @@ struct MappingParameter {
 }
 
 struct RCMapping(int SizeLnt, int SizePnt) {
-	int rc;
-	Mapping!(SizeLnt,SizePnt) mapping;
-	Result result;
+	struct Payload {
+		int rc;
+		Mapping!(SizeLnt,SizePnt) mapping;
+		Result result;
+	}
+
+	Payload* payload;
+	this(Mapping!(SizeLnt,SizePnt) mapping, Result result) {
+		this.payload = GC.malloc(sizeof(Payload));
+		this.payload.mapping = mapping;
+		this.payload.result = result;
+		this.payload.rc = 1;
+	}
+
+	this(this) {
+		this.incRef();
+	}
+
+	private void incRef() {
+		if(this.payload !is null) {
+			++this.payload.rc;
+		}
+	}
+
+	~this() {
+		this.decRef();
+	}
+
+	private void decRef() {
+		if(this.payload !is null) {
+			--this.payload.rc;
+			if(this.payload.rc == 0) {
+				GC.free(ptr);
+				this.payload = null;
+			}
+		}
+	}
+
+	void opAssign(RCMapping(SizeLnt,SizePnt) other) {
+		this.decRef();
+		this.payload = other.payload;
+		this.incRef();
+	}
 }
 
-void decrementRCMapping(RC)(RC* ptr) {
-	import core.memory : GC;
+/*void decrementRCMapping(RC)(RC* ptr) {
 	assert(ptr !is null);	
 	(*ptr).rc--;
 	if((*ptr).rc == 0) {
 		GC.removeRange(cast(void*)ptr);
-		GC.free(cast(void*)(*ptr).mapping);
+		//GC.free(cast(void*)(*ptr).mapping);
 		(*ptr).mapping = null;
 		GC.free(ptr);
 	}
@@ -58,10 +97,10 @@ void decrementRCMapping(RC)(RC* ptr) {
 void incrementRCMapping(RC)(RC* ptr) {
 	assert(ptr !is null);	
 	(*ptr).rc++;
-}
+}*/
 
 struct MappingResultElement(int SizeLnt, int SizePnt) {
-	RCMapping!(SizeLnt, SizePnt)* mapping;
+	RCMapping!(SizeLnt, SizePnt) mapping;
 	double value;
 }
 
@@ -78,25 +117,25 @@ struct MappingResultStore(int SizeLnt, int SizePnt) {
 		this.rowc = rowc;
 	}
 
-	RCMapping!(SizeLnt,SizePnt)* get(ROW row) {
+	RCMapping!(SizeLnt,SizePnt) get(ROW row) {
 		auto idx = cast(int)(row.value * 100);
 		auto ret = this.bestAvail[idx].mapping;
 		return ret;
 	}
 
-	const(RCMapping!(SizeLnt,SizePnt)*) get(ROW row) const {
+	const(RCMapping!(SizeLnt,SizePnt)) get(ROW row) const {
 		auto idx = cast(int)(row.value * 100);
 		auto ret = this.bestAvail[idx].mapping;
 		return ret;
 	}
 
-	RCMapping!(SizeLnt,SizePnt)* get(ROWC rowc) {
+	RCMapping!(SizeLnt,SizePnt) get(ROWC rowc) {
 		auto idx = cast(int)(rowc.value * 100);
 		auto ret = this.bestCosts[idx].mapping;
 		return ret;
 	}
 
-	const(RCMapping!(SizeLnt,SizePnt)*) get(ROWC rowc) const {
+	const(RCMapping!(SizeLnt,SizePnt)) get(ROWC rowc) const {
 		auto idx = cast(int)(rowc.value * 100);
 		auto ret = this.bestCosts[idx].mapping;
 		return ret;
@@ -185,8 +224,9 @@ class Mapping(int SizeLnt, int SizePnt) {
 	align(8) {
 	const(Graph!SizeLnt)* lnt;	
 	const(Graph!SizePnt)* pnt;	
-	const(int[]) mapping;
-	const uint upTo;
+	//const(int[]) mapping;
+	FixedSizeArray!(int,32) mapping;
+	uint upTo;
 	Floyd floyd;
 
 	BitsetStore!uint read;
@@ -203,25 +243,31 @@ class Mapping(int SizeLnt, int SizePnt) {
 	this(ref const Graph!SizeLnt lnt, ref const Graph!SizePnt pnt, 
 			int[] mapping, QTF quorumTestFraction = QTF(1.0)) 
 	{
-		//this.lnt = &lnt;
-		//this.pnt = &pnt;
-		//this.mapping = mapping.dup;
-		//this.upTo = to!uint(this.lnt.length);
-		//this.floyd.init(*this.pnt);
-		//this.quorumTestFraction = quorumTestFraction;
-		this.init(lnt, pnt, mapping, quorumTestFraction);
-	}
-
-	void init(ref const Graph!SizeLnt lnt, ref const Graph!SizePnt pnt, 
-			int[] mapping, QTF quorumTestFraction = QTF(1.0))
-	{
 		this.lnt = &lnt;
 		this.pnt = &pnt;
-		this.mapping = mapping.dup;
+		//this.mapping = mapping.dup;
+		foreach(int it; mapping) {
+			this.mapping.insertBack(it);
+		}
 		this.upTo = to!uint(this.lnt.length);
 		this.floyd.init(*this.pnt);
 		this.quorumTestFraction = quorumTestFraction;
+		//this.init(lnt, pnt, mapping, quorumTestFraction);
 	}
+
+	/*void init(ref const Graph!SizeLnt lnt, ref const Graph!SizePnt pnt, 
+			int[] mapping, QTF quorumTestFraction = QTF(1.0))
+	{
+		this.lnt = cast(Graph!SizeLnt)&lnt;
+		this.pnt = cast(Graph!SizePnt)&pnt;
+		//this.mapping = mapping.dup;
+		foreach(int it; mapping) {
+			this.mapping.insertBack(it);
+		}
+		this.upTo = to!uint(this.lnt.length);
+		this.floyd.init(*this.pnt);
+		this.quorumTestFraction = quorumTestFraction;
+	}*/
 
 	void reconnectQuorum(ref const(Bitset!uint) quorum, 
 			ref BitsetStore!uint rsltQuorumSet, Bitset!uint perm)
