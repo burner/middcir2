@@ -8,7 +8,10 @@ import fixedsizearray;
 alias Permutation = PermutationImpl!uint;
 
 struct PermutationImpl(BitsetType) {
-	static if(is(BitsetType == uint)) {
+	import std.conv : to;
+	static if(is(BitsetType == ushort)) {
+		alias Integer = short;
+	} else static if(is(BitsetType == uint)) {
 		alias Integer = int;
 	} else static if(is(BitsetType == ulong)) {
 		alias Integer = long;
@@ -24,8 +27,8 @@ struct PermutationImpl(BitsetType) {
 		import std.array;
 		this.empty = (nN < 1 || nR > nN); 
 		this.generated = 0;
-		this.N = nN;
-		this.R = nR;
+		this.N = to!Integer(nN);
+		this.R = to!Integer(nR);
 
 		//this.curr = new Integer[nR];
 		for(int c = 0; c < nR; ++c) {
@@ -55,9 +58,9 @@ struct PermutationImpl(BitsetType) {
 	void popFront() {
 		// find what to increment
 		this.empty = true;
-		for(Integer i = R - 1; i >= 0; --i) {
+		for(Integer i = to!Integer(R - 1); i >= 0; --i) {
 			if(this.curr[cast(size_t)i] < N - R + i) {
-				Integer j = this.curr[cast(size_t)i] + 1;
+				Integer j = to!Integer(this.curr[cast(size_t)i] + 1);
 				while(i < R) {
 					this.curr[cast(size_t)i] = j;
 					++i;

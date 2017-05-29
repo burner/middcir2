@@ -226,17 +226,17 @@ for each element it will try to reconnect the element for every permutation.
 align(8)
 class Mapping(int SizeLnt, int SizePnt) {
 	align(8) {
-	const(Graph!SizeLnt)* lnt;	
-	const(Graph!SizePnt)* pnt;	
-	//const(int[]) mapping;
-	FixedSizeArray!(int,32) mapping;
-	uint upTo;
-	Floyd floyd;
+		const(Graph!SizeLnt)* lnt;	
+		const(Graph!SizePnt)* pnt;	
+		//const(int[]) mapping;
+		FixedSizeArray!(int,32) mapping;
+		uint upTo;
+		Floyd floyd;
 
-	BitsetStore!uint read;
-	BitsetStore!uint write;
+		BitsetStore!uint read;
+		BitsetStore!uint write;
 
-	const(QTF) quorumTestFraction;
+		const(QTF) quorumTestFraction;
 	}
 
 	/** 
