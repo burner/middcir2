@@ -22,6 +22,7 @@ import protocols.lattice;
 import plot.gnuplot;
 import plot;
 import units;
+import utils;
 
 alias ROW = Quantity!(double, "ReadOverWrite", 0.0, 1.0);
 alias ROWC = Quantity!(double, "ReadOverWriteCosts", 0.0, 1.0);
@@ -46,7 +47,7 @@ struct RCMapping(int SizeLnt, int SizePnt) {
 
 	Payload* payload;
 	this(Mapping!(SizeLnt,SizePnt) mapping, Result result) {
-		this.payload = GC.malloc(sizeof(Payload));
+		this.payload = cast(Payload*)GC.malloc(Payload.sizeof);
 		this.payload.mapping = mapping;
 		this.payload.result = result;
 		this.payload.rc = 1;
@@ -70,17 +71,19 @@ struct RCMapping(int SizeLnt, int SizePnt) {
 		if(this.payload !is null) {
 			--this.payload.rc;
 			if(this.payload.rc == 0) {
-				GC.free(ptr);
+				GC.free(this.payload);
 				this.payload = null;
 			}
 		}
 	}
 
-	void opAssign(RCMapping(SizeLnt,SizePnt) other) {
+	void opAssign(RCMapping!(SizeLnt,SizePnt) other) {
 		this.decRef();
 		this.payload = other.payload;
 		this.incRef();
 	}
+
+	alias payload this;
 }
 
 /*void decrementRCMapping(RC)(RC* ptr) {
@@ -141,7 +144,7 @@ struct MappingResultStore(int SizeLnt, int SizePnt) {
 		return ret;
 	}
 
-	static RCMapping!(SizeLnt,SizePnt)* newPtr(Mapping!(SizeLnt,SizePnt) mapping,
+	/*static RCMapping!(SizeLnt,SizePnt)* newPtr(Mapping!(SizeLnt,SizePnt) mapping,
 			ref Result rslt) 
 	{
 		import core.memory : GC;
@@ -154,33 +157,34 @@ struct MappingResultStore(int SizeLnt, int SizePnt) {
 		(*ptr).mapping = mapping;
 		(*ptr).result = rslt.dup();
 		return ptr;
-	}
+	}*/
 
 	void compare(ref Result rslt, Mapping!(SizeLnt,SizePnt) mapping) {
-		auto ptr = newPtr(mapping, rslt);
+		//auto ptr = newPtr(mapping, rslt);
+		auto ptr = RCMapping!(SizeLnt,SizePnt)(mapping, rslt);
 		this.compareROW(rslt, ptr);
 		this.compareROWC(rslt, ptr);
-		decrementRCMapping(ptr);
+		//decrementRCMapping(ptr);
 	}
 
-	static void compareImpl(const(double) value, RCMapping!(SizeLnt,SizePnt)* ptr,
+	static void compareImpl(const(double) value, RCMapping!(SizeLnt,SizePnt) ptr,
 			const(int) idx, ref MappingResultElement!(SizeLnt,SizePnt)[101] arr)
 	{
 		if(arr[idx].mapping is null) {
 			arr[idx].mapping = ptr;
 			arr[idx].value = value;
-			incrementRCMapping(ptr);
+			//incrementRCMapping(ptr);
 		} else if(arr[idx].mapping !is null) {
 			if(value > arr[idx].value) {
-				decrementRCMapping(arr[idx].mapping);
+				//decrementRCMapping(arr[idx].mapping);
 				arr[idx].mapping = ptr;
 				arr[idx].value = value;
-				incrementRCMapping(ptr);
+				//incrementRCMapping(ptr);
 			}
 		}
 	}
 
-	void compareROW(ref Result rslt, RCMapping!(SizeLnt,SizePnt)* ptr) {
+	void compareROW(ref Result rslt, RCMapping!(SizeLnt,SizePnt) ptr) {
 		const(double) sumRsltW = sum(rslt.writeAvail);
 		const(double) sumRsltR = sum(rslt.readAvail);
 
@@ -193,7 +197,7 @@ struct MappingResultStore(int SizeLnt, int SizePnt) {
 		}
 	}
 
-	void compareROWC(ref Result rslt, RCMapping!(SizeLnt,SizePnt)* ptr) {
+	void compareROWC(ref Result rslt, RCMapping!(SizeLnt,SizePnt) ptr) {
 		const(double) sumRsltW = sum(rslt.writeCosts);
 		const(double) sumRsltR = sum(rslt.readCosts);
 
@@ -407,7 +411,7 @@ struct Mappings(int SizeLnt, int SizePnt) {
 	}
 
 	@property Mapping!(SizeLnt,SizePnt) bestMapping() {
-		if(this.results.get(ROW(0.5)) !is null) {
+		if(this.results.get(ROW(0.5)).payload !is null) {
 			return this.results.get(ROW(0.5)).mapping;
 		} else {
 			return this.results.get(this.results.row[0]).mapping;
