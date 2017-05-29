@@ -6,7 +6,7 @@ import std.format : format, formattedWrite;
 import std.algorithm.sorting : nextPermutation;
 import std.meta : AliasSeq;
 
-import fixedsizearray;
+//import fixedsizearray;
 
 import statsanalysis;
 import bitsetmodule;
@@ -163,23 +163,22 @@ string genMMs(T...)() {
 	return ret;
 }
 
-unittest {
+/*unittest {
 	enum mm = genMMs!(Connectivity!32, DiameterAverage!32,
 			DegreeMin!32);
 
 	pragma(msg, mm);
-}
+}*/
 
-immutable MMsString = genMMs!(
+/*immutable MMsString = genMMs!(
 		DiameterAverage!32, DiameterMedian!32, DiameterMax!32,
 		DiameterMode!32,
 		Connectivity!32,
 		DegreeAverage!32, DegreeMedian!32, DegreeMin!32, DegreeMax!32,
 		BetweenneesAverage!32, BetweenneesMedian!32, BetweenneesMin!32, BetweenneesMax!32
-	);
+	);*/
 
 //pragma(msg, MMsString);
-//mixin(MMsString);
 
 // how good can "mm" can be used to predict the costs or availability
 // join 4/5 of rslts with mm and jm into Joined

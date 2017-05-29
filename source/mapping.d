@@ -203,6 +203,18 @@ class Mapping(int SizeLnt, int SizePnt) {
 	this(ref const Graph!SizeLnt lnt, ref const Graph!SizePnt pnt, 
 			int[] mapping, QTF quorumTestFraction = QTF(1.0)) 
 	{
+		//this.lnt = &lnt;
+		//this.pnt = &pnt;
+		//this.mapping = mapping.dup;
+		//this.upTo = to!uint(this.lnt.length);
+		//this.floyd.init(*this.pnt);
+		//this.quorumTestFraction = quorumTestFraction;
+		this.init(lnt, pnt, mapping, quorumTestFraction);
+	}
+
+	void init(ref const Graph!SizeLnt lnt, ref const Graph!SizePnt pnt, 
+			int[] mapping, QTF quorumTestFraction = QTF(1.0))
+	{
 		this.lnt = &lnt;
 		this.pnt = &pnt;
 		this.mapping = mapping.dup;

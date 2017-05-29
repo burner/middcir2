@@ -25,8 +25,8 @@ align(8)
 struct BitsetArray(T) {
 	align(8) {
 	Bitset!T bitset;
-	//Array!(Bitset!(T)) subsets;
-	Bitset!(T)[] subsets;
+	Array!(Bitset!(T)) subsets;
+	//Bitset!(T)[] subsets;
 	}
 
 	this(T value) {
@@ -53,7 +53,10 @@ struct BitsetArray(T) {
 
 		Unqual!(typeof(this)) ret;
 		ret.bitset = this.bitset;
-		ret.subsets = this.subsets.dup;
+		//ret.subsets = this.subsets.dup;
+		foreach(ref it; this.subsets[]) {
+			ret.subsets ~= it;
+		}
 		return ret;
 	}
 }

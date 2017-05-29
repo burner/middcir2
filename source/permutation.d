@@ -3,6 +3,8 @@ module permutation;
 import bitsetmodule;
 import std.experimental.logger;
 
+import fixedsizearray;
+
 alias Permutation = PermutationImpl!uint;
 
 struct PermutationImpl(BitsetType) {
@@ -13,7 +15,7 @@ struct PermutationImpl(BitsetType) {
 	}
 	Integer N;
    	Integer R;
-	Integer[] curr;
+	FixedSizeArray!(Integer,32) curr;
 
 	/** nN how many total, nR how many to select */
 	this(int nN, int nR) {
@@ -24,15 +26,16 @@ struct PermutationImpl(BitsetType) {
 		this.N = nN;
 		this.R = nR;
 
-		this.curr = new Integer[nR];
+		//this.curr = new Integer[nR];
 		for(int c = 0; c < nR; ++c) {
-	 		this.curr[c] = c;
+	 		//this.curr[c] = c;
+			this.curr.insertBack(c);
 		}
 	}
 
-	~this() {
+	/*~this() {
 		destroy(this.curr);
-	}
+	}*/
 
 	// true while there are more solutions
 	bool empty;
@@ -116,6 +119,21 @@ unittest {
 	auto perm = Permutations(3);
 	int cnt = 0;
 	foreach(it; perm) {
+		++cnt;
+	}
+	cast(void)assertEqual(cnt, 7);
+}
+
+unittest {
+	import exceptionhandling;
+	int[] arr = [
+		0b1, 0b10, 0b100,
+		0b11, 0b101, 0b110, 0b111
+	];
+	auto perm = Permutations(3);
+	int cnt = 0;
+	foreach(it; perm) {
+		cast(void)assertEqual(arr[cnt], it.store);
 		++cnt;
 	}
 	cast(void)assertEqual(cnt, 7);
