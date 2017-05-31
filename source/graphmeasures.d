@@ -190,6 +190,7 @@ struct DegreeResult {
 	double median;
 	double min;
 	double max;
+	double mode;
 }
 
 DegreeResult computeDegree(int Size)(ref Graph!Size graph) {
@@ -217,6 +218,9 @@ DegreeResult computeDegree(int Size)(ref Graph!Size graph) {
 		ret.median = tmp[graph.length / 2];
 	}
 
+	auto m = computeMode(tmp);
+	ret.mode = m.max;
+
 	return ret;
 }
 
@@ -238,6 +242,7 @@ struct BetweennessCentrality {
 	double median;
 	double min;
 	double max;
+	double mode;
 }
 
 BetweennessCentrality betweennessCentrality(int Size)(ref Graph!Size graph) {
@@ -289,6 +294,9 @@ BetweennessCentrality betweennessCentrality(int Size)(ref Graph!Size graph) {
 	} else {
 		ret.median = store[graph.length / 2];
 	}
+
+	auto m = computeMode(store);
+	ret.mode = m.max;
 
 	return ret;
 }

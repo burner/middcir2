@@ -4,6 +4,10 @@ import std.container.array;
 import std.experimental.logger;
 import std.stdio : File;
 import std.meta : AliasSeq;
+import std.exception : enforce;
+import std.math : approxEqual, isNaN;
+import std.format : format;
+
 import stdx.data.json.parser;
 import stdx.data.json.value;
 
@@ -24,12 +28,12 @@ alias Measures(int Size) =
 struct Connectivity(int Size) {
 	static immutable string XLabel = "Connectivity";
 	static immutable string sortPredicate = "a.graph.connectivity < b.graph.connectivity";
-	static auto select(const(GraphStats!Size) g) {
+	static auto select(const(GraphStats!Size) g) nothrow {
 		import std.math : isNaN;
 		assert(!isNaN(g.graph.connectivity));
 		return g.graph.connectivity;
 	}
-	static auto select(const(GraphWithProperties!Size) g) {
+	static auto select(const(GraphWithProperties!Size) g) nothrow {
 		return g.connectivity;
 	}
 }
@@ -40,7 +44,7 @@ struct DiameterAverage(int Size) {
 	static auto select(const(GraphStats!Size) g) {
 		return g.graph.diameter.average;
 	}
-	static auto select(const(GraphWithProperties!Size) g) {
+	static auto select(const(GraphWithProperties!Size) g) nothrow {
 		return g.diameter.average;
 	}
 }
@@ -51,7 +55,7 @@ struct DiameterMedian(int Size) {
 	static auto select(const(GraphStats!Size) g) {
 		return g.graph.diameter.median;
 	}
-	static auto select(const(GraphWithProperties!Size) g) {
+	static auto select(const(GraphWithProperties!Size) g) nothrow {
 		return g.diameter.median;
 	}
 }
@@ -59,10 +63,10 @@ struct DiameterMedian(int Size) {
 struct DiameterMode(int Size) {
 	static immutable string XLabel = "DiameterMode";
 	static immutable string sortPredicate = "a.graph.diameter.mode < b.graph.diameter.mode";
-	static auto select(const(GraphStats!Size) g) {
+	static auto select(const(GraphStats!Size) g) nothrow {
 		return g.graph.diameter.mode;
 	}
-	static auto select(const(GraphWithProperties!Size) g) {
+	static auto select(const(GraphWithProperties!Size) g) nothrow {
 		return g.diameter.mode;
 	}
 }
@@ -70,10 +74,10 @@ struct DiameterMode(int Size) {
 struct DiameterMax(int Size) {
 	static immutable string XLabel = "DiameterMax";
 	static immutable string sortPredicate = "a.graph.diameter.max < b.graph.diameter.max";
-	static auto select(const(GraphStats!Size) g) {
+	static auto select(const(GraphStats!Size) g) nothrow {
 		return g.graph.diameter.max;
 	}
-	static auto select(const(GraphWithProperties!Size) g) {
+	static auto select(const(GraphWithProperties!Size) g) nothrow {
 		return g.diameter.max;
 	}
 }
@@ -81,10 +85,10 @@ struct DiameterMax(int Size) {
 struct DiameterMin(int Size) {
 	static immutable string XLabel = "DiameterMin";
 	static immutable string sortPredicate = "a.graph.diameter.min < b.graph.diameter.min";
-	static auto select(const(GraphStats!Size) g) {
+	static auto select(const(GraphStats!Size) g) nothrow {
 		return g.graph.diameter.min;
 	}
-	static auto select(const(GraphWithProperties!Size) g) {
+	static auto select(const(GraphWithProperties!Size) g) nothrow {
 		return g.degree.min;
 	}
 }
@@ -92,10 +96,10 @@ struct DiameterMin(int Size) {
 struct DegreeAverage(int Size) {
 	static immutable string XLabel = "DegreeAverage";
 	static immutable string sortPredicate = "a.graph.degree.average < b.graph.degree.average";
-	static auto select(const(GraphStats!Size) g) {
+	static auto select(const(GraphStats!Size) g) nothrow {
 		return g.graph.degree.average;
 	}
-	static auto select(const(GraphWithProperties!Size) g) {
+	static auto select(const(GraphWithProperties!Size) g) nothrow {
 		return g.degree.average;
 	}
 }
@@ -103,10 +107,10 @@ struct DegreeAverage(int Size) {
 struct DegreeMedian(int Size) {
 	static immutable string XLabel = "DegreeMedian";
 	static immutable string sortPredicate = "a.graph.degree.median < b.graph.degree.median";
-	static auto select(const(GraphStats!Size) g) {
+	static auto select(const(GraphStats!Size) g) nothrow {
 		return g.graph.degree.median;
 	}
-	static auto select(const(GraphWithProperties!Size) g) {
+	static auto select(const(GraphWithProperties!Size) g) nothrow {
 		return g.degree.median;
 	}
 }
@@ -117,7 +121,7 @@ struct DegreeMin(int Size) {
 	static auto select(const(GraphStats!Size) g) {
 		return g.graph.degree.min;
 	}
-	static auto select(const(GraphWithProperties!Size) g) {
+	static auto select(const(GraphWithProperties!Size) g) nothrow {
 		return g.degree.min;
 	}
 }
@@ -128,7 +132,7 @@ struct DegreeMax(int Size) {
 	static auto select(const(GraphStats!Size) g) {
 		return g.graph.degree.max;
 	}
-	static auto select(const(GraphWithProperties!Size) g) {
+	static auto select(const(GraphWithProperties!Size) g) nothrow {
 		return g.degree.average;
 	}
 }
@@ -136,10 +140,10 @@ struct DegreeMax(int Size) {
 struct BetweenneesAverage(int Size) {
 	static immutable string XLabel = "BetweenneesAverage";
 	static immutable string sortPredicate = "a.graph.betweenness.average < b.graph.betweenness.average";
-	static auto select(const(GraphStats!Size) g) {
+	static auto select(const(GraphStats!Size) g) nothrow {
 		return g.graph.betweenness.average;
 	}
-	static auto select(const(GraphWithProperties!Size) g) {
+	static auto select(const(GraphWithProperties!Size) g) nothrow {
 		return g.betweenness.average;
 	}
 }
@@ -147,10 +151,10 @@ struct BetweenneesAverage(int Size) {
 struct BetweenneesMedian(int Size) {
 	static immutable string XLabel = "BetweenneesMedian";
 	static immutable string sortPredicate = "a.graph.betweenness.median < b.graph.betweenness.median";
-	static auto select(const(GraphStats!Size) g) {
+	static auto select(const(GraphStats!Size) g) nothrow {
 		return g.graph.betweenness.median;
 	}
-	static auto select(const(GraphWithProperties!Size) g) {
+	static auto select(const(GraphWithProperties!Size) g) nothrow {
 		return g.betweenness.median;
 	}
 }
@@ -158,10 +162,10 @@ struct BetweenneesMedian(int Size) {
 struct BetweenneesMin(int Size) {
 	static immutable string XLabel = "BetweenneesMin";
 	static immutable string sortPredicate = "a.graph.betweenness.min < b.graph.betweenness.min";
-	static auto select(const(GraphStats!Size) g) {
+	static auto select(const(GraphStats!Size) g) nothrow {
 		return g.graph.betweenness.min;
 	}
-	static auto select(const(GraphWithProperties!Size) g) {
+	static auto select(const(GraphWithProperties!Size) g) nothrow {
 		return g.betweenness.min;
 	}
 }
@@ -169,10 +173,10 @@ struct BetweenneesMin(int Size) {
 struct BetweenneesMax(int Size) {
 	static immutable string XLabel = "BetweenneesMax";
 	static immutable string sortPredicate = "a.graph.betweenness.max < b.graph.betweenness.max";
-	static auto select(const(GraphStats!Size) g) {
+	static auto select(const(GraphStats!Size) g) nothrow {
 		return g.graph.betweenness.max;
 	}
-	static auto select(const(GraphWithProperties!Size) g) {
+	static auto select(const(GraphWithProperties!Size) g) nothrow {
 		return g.betweenness.max;
 	}
 }
@@ -216,6 +220,12 @@ struct GraphStats(int Size) {
 			LNTDimensions dim) 
 	{
 		this.graph = g;
+		foreach(ref it; this.results) {
+			foreach(ref jt; it) {
+				jt = getResult();
+			}
+		}
+
 		this.loadResults(this.graph.graph.id, filename, "_row_", protocol,
 				dim, 0);
 		this.loadResults(this.graph.graph.id, filename, "_rowc_", protocol,
@@ -227,6 +237,49 @@ struct GraphStats(int Size) {
 		for(size_t i = 0; i < results.length; ++i) {
 			for(size_t j = 0; j < results[i].length; ++j) {
 				this.results[i][j] = old.results[i][j].dup;
+			}
+		}
+	}
+
+	void validate() const {
+		bool floatCmp(string c, Int)(double a, Int b) {
+			mixin("bool cr = a " ~ c ~ "b;");
+			if(cr) {
+				return true;
+			} else {
+				return approxEqual(a, cast(double)b);
+			}
+		}
+
+		enforce(this.graph !is null);
+		this.graph.validate();
+
+		foreach(ref it; this.results) {
+			foreach(ref jt; it) {
+				foreach(kt; jt.readAvail) {
+					enforce(isNaN(kt) || 
+						(floatCmp!">"(kt, 0.0) && floatCmp!"<"(kt, 1.0)), 
+							format("%f", kt)
+					);
+				}
+				foreach(kt; jt.writeAvail) {
+					enforce(isNaN(kt) || 
+						(floatCmp!">"(kt, 0.0) && floatCmp!"<"(kt, 1.0)), 
+							format("%f", kt)
+					);
+				}
+				foreach(kt; jt.readCosts) {
+					enforce(isNaN(kt) || 
+						(floatCmp!">"(kt, 0.0) && floatCmp!"<"(kt, this.graph.graph.length)), 
+							format("%f", kt)
+					);
+				}
+				foreach(kt; jt.writeCosts) {
+					enforce(isNaN(kt) || 
+						(floatCmp!">"(kt, 0.0) && floatCmp!"<"(kt, this.graph.graph.length)), 
+							format("%f", kt)
+					);
+				}
 			}
 		}
 	}
@@ -297,7 +350,7 @@ struct GraphStats(int Size) {
 					&& canFind(f.name, "_costs")
 				);
 			foreach(a, c; lockstep(filesAvail, filesCosts)) {
-				logf("\n\t%s\n\t%s", a, c);
+				//logf("\n\t%s\n\t%s", a, c);
 				string avail = readText(a);
 				string costs = readText(c);
 				assert(!avail.empty);
@@ -315,6 +368,21 @@ struct GraphStats(int Size) {
 struct Data(int Size) {
 	LNTDimensions key;
 	Array!(GraphStats!Size) values;
+
+	this(LNTDimensions key, Array!(GraphStats!Size) values) {
+		this.key = key;
+		this.values = values;
+	}
+
+	this(LNTDimensions key) {
+		this.key = key;
+	}
+
+	void validate() const {
+		foreach(ref it; this.values[]) {
+			it.validate();
+		}
+	}
 }
 
 struct GraphStatss(int Size) {
@@ -324,6 +392,19 @@ struct GraphStatss(int Size) {
 		static import std.algorithm.sorting;
 		foreach(ref it; this.data[]) {
 			std.algorithm.sorting.sort!(Pred)(it.values[]);
+		}
+	}
+
+	void sort2(Pred)() {
+		static import std.algorithm.sorting;
+		foreach(ref it; this.data[]) {
+			std.algorithm.sorting.sort!(Pred)(it.values[]);
+		}
+	}
+
+	void validate() const {
+		foreach(ref it; this.data[]) {
+			it.validate();
 		}
 	}
 }
@@ -337,6 +418,18 @@ struct ProtocolStats(int Size) {
 		this.mcs.sort!Pred();
 		this.grid.sort!Pred();
 		this.lattice.sort!Pred();
+	}
+
+	void sort2(Pred)() {
+		this.mcs.sort!Pred();
+		this.grid.sort!Pred();
+		this.lattice.sort!Pred();
+	}
+
+	void validate() const {
+		this.mcs.validate();
+		this.grid.validate();
+		this.lattice.validate();
 	}
 }
 
@@ -354,6 +447,28 @@ struct GraphWithProperties(int Size) {
 		this.connectivity = computeConnectivity(this.graph);
 		this.degree = computeDegree(this.graph);
 		this.betweenness = betweennessCentrality(this.graph);
+	}
+
+	void validate() const {
+		enforce(!isNaN(this.diameter.min));
+		enforce(!isNaN(this.diameter.mode));
+		enforce(!isNaN(this.diameter.max));
+		enforce(!isNaN(this.diameter.average));
+		enforce(!isNaN(this.diameter.median));
+
+		enforce(!isNaN(this.degree.min));
+		enforce(!isNaN(this.degree.mode));
+		enforce(!isNaN(this.degree.max));
+		enforce(!isNaN(this.degree.average));
+		enforce(!isNaN(this.degree.median));
+
+		enforce(!isNaN(this.betweenness.min));
+		enforce(!isNaN(this.betweenness.mode));
+		enforce(!isNaN(this.betweenness.max));
+		enforce(!isNaN(this.betweenness.average));
+		enforce(!isNaN(this.betweenness.median));
+
+		enforce(!isNaN(this.connectivity));
 	}
 }
 
@@ -411,7 +526,6 @@ GraphStatss!(Size) loadResults(int Size)(Array!(GraphWithProperties!Size) graphs
 			if(!exists(fn)) {
 				continue;
 			}
-			//logf("%s", fn);
 			ret.data.back.values.insertBack(GraphStats!(Size)(&g, filename, protocol, dim));
 		}
 	}
