@@ -307,6 +307,42 @@ bool checkSorted(int Size)(ref ProtocolStats!Size joined, MMCStat!Size mm) {
 	return ret;
 }
 
+struct LearnRsltEntry(int Size) {
+	double mse;
+	MMCStat!32 bestApprox;
+}
+
+struct LearnRsltDim(int Size) {
+	LNTDimensions dim;
+	LearnRsltEntry!Size best;
+
+	this(LNTDimensions dim) {
+		this.dim = dim;
+	}
+}
+
+struct LearnRslt(int Size) {
+	Array!(LearnRsltDim!Size) mcs;
+	Array!(LearnRsltDim!Size) lattice;
+	Array!(LearnRsltDim!Size) grid;
+
+	const(ProtocolStats!Size)* ps;
+
+	this(const(ProtocolStats!Size)* ps) {
+		this.ps = ps;
+
+		foreach(ref it; ps.mcs.data[]) {
+			this.mcs.insertBack(LearnRsltDim!Size(it.key));
+		}
+		foreach(ref it; ps.lattice.data[]) {
+			this.lattice.insertBack(LearnRsltDim!Size(it.key));
+		}
+		foreach(ref it; ps.grid.data[]) {
+			this.grid.insertBack(LearnRsltDim!Size(it.key));
+		}
+	}
+}
+
 // how good can "mm" can be used to predict the costs or availability
 // join 4/5 of rslts with mm and jm into Joined
 // predict the avail and costs based on mm for all 1/5 graphs of rslts
@@ -325,10 +361,12 @@ void doLearning(int Size)(string jsonFileName) {
 		it.validate();
 	}
 
-	auto mm = new MMCStat!32();
-	for(size_t sp = 0; sp < numSplits; ++sp) {
-		auto permu = Permutations(cast(int)cstatsArray.length, 1, cast(int)cstatsArray.length);
-		foreach(perm; permu) {
+	auto learnRslt = LearnRslt!(Size)(&rslts);
+
+	auto permu = Permutations(cast(int)cstatsArray.length, 1, cast(int)cstatsArray.length);
+	foreach(perm; permu) {
+		auto mm = new MMCStat!32();
+		for(size_t sp = 0; sp < numSplits; ++sp) {
 			logf("begin");
 			logf("%s %s", sp, perm.count());
 			for(int j = 0; j < cstatsArray.length; ++j) {
