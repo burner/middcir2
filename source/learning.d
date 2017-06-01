@@ -232,12 +232,86 @@ ProtocolStats!(Size) join(int Size)(Array!(ProtocolStats!Size) parts,
 	return ret;
 }
 
+Array!(GraphStats!Size) joinGraphStats(int Size)(
+		ref const(Array!(GraphStats!Size)) old,
+		const(MMCStat!Size) mm)
+{
+	Array!(GraphStats!Size) ret;
+	foreach(ref it; old[]) {
+		if(ret.empty) {
+			ret.insertBack(GraphStats!Size(it));
+		} else {
+			if(mm.equal(ret.back, it)) {
+				//logf("dup %.10f %.10f", Selector.select(ret.back), Selector.select(it));
+			} else {
+				ret.insertBack(GraphStats!Size(it));
+			}
+		}
+	}
+
+	return ret;
+}
+
+Data!Size joinData(int Size)(ref const(Data!Size) old,
+	   	const(MMCStat!Size) mm)
+{
+	auto ret = Data!Size(old.key);
+	ret.values = joinGraphStats(old.values, mm);
+	return ret;
+}
+
+void joinData(int Size)(ref ProtocolStats!Size ps, const(MMCStat!Size) mm) {
+	foreach(ref it; ps.mcs.data[]) {
+		logf("mcs before length %s", it.values.length);
+		it = joinData!(Size)(it, mm);
+		logf("mcs after length %s", it.values.length);
+	}
+	foreach(ref it; ps.lattice.data[]) {
+		logf("lattice before length %s", it.values.length);
+		it = joinData!(Size)(it, mm);
+		logf("lattice after length %s", it.values.length);
+	}
+	foreach(ref it; ps.grid.data[]) {
+		logf("grid before length %s", it.values.length);
+		it = joinData!(Size)(it, mm);
+		logf("grid after length %s", it.values.length);
+	}
+}
+
+void sort(int Size)(ref ProtocolStats!Size joined, MMCStat!Size mm) {
+	import std.algorithm.sorting : sort;
+	foreach(ref it; joined.mcs.data[]) {
+		sort!((a,b) => mm.less(a,b))(it.values[]);
+	}
+	foreach(ref it; joined.lattice.data[]) {
+		sort!((a,b) => mm.less(a,b))(it.values[]);
+	}
+	foreach(ref it; joined.grid.data[]) {
+		sort!((a,b) => mm.less(a,b))(it.values[]);
+	}
+}
+
+bool checkSorted(int Size)(ref ProtocolStats!Size joined, MMCStat!Size mm) {
+	import std.algorithm.sorting : isSorted;
+	bool ret = true;
+	foreach(ref it; joined.mcs.data[]) {
+		ret = ret && enforce(isSorted!((a,b) => mm.less(a,b))(it.values[]));
+	}
+	foreach(ref it; joined.lattice.data[]) {
+		ret = ret && enforce(isSorted!((a,b) => mm.less(a,b))(it.values[]));
+	}
+	foreach(ref it; joined.grid.data[]) {
+		ret = ret && enforce(isSorted!((a,b) => mm.less(a,b))(it.values[]));
+	}
+
+	return ret;
+}
+
 // how good can "mm" can be used to predict the costs or availability
 // join 4/5 of rslts with mm and jm into Joined
 // predict the avail and costs based on mm for all 1/5 graphs of rslts
 // calc MSE against real value
 void doLearning(int Size)(string jsonFileName) {
-	import std.algorithm.sorting : sort;
 	enum numSplits = 5;
 	string outdir = format("%s_Learning/", jsonFileName);
 	Array!(GraphWithProperties!Size) graphs = loadGraphs!Size(jsonFileName);
@@ -251,43 +325,40 @@ void doLearning(int Size)(string jsonFileName) {
 		it.validate();
 	}
 
+	auto mm = new MMCStat!32();
 	for(size_t sp = 0; sp < numSplits; ++sp) {
-		ProtocolStats!Size joined = join(splits, sp);
-		joined.validate();
 		auto permu = Permutations(cast(int)cstatsArray.length, 1, cast(int)cstatsArray.length);
-		//auto permu = Permutations(i);
-		auto mm = new MMCStat!32();
 		foreach(perm; permu) {
+			logf("begin");
+			logf("%s %s", sp, perm.count());
 			for(int j = 0; j < cstatsArray.length; ++j) {
 				if(perm.test(j)) {
 					mm.insertIStat(cstatsArray[j]);
 				}
 			}
 
-			foreach(ref it; joined.mcs.data[]) {
-				sort!((a,b) => mm.less(a,b))(it.values[]);
+			ProtocolStats!Size joined = join(splits, sp);
+			joined.validate();
+			sort!Size(joined, mm);
+			assert(checkSorted(joined, mm));
+			joined.validate();
+
+			logf("rslt.mcs %s", joined.mcs.data.length);
+			logf("rslt.lattice %s", joined.lattice.data.length);
+			logf("rslt.grid %s", joined.grid.data.length);
+			foreach(jt; joined.mcs.data[]) {
+				logf("mcs %s", jt.values.length);
 			}
-			foreach(ref it; joined.lattice.data[]) {
-				sort!((a,b) => mm.less(a,b))(it.values[]);
+			foreach(jt; joined.lattice.data[]) {
+				logf("lattice %s", jt.values.length);
 			}
-			foreach(ref it; joined.grid.data[]) {
-				sort!((a,b) => mm.less(a,b))(it.values[]);
+			foreach(jt; joined.grid.data[]) {
+				logf("grid %s", jt.values.length);
 			}
 
-			writefln("%s %s", sp, perm.count());
+			joinData(joined, mm);
 			mm.clear();
-		}
-		logf("rslt.mcs %s", joined.mcs.data.length);
-		logf("rslt.lattice %s", joined.lattice.data.length);
-		logf("rslt.grid %s", joined.grid.data.length);
-		foreach(jt; joined.mcs.data[]) {
-			logf("mcs %s", jt.values.length);
-		}
-		foreach(jt; joined.lattice.data[]) {
-			logf("lattice %s", jt.values.length);
-		}
-		foreach(jt; joined.grid.data[]) {
-			logf("grid %s", jt.values.length);
+			logf("end\n");
 		}
 	}
 }
