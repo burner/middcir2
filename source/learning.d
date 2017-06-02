@@ -7,6 +7,7 @@ import std.algorithm.sorting : nextPermutation;
 import std.meta : AliasSeq;
 import std.exception : enforce;
 import std.experimental.logger;
+import std.math : isNaN, pow, approxEqual;
 
 import fixedsizearray;
 
@@ -97,6 +98,18 @@ class MMCStat(int Size) {
 			}
 		}
 		return true;
+	}
+
+	size_t equalCount(const(GraphStats!Size) a, 
+			const(GraphStats!Size) b) const
+	{
+		size_t sum = 0;
+		foreach(it; this.cstats) {
+			if(approxEqual(it.select(a), it.select(b), 0.000_001)) {
+				++sum;
+			}
+		}
+		return sum;
 	}
 
 	void insertIStat(IStat!Size ne) {
@@ -314,10 +327,11 @@ struct LearnRsltEntry(int Size) {
 
 struct LearnRsltDim(int Size) {
 	LNTDimensions dim;
-	LearnRsltEntry!Size best;
+	CmpRslt rslt;
 
 	this(LNTDimensions dim) {
 		this.dim = dim;
+		this.rslt = CmpRslt();
 	}
 }
 
@@ -326,11 +340,7 @@ struct LearnRslt(int Size) {
 	Array!(LearnRsltDim!Size) lattice;
 	Array!(LearnRsltDim!Size) grid;
 
-	const(ProtocolStats!Size)* ps;
-
 	this(const(ProtocolStats!Size)* ps) {
-		this.ps = ps;
-
 		foreach(ref it; ps.mcs.data[]) {
 			this.mcs.insertBack(LearnRsltDim!Size(it.key));
 		}
@@ -339,6 +349,148 @@ struct LearnRslt(int Size) {
 		}
 		foreach(ref it; ps.grid.data[]) {
 			this.grid.insertBack(LearnRsltDim!Size(it.key));
+		}
+	}
+
+	void print() {
+		foreach(ref it; this.mcs[]) {
+			logf("%s:%s %s", it.dim.width, it.dim.height, it.rslt);
+		}
+		foreach(ref it; this.lattice[]) {
+			logf("%s:%s %s", it.dim.width, it.dim.height, it.rslt);
+		}
+		foreach(ref it; this.grid[]) {
+			logf("%s:%s %s", it.dim.width, it.dim.height, it.rslt);
+		}
+	}
+}
+
+const(GraphStats!Size)* getPrediction(int Size)(ref const(GraphStatss!Size) ps,
+		ref const(LNTDimensions) dim, ref const(GraphStats!Size) toFind, 
+		const(MMCStat!Size) mm)
+{
+	foreach(ref data; ps.data[]) {
+		if(data.key == dim) {
+			size_t highestCnt;
+			const(GraphStats!Size)* best;
+			foreach(ref ss; data.values[]) {
+				if(best is null) {
+					highestCnt = mm.equalCount(ss, toFind);
+					best = &ss;
+				} else {
+					size_t tmpCnt = mm.equalCount(ss, toFind);
+					if(tmpCnt > highestCnt) {
+						highestCnt = tmpCnt;
+						best = &ss;
+					}
+				}
+			}
+			enforce(best !is null);
+			return best;
+		}
+	}
+	throw new Exception("Coundn't find shit");
+}
+
+struct CmpRslt {
+	double[4][7][2] mse;
+
+	static CmpRslt opCall() {
+		CmpRslt ret;
+		for(size_t i = 0; i < ret.mse.length; ++i) {
+			for(size_t j = 0; j < ret.mse[i].length; ++j) {
+				for(size_t k = 0; k < ret.mse[i][j].length; ++k) {
+					ret.mse[i][j][k] = 0.0;
+				}
+			}
+		}
+		return ret;
+	}
+
+	void add(CmpRslt other) {
+		for(size_t i = 0; i < mse.length; ++i) {
+			for(size_t j = 0; j < mse[i].length; ++j) {
+				for(size_t k = 0; k < mse[i][j].length; ++k) {
+					this.mse[i][j][k] += other.mse[i][j][k];
+				}
+			}
+		}
+	}
+}
+
+double getWithNaN(double input) {
+	return isNaN(input) ? 0.0 : input;
+}
+
+CmpRslt compare(int Size)(const(GraphStats!Size)* a,
+	   	const(GraphStats!Size)* b) 
+{
+	enforce(a !is null);
+	enforce(b !is null);
+
+	auto ret = CmpRslt();
+	for(size_t i = 0; i < a.results.length; ++i) {
+		for(size_t j = 0; j < a.results[i].length; ++j) {
+			double sum = 0.0;
+			for(size_t k = 0; k < 101; ++k) {
+				for(size_t h = 0; h < 4; ++h) {
+					switch(h) {
+						case 0:
+							ret.mse[i][j][h] += pow(getWithNaN(a.results[i][j].readAvail[k]) -
+								getWithNaN(b.results[i][j].readAvail[k]), 2);
+							break;
+						case 1:
+							ret.mse[i][j][h] += pow(getWithNaN(a.results[i][j].writeAvail[k]) -
+								getWithNaN(b.results[i][j].writeAvail[k]), 2);
+							break;
+						case 2:
+							ret.mse[i][j][h] += pow(getWithNaN(a.results[i][j].readCosts[k]) -
+								getWithNaN(b.results[i][j].readCosts[k]), 2);
+							break;
+						case 3:
+							ret.mse[i][j][h] += pow(getWithNaN(a.results[i][j].writeCosts[k]) -
+								getWithNaN(b.results[i][j].writeCosts[k]), 2);
+							break;
+						default:
+							assert(false);
+					}
+				}
+			}
+		}
+	}
+
+	for(size_t i = 0; i < ret.mse.length; ++i) {
+		for(size_t j = 0; j < ret.mse[i].length; ++j) {
+			for(size_t k = 0; k < ret.mse[i][j].length; ++k) {
+				ret.mse[i][j][k] /= 101.0;
+			}
+		}
+	}
+	return ret;
+}
+
+void testPrediction(int Size)(ref LearnRslt!Size result, ref const(ProtocolStats!Size) ps,
+		ref const(ProtocolStats!Size) toTest, MMCStat!Size mm)
+{
+	foreach(size_t i, ref const(GraphStatss!Size) it; 
+			[toTest.mcs, toTest.lattice, toTest.grid])
+	{
+		foreach(ref const(Data!Size) jt; it.data[]) {
+			auto rslt = CmpRslt();
+			foreach(ref const(GraphStats!Size) kt; jt.values[]) {
+				const(GraphStats!Size)* pred = getPrediction!Size(it, jt.key,
+						kt, mm
+					);
+				auto tmpRslt = compare(pred, &kt);
+				rslt.add(tmpRslt);
+			}
+			Array!(LearnRsltDim!Size) store = 
+				[result.mcs, result.lattice, result.grid][i];
+			foreach(ref kt; store) {
+				if(kt.dim == jt.key) {
+					kt.rslt.add(rslt);
+				}
+			}
 		}
 	}
 }
@@ -361,11 +513,11 @@ void doLearning(int Size)(string jsonFileName) {
 		it.validate();
 	}
 
-	auto learnRslt = LearnRslt!(Size)(&rslts);
 
 	auto permu = Permutations(cast(int)cstatsArray.length, 1, cast(int)cstatsArray.length);
 	foreach(perm; permu) {
 		auto mm = new MMCStat!32();
+		auto learnRsltPerm = LearnRslt!(Size)(&rslts);
 		for(size_t sp = 0; sp < numSplits; ++sp) {
 			logf("begin");
 			logf("%s %s", sp, perm.count());
@@ -395,8 +547,12 @@ void doLearning(int Size)(string jsonFileName) {
 			}
 
 			joinData(joined, mm);
+			
+			testPrediction(learnRsltPerm, joined, splits[sp], mm);
+
 			mm.clear();
 			logf("end\n");
 		}
+		learnRsltPerm.print();
 	}
 }
