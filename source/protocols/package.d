@@ -3,6 +3,7 @@ module protocols;
 import std.conv : text;
 import std.container : Array;
 import std.experimental.logger;
+import std.math : isNaN;
 
 import bitsetrbtree;
 import mapping;
@@ -12,10 +13,10 @@ import protocols.crossing;
 
 Result getResult() {
 	Result ret;
-	ret.readAvail[] = 0.0;
-	ret.writeAvail[] = 0.0;
-	ret.readCosts[] = 0.0;
-	ret.writeCosts[] = 0.0;
+	ret.readAvail[] = double.nan;
+	ret.writeAvail[] = double.nan;
+	ret.readCosts[] = double.nan;
+	ret.writeCosts[] = double.nan;
 	return ret;
 }
 
@@ -54,6 +55,18 @@ struct Result {
 					&(this.readAvail[i]), &(this.writeAvail[i]));
 			formattedRead(c, "%f %f %f", &dummy,
 					&(this.readCosts[i]), &(this.writeCosts[i]));
+			if(isNaN(this.readAvail[i])) {
+				this.readAvail[i] = 0.0;
+			}
+			if(isNaN(this.writeAvail[i])) {
+				this.writeAvail[i] = 0.0;
+			}
+			if(isNaN(this.readCosts[i])) {
+				this.readCosts[i] = 0.0;
+			}
+			if(isNaN(this.writeCosts[i])) {
+				this.writeCosts[i] = 0.0;
+			}
 			if(i < 100) {
 				asp.popFront();
 				csp.popFront();

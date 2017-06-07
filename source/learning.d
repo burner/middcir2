@@ -54,13 +54,19 @@ class CStat(alias Stat, int Size) : IStat!Size {
 }
 
 auto cstatsArray = [
-	new CStat!(DiameterAverage,32), new CStat!(DiameterMedian,32),
-	new CStat!(DiameterMax,32), new CStat!(DiameterMode,32),
-	new CStat!(Connectivity,32), new CStat!(DegreeAverage,32), 
-	new CStat!(DegreeMedian,32), new CStat!(DegreeMin,32), 
-	new CStat!(DegreeMax,32), new CStat!(BetweenneesAverage,32), 
 	new CStat!(BetweenneesMedian,32), new CStat!(BetweenneesMin,32), 
-	new CStat!(BetweenneesMax,32)
+	new CStat!(BetweenneesMax,32), new CStat!(BetweenneesAverage,32),
+	new CStat!(BetweenneesMode,32),
+
+	new CStat!(DiameterAverage,32), new CStat!(DiameterMedian,32), 
+	new CStat!(DiameterMax,32), new CStat!(DiameterMin,32), 
+	new CStat!(DiameterMode,32),
+
+	new CStat!(Connectivity,32), 
+
+	new CStat!(DegreeAverage,32), new CStat!(DegreeMedian,32), 
+	new CStat!(DegreeMode,32), new CStat!(DegreeMin,32), 
+	new CStat!(DegreeMax,32), 
 ];
 
 class MMCStat(int Size) {
@@ -78,7 +84,7 @@ class MMCStat(int Size) {
 
 		try {
 			foreach(it; this.cstats) {
-				if(approxEqual(it.select(a), it.select(b), 0.000_001)) {
+				if(approxEqual(it.select(a), it.select(b), 0.000_000_1)) {
 					continue;
 				} else if(it.select(a) < it.select(b)) {
 					return true;
@@ -98,7 +104,7 @@ class MMCStat(int Size) {
 		import std.math : approxEqual;
 
 		foreach(it; this.cstats) {
-			if(!approxEqual(it.select(a), it.select(b), 0.000_001)) {
+			if(!approxEqual(it.select(a), it.select(b), 0.000_000_1)) {
 				return false;
 			}
 		}
@@ -110,7 +116,7 @@ class MMCStat(int Size) {
 	{
 		size_t sum = 0;
 		foreach(it; this.cstats) {
-			if(approxEqual(it.select(a), it.select(b), 0.000_001)) {
+			if(approxEqual(it.select(a), it.select(b), 0.000_000_1)) {
 				++sum;
 			}
 		}
@@ -319,9 +325,9 @@ Data!Size joinData(int Size)(ref const(Data!Size) old,
 
 void joinData(int Size)(ref ProtocolStats!Size ps, const(MMCStat!Size) mm) {
 	foreach(ref it; ps.mcs.data[]) {
-		//logf("mcs before length %s", it.values.length);
+		logf("mcs before length %s", it.values.length);
 		it = joinData!(Size)(it, mm);
-		//logf("mcs after length %s", it.values.length);
+		logf("mcs after length %s", it.values.length);
 	}
 	foreach(ref it; ps.lattice.data[]) {
 		//logf("lattice before length %s", it.values.length);
@@ -547,50 +553,56 @@ struct CmpRslt {
 	}
 }
 
+pragma(inline, true)
 double getWithNaN(double input) {
 	return isNaN(input) ? 0.0 : input;
 }
 
-CmpRslt compare(int Size)(const(GraphStats!Size)* a,
-	   	const(GraphStats!Size)* b) 
+pragma(inline, true)
+void mse(ref double store, double a, double b) {
+	enforce(!isNaN(store));
+	//enforce(!isNaN(a));
+	//enforce(!isNaN(b));
+	logf("%.9f %.9f", a, b);
+	store += pow(getWithNaN(a) - getWithNaN(b), 2);
+}
+
+CmpRslt compare(int Size)(const(GraphStats!Size)* pred,
+	   	const(GraphStats!Size)* actual) 
 {
-	enforce(a !is null);
-	enforce(b !is null);
+	enforce(pred !is null);
+	enforce(actual !is null);
 
 	auto ret = CmpRslt();
-	for(size_t i = 0; i < a.results.length; ++i) {
-		for(size_t j = 0; j < a.results[i].length; ++j) {
+	for(size_t i = 0; i < pred.results.length; ++i) {
+		for(size_t j = 0; j < pred.results[i].length; ++j) {
 			for(size_t k = 0; k < 101; ++k) {
-				for(size_t h = 0; h < 4; ++h) {
+				inner: for(size_t h = 0; h < 4; ++h) {
 					switch(h) {
 						case 0:
-							//logf("%.8f %.8f", getWithNaN(a.results[i][j].readAvail[k]),
-							//	getWithNaN(b.results[i][j].readAvail[k])
-							//);
-							ret.mse[i][j][h] += pow(getWithNaN(a.results[i][j].readAvail[k]) -
-								getWithNaN(b.results[i][j].readAvail[k]), 2);
-							break;
+							mse(ret.mse[i][j][h],
+									pred.results[i][j].readAvail[k],
+									actual.results[i][j].readAvail[k],
+								);
+							continue inner;
 						case 1:
-							//logf("%.6f %.6f", getWithNaN(a.results[i][j].writeAvail[k]),
-							//	getWithNaN(b.results[i][j].writeAvail[k])
-							//);
-							ret.mse[i][j][h] += pow(getWithNaN(a.results[i][j].writeAvail[k]) -
-								getWithNaN(b.results[i][j].writeAvail[k]), 2);
-							break;
+							mse(ret.mse[i][j][h],
+									pred.results[i][j].writeAvail[k],
+									actual.results[i][j].writeAvail[k],
+								);
+							continue inner;
 						case 2:
-							//logf("%.6f %.6f", getWithNaN(a.results[i][j].readCosts[k]),
-							//	getWithNaN(b.results[i][j].readCosts[k])
-							//);
-							ret.mse[i][j][h] += pow(getWithNaN(a.results[i][j].readCosts[k]) -
-								getWithNaN(b.results[i][j].readCosts[k]), 2);
-							break;
+							mse(ret.mse[i][j][h],
+									pred.results[i][j].readCosts[k],
+									actual.results[i][j].readCosts[k],
+								);
+							continue inner;
 						case 3:
-							//logf("%.6f %.6f", getWithNaN(a.results[i][j].writeCosts[k]),
-							//	getWithNaN(b.results[i][j].writeCosts[k])
-							//);
-							ret.mse[i][j][h] += pow(getWithNaN(a.results[i][j].writeCosts[k]) -
-								getWithNaN(b.results[i][j].writeCosts[k]), 2);
-							break;
+							mse(ret.mse[i][j][h],
+									pred.results[i][j].writeCosts[k],
+									actual.results[i][j].writeCosts[k],
+								);
+							continue inner;
 						default:
 							assert(false);
 					}
@@ -747,7 +759,7 @@ void doLearning(int Size)(string jsonFileName) {
 	Compare!Size results;
 
 	//auto permu = Permutations(cast(int)cstatsArray.length, 1, cast(int)cstatsArray.length);
-	auto permu = Permutations(cast(int)cstatsArray.length, 1, 2);
+	auto permu = Permutations(cast(int)cstatsArray.length, 3, 4);
 	foreach(perm; permu) {
 		logf("begin");
 		auto mm = new MMCStat!32();
@@ -784,10 +796,10 @@ void doLearning(int Size)(string jsonFileName) {
 			joinData(joined, mm);
 			
 			testPrediction(learnRsltPerm, joined, splits[sp], mm);
+			learnRsltPerm.print();
 		}
 		results.compare(learnRsltPerm, mm);
-		results.print();
-		//learnRsltPerm.print();
+		//results.print();
 		logf("end\n");
 	}
 }

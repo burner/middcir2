@@ -11,6 +11,8 @@ import std.format : format;
 import stdx.data.json.parser;
 import stdx.data.json.value;
 
+import exceptionhandling;
+
 import graphmeasures;
 import graph;
 import protocols;
@@ -115,6 +117,17 @@ struct DegreeMedian(int Size) {
 	}
 }
 
+struct DegreeMode(int Size) {
+	static immutable string XLabel = "DegreeMode";
+	static immutable string sortPredicate = "a.graph.degree.mode < b.graph.degree.mode";
+	static auto select(const(GraphStats!Size) g) nothrow {
+		return g.graph.degree.mode;
+	}
+	static auto select(const(GraphWithProperties!Size) g) nothrow {
+		return g.degree.mode;
+	}
+}
+
 struct DegreeMin(int Size) {
 	static immutable string XLabel = "DegreeMin";
 	static immutable string sortPredicate = "a.graph.degree.min < b.graph.degree.min";
@@ -156,6 +169,17 @@ struct BetweenneesMedian(int Size) {
 	}
 	static auto select(const(GraphWithProperties!Size) g) nothrow {
 		return g.betweenness.median;
+	}
+}
+
+struct BetweenneesMode(int Size) {
+	static immutable string XLabel = "BetweenneesMode";
+	static immutable string sortPredicate = "a.graph.betweenness.mode < b.graph.betweenness.mode";
+	static auto select(const(GraphStats!Size) g) nothrow {
+		return g.graph.betweenness.mode;
+	}
+	static auto select(const(GraphWithProperties!Size) g) nothrow {
+		return g.betweenness.mode;
 	}
 }
 
@@ -241,6 +265,34 @@ struct GraphStats(int Size) {
 		}
 	}
 
+	bool wasLoaded() const {
+		foreach(ref it; this.results) {
+			foreach(ref jt; it) {
+				foreach(ref kt; jt.readAvail) {
+					if(isNaN(kt)) {
+						return false;
+					}
+				}
+				foreach(ref kt; jt.writeAvail) {
+					if(isNaN(kt)) {
+						return false;
+					}
+				}
+				foreach(ref kt; jt.readCosts) {
+					if(isNaN(kt)) {
+						return false;
+					}
+				}
+				foreach(ref kt; jt.writeCosts) {
+					if(isNaN(kt)) {
+						return false;
+					}
+				}
+			}
+		}
+		return true;
+	}
+
 	void validate() const {
 		bool floatCmp(string c, Int)(double a, Int b) {
 			mixin("bool cr = a " ~ c ~ "b;");
@@ -253,6 +305,13 @@ struct GraphStats(int Size) {
 
 		enforce(this.graph !is null);
 		this.graph.validate();
+
+		for(size_t i = 0; i < 7; ++i) {
+			enforce(approxEqual(results[0][i].readAvail[100], 1.0),
+				format("%d %.9f", i, results[0][i].readAvail[100]));
+			enforce(approxEqual(results[1][i].writeAvail[100], 1.0),
+				format("%d %.9f", i, results[1][i].readAvail[100]));
+		}
 
 		foreach(ref it; this.results) {
 			foreach(ref jt; it) {
@@ -538,7 +597,12 @@ GraphStatss!(Size) loadResults(int Size)(Array!(GraphWithProperties!Size) graphs
 			if(!exists(fn)) {
 				continue;
 			}
-			ret.data.back.values.insertBack(GraphStats!(Size)(&g, filename, protocol, dim));
+			auto tmp = GraphStats!(Size)(&g, filename, protocol, dim);
+			if(tmp.wasLoaded()) {
+				ret.data.back.values.insertBack(tmp);
+			} else {
+				logf("%s %s", fn, dim);
+			}
 		}
 	}
 	return ret;
