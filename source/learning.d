@@ -65,6 +65,11 @@ auto cstatsArray = [
 
 class MMCStat(int Size) {
 	FixedSizeArray!(IStat!Size) cstats;
+	string name;
+
+	string getName() const {
+		return this.name;
+	}
 
 	bool less(const(GraphStats!Size) a, 
 			const(GraphStats!Size) b) const nothrow
@@ -114,10 +119,12 @@ class MMCStat(int Size) {
 
 	void insertIStat(IStat!Size ne) {
 		this.cstats.insertBack(ne);
+		this.name ~= ne.name;
 	}
 
 	void clear() {
 		this.cstats.removeAll();
+		this.name = "";
 	}
 }
 
@@ -312,19 +319,19 @@ Data!Size joinData(int Size)(ref const(Data!Size) old,
 
 void joinData(int Size)(ref ProtocolStats!Size ps, const(MMCStat!Size) mm) {
 	foreach(ref it; ps.mcs.data[]) {
-		logf("mcs before length %s", it.values.length);
+		//logf("mcs before length %s", it.values.length);
 		it = joinData!(Size)(it, mm);
-		logf("mcs after length %s", it.values.length);
+		//logf("mcs after length %s", it.values.length);
 	}
 	foreach(ref it; ps.lattice.data[]) {
-		logf("lattice before length %s", it.values.length);
+		//logf("lattice before length %s", it.values.length);
 		it = joinData!(Size)(it, mm);
-		logf("lattice after length %s", it.values.length);
+		//logf("lattice after length %s", it.values.length);
 	}
 	foreach(ref it; ps.grid.data[]) {
-		logf("grid before length %s", it.values.length);
+		//logf("grid before length %s", it.values.length);
 		it = joinData!(Size)(it, mm);
-		logf("grid after length %s", it.values.length);
+		//logf("grid after length %s", it.values.length);
 	}
 }
 
@@ -445,11 +452,6 @@ bool checkSorted(int Size)(ref ProtocolStats!Size joined, MMCStat!Size mm) {
 	}
 
 	return ret;
-}
-
-struct LearnRsltEntry(int Size) {
-	double mse;
-	MMCStat!32 bestApprox;
 }
 
 struct LearnRsltDim(int Size) {
@@ -607,8 +609,9 @@ CmpRslt compare(int Size)(const(GraphStats!Size)* a,
 	return ret;
 }
 
-void testPrediction(int Size)(ref LearnRslt!Size result, ref const(ProtocolStats!Size) ps,
-		ref const(ProtocolStats!Size) toTest, MMCStat!Size mm)
+void testPrediction(int Size)(ref LearnRslt!Size result, 
+		ref const(ProtocolStats!Size) ps, ref const(ProtocolStats!Size) toTest,
+	   	MMCStat!Size mm)
 {
 	foreach(size_t i, ref const(GraphStatss!Size) it; 
 			[toTest.mcs, toTest.lattice, toTest.grid])
@@ -633,6 +636,96 @@ void testPrediction(int Size)(ref LearnRslt!Size result, ref const(ProtocolStats
 	}
 }
 
+struct CompareEntries(int Size) {
+	double value;
+	MMCStat!Size mm;
+}
+
+struct CompareEntry(int Size) {
+	LNTDimensions dim;
+	CompareEntries!(Size)[4][7][2] entries;
+}
+
+struct Compare(int Size) {
+	Array!(CompareEntry!Size) mcs;
+	Array!(CompareEntry!Size) grid;
+	Array!(CompareEntry!Size) lattice;
+
+	void print() const {
+		print("MCS", this.mcs);
+		print("Lattice", this.lattice);
+		print("Grid", this.grid);
+	}
+
+	static void print(string name, ref const(Array!(CompareEntry!Size)) arr) {
+		logf(name);
+		foreach(ref it; arr[]) {
+			writefln("\t%d:%d", it.dim.width, it.dim.height);
+			for(size_t i = 0; i < it.entries.length; ++i) {
+				for(size_t j = 0; j < it.entries[i].length; ++j) {
+					for(size_t k = 0; k < it.entries[i][j].length; ++k) {
+						writefln!"\t\t%d %d %d %.9f %s"(
+							i, j, k, it.entries[i][j][k].value,
+							it.entries[i][j][k].mm.getName());
+					}
+				}
+			}
+		}
+	}
+
+	void compare(ref LearnRslt!Size rslt, MMCStat!Size mm) {
+		this.compareImpl(rslt.mcs, this.mcs, mm);
+		this.compareImpl(rslt.lattice, this.lattice, mm);
+		this.compareImpl(rslt.grid, this.grid, mm);
+	}
+
+	void compareImpl(ref const(Array!(LearnRsltDim!Size)) rslt, 
+			ref Array!(CompareEntry!Size) store, MMCStat!Size mm)
+	{
+		outer: foreach(ref it; rslt[]) {
+			foreach(ref iit; store[]) {
+				if(it.dim == iit.dim) {
+					CompareEntries!(Size)[4][7][2] tmp = buildSums(it.rslt, mm);
+					compareSwap(iit.entries, tmp);
+					continue outer;
+				}
+			}
+			CompareEntries!(Size)[4][7][2] tmp = buildSums(it.rslt, mm);
+			store.insertBack(CompareEntry!Size(it.dim, tmp));
+		}
+	}
+
+	void compareSwap(ref CompareEntries!(Size)[4][7][2] store, 
+			ref CompareEntries!(Size)[4][7][2] tmp)
+	{
+		for(size_t i = 0; i < store.length; ++i) {
+			for(size_t j = 0; j < store[i].length; ++j) {
+				for(size_t k = 0; k < store[i][j].length; ++k) {
+					if(tmp[i][j][k].value < store[i][j][k].value) {
+						store[i][j][k].value = tmp[i][j][k].value;
+						store[i][j][k].mm = tmp[i][j][k].mm;
+					}
+				}
+			}
+		}
+	}
+
+	static CompareEntries!(Size)[4][7][2] buildSums(ref const(CmpRslt) cr,
+			MMCStat!Size mm) 
+	{
+		CompareEntries!(Size)[4][7][2] ret;
+		for(size_t i = 0; i < ret.length; ++i) {
+			for(size_t j = 0; j < ret[i].length; ++j) {
+				for(size_t k = 0; k < ret[i][j].length; ++k) {
+					ret[i][j][k].value = cr.mse[i][j][k];
+					ret[i][j][k].mm = mm;
+				}
+			}
+		}
+		return ret;
+	}
+}
+
 // how good can "mm" can be used to predict the costs or availability
 // join 4/5 of rslts with mm and jm into Joined
 // predict the avail and costs based on mm for all 1/5 graphs of rslts
@@ -651,20 +744,23 @@ void doLearning(int Size)(string jsonFileName) {
 		it.validate();
 	}
 
+	Compare!Size results;
 
 	//auto permu = Permutations(cast(int)cstatsArray.length, 1, cast(int)cstatsArray.length);
-	auto permu = Permutations(cast(int)cstatsArray.length, 3, 5);
+	auto permu = Permutations(cast(int)cstatsArray.length, 1, 2);
 	foreach(perm; permu) {
+		logf("begin");
 		auto mm = new MMCStat!32();
-		auto learnRsltPerm = LearnRslt!(Size)(&rslts);
-		for(size_t sp = 0; sp < numSplits; ++sp) {
-			logf("begin");
-			logf("%s %s", sp, perm.count());
-			for(int j = 0; j < cstatsArray.length; ++j) {
-				if(perm.test(j)) {
-					mm.insertIStat(cstatsArray[j]);
-				}
+		for(int j = 0; j < cstatsArray.length; ++j) {
+			if(perm.test(j)) {
+				mm.insertIStat(cstatsArray[j]);
 			}
+		}
+
+		auto learnRsltPerm = LearnRslt!(Size)(&rslts);
+
+		for(size_t sp = 0; sp < numSplits; ++sp) {
+			//logf("%s %s", sp, perm.count());
 
 			ProtocolStats!Size joined = join(splits, sp);
 			joined.validate();
@@ -672,26 +768,26 @@ void doLearning(int Size)(string jsonFileName) {
 			assert(checkSorted(joined, mm));
 			joined.validate();
 
-			logf("rslt.mcs %s", joined.mcs.data.length);
-			logf("rslt.lattice %s", joined.lattice.data.length);
-			logf("rslt.grid %s", joined.grid.data.length);
-			foreach(jt; joined.mcs.data[]) {
-				logf("mcs %s", jt.values.length);
-			}
-			foreach(jt; joined.lattice.data[]) {
-				logf("lattice %s", jt.values.length);
-			}
-			foreach(jt; joined.grid.data[]) {
-				logf("grid %s", jt.values.length);
-			}
+			//logf("rslt.mcs %s", joined.mcs.data.length);
+			//logf("rslt.lattice %s", joined.lattice.data.length);
+			//logf("rslt.grid %s", joined.grid.data.length);
+			//foreach(jt; joined.mcs.data[]) {
+			//	logf("mcs %s", jt.values.length);
+			//}
+			//foreach(jt; joined.lattice.data[]) {
+			//	logf("lattice %s", jt.values.length);
+			//}
+			//foreach(jt; joined.grid.data[]) {
+			//	logf("grid %s", jt.values.length);
+			//}
 
 			joinData(joined, mm);
 			
 			testPrediction(learnRsltPerm, joined, splits[sp], mm);
-
-			mm.clear();
-			logf("end\n");
 		}
-		learnRsltPerm.print();
+		results.compare(learnRsltPerm, mm);
+		results.print();
+		//learnRsltPerm.print();
+		logf("end\n");
 	}
 }
