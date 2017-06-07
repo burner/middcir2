@@ -299,6 +299,12 @@ struct GraphStats(int Size) {
 		}
 	}
 
+	void add(ref const(GraphStats!Size) other) {
+		for(size_t i = 0; i < 2; ++i) {
+			this.add(other, i);
+		}
+	}
+
 	void add(ref const(GraphStats!Size) other, const size_t ac) {
 		for(size_t i = 0; i < results.length; ++i) {
 			this.results[ac][i].readAvail[] += other.results[ac][i].readAvail[];
@@ -314,6 +320,12 @@ struct GraphStats(int Size) {
 			this.results[ac][i].writeAvail[] /= cast(double)count;
 			this.results[ac][i].readCosts[] /= cast(double)count;
 			this.results[ac][i].writeCosts[] /= cast(double)count;
+		}
+	}
+
+	void div(int count) {
+		for(size_t i = 0; i < 2; ++i) {
+			this.div(count, i);
 		}
 	}
 

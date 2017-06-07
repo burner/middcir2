@@ -249,6 +249,13 @@ Array!(GraphStats!Size) joinGraphStats(int Size)(
 		ref const(Array!(GraphStats!Size)) old,
 		const(MMCStat!Size) mm)
 {
+	return joinGraphStatsAvg!Size(old, mm);
+}
+
+Array!(GraphStats!Size) joinGraphStatsIgnoreSame(int Size)(
+		ref const(Array!(GraphStats!Size)) old,
+		const(MMCStat!Size) mm)
+{
 	Array!(GraphStats!Size) ret;
 	foreach(ref it; old[]) {
 		if(ret.empty) {
@@ -265,6 +272,36 @@ Array!(GraphStats!Size) joinGraphStats(int Size)(
 	return ret;
 }
 
+Array!(GraphStats!Size) joinGraphStatsAvg(int Size)(
+		ref const(Array!(GraphStats!Size)) old,
+		const(MMCStat!Size) mm)
+{
+	Array!(GraphStats!Size) ret;
+
+	int addCount = 1;
+	foreach(ref it; old[]) {
+		if(ret.empty) {
+			ret.insertBack(GraphStats!Size(it));
+		} else {
+			if(mm.equal(ret.back, it)) {
+				ret.back.add(it);
+				++addCount;
+			} else {
+				if(addCount > 1) {
+					ret.back.div(addCount);
+					addCount = 1;
+				}
+				ret.insertBack(GraphStats!Size(it));
+			}
+		}
+	}
+	if(addCount > 1) {
+		ret.back.div(addCount);
+		addCount = 1;
+	}
+
+	return ret;
+}
 Data!Size joinData(int Size)(ref const(Data!Size) old,
 	   	const(MMCStat!Size) mm)
 {
@@ -288,6 +325,96 @@ void joinData(int Size)(ref ProtocolStats!Size ps, const(MMCStat!Size) mm) {
 		logf("grid before length %s", it.values.length);
 		it = joinData!(Size)(it, mm);
 		logf("grid after length %s", it.values.length);
+	}
+}
+
+unittest {
+	GraphWithProperties!(16)[5] graphs;
+	graphs[0].connectivity = 0.3;
+	graphs[1].connectivity = 0.4;
+	graphs[2].connectivity = 0.4;
+	graphs[3].connectivity = 0.4;
+	graphs[4].connectivity = 0.7;
+
+	GraphStats!(16)[5] graphStats;
+	graphStats[0].graph = &graphs[0];
+	graphStats[0].results[0][0].readAvail[] = 0.1;
+	graphStats[1].graph = &graphs[1];
+	graphStats[1].results[0][0].readAvail[] = 1.0;
+	graphStats[2].graph = &graphs[2];
+	graphStats[2].results[0][0].readAvail[] = 2.0;
+	graphStats[3].graph = &graphs[3];
+	graphStats[3].results[0][0].readAvail[] = 3.0;
+	graphStats[4].graph = &graphs[4];
+	graphStats[4].results[0][0].readAvail[] = 0.2;
+
+	Array!(GraphStats!16) arr;
+	foreach(it; graphStats) {
+		arr.insertBack(it);
+	}
+
+	auto cs = new CStat!(Connectivity,16)();
+	auto mm = new MMCStat!16();
+	mm.insertIStat(cs);
+	auto ret = joinGraphStatsAvg!16(arr, mm);
+
+	assert(ret.length == 3);
+
+	foreach(it; ret[0].results[0][0].readAvail[]) {
+		assert(approxEqual(it, 0.1));
+	}
+
+	foreach(idx, it; ret[1].results[0][0].readAvail[]) {
+		assert(approxEqual(it, 2.0), format("%s %s %s", idx, it, 2.0));
+	}
+
+	foreach(it; ret[2].results[0][0].readAvail[]) {
+		assert(approxEqual(it, 0.2));
+	}
+}
+
+unittest {
+	GraphWithProperties!(16)[5] graphs;
+	graphs[0].connectivity = 0.3;
+	graphs[1].connectivity = 0.4;
+	graphs[2].connectivity = 0.4;
+	graphs[3].connectivity = 0.4;
+	graphs[4].connectivity = 0.7;
+
+	GraphStats!(16)[5] graphStats;
+	graphStats[0].graph = &graphs[0];
+	graphStats[0].results[0][0].readAvail[] = 0.1;
+	graphStats[1].graph = &graphs[1];
+	graphStats[1].results[0][0].readAvail[] = 1.0;
+	graphStats[2].graph = &graphs[2];
+	graphStats[2].results[0][0].readAvail[] = 2.0;
+	graphStats[3].graph = &graphs[3];
+	graphStats[3].results[0][0].readAvail[] = 3.0;
+	graphStats[4].graph = &graphs[4];
+	graphStats[4].results[0][0].readAvail[] = 0.2;
+
+	Array!(GraphStats!16) arr;
+	foreach(it; graphStats) {
+		arr.insertBack(it);
+	}
+
+	auto cs = new CStat!(Connectivity,16)();
+	auto mm = new MMCStat!16();
+	mm.insertIStat(cs);
+	auto ret = joinGraphStatsIgnoreSame!16(arr, mm);
+
+	assert(ret.length == 3);
+
+	foreach(it; ret[0].results[0][0].readAvail[]) {
+		assert(approxEqual(it, 0.1));
+	}
+
+	foreach(idx, it; ret[1].results[0][0].readAvail[]) {
+		assert(approxEqual(it, 1.0));
+	}
+
+	foreach(it; ret[2].results[0][0].readAvail[]) {
+		assert(approxEqual(it, 0.2));
 	}
 }
 
@@ -431,23 +558,34 @@ CmpRslt compare(int Size)(const(GraphStats!Size)* a,
 	auto ret = CmpRslt();
 	for(size_t i = 0; i < a.results.length; ++i) {
 		for(size_t j = 0; j < a.results[i].length; ++j) {
-			double sum = 0.0;
 			for(size_t k = 0; k < 101; ++k) {
 				for(size_t h = 0; h < 4; ++h) {
 					switch(h) {
 						case 0:
+							//logf("%.8f %.8f", getWithNaN(a.results[i][j].readAvail[k]),
+							//	getWithNaN(b.results[i][j].readAvail[k])
+							//);
 							ret.mse[i][j][h] += pow(getWithNaN(a.results[i][j].readAvail[k]) -
 								getWithNaN(b.results[i][j].readAvail[k]), 2);
 							break;
 						case 1:
+							//logf("%.6f %.6f", getWithNaN(a.results[i][j].writeAvail[k]),
+							//	getWithNaN(b.results[i][j].writeAvail[k])
+							//);
 							ret.mse[i][j][h] += pow(getWithNaN(a.results[i][j].writeAvail[k]) -
 								getWithNaN(b.results[i][j].writeAvail[k]), 2);
 							break;
 						case 2:
+							//logf("%.6f %.6f", getWithNaN(a.results[i][j].readCosts[k]),
+							//	getWithNaN(b.results[i][j].readCosts[k])
+							//);
 							ret.mse[i][j][h] += pow(getWithNaN(a.results[i][j].readCosts[k]) -
 								getWithNaN(b.results[i][j].readCosts[k]), 2);
 							break;
 						case 3:
+							//logf("%.6f %.6f", getWithNaN(a.results[i][j].writeCosts[k]),
+							//	getWithNaN(b.results[i][j].writeCosts[k])
+							//);
 							ret.mse[i][j][h] += pow(getWithNaN(a.results[i][j].writeCosts[k]) -
 								getWithNaN(b.results[i][j].writeCosts[k]), 2);
 							break;
@@ -514,7 +652,8 @@ void doLearning(int Size)(string jsonFileName) {
 	}
 
 
-	auto permu = Permutations(cast(int)cstatsArray.length, 1, cast(int)cstatsArray.length);
+	//auto permu = Permutations(cast(int)cstatsArray.length, 1, cast(int)cstatsArray.length);
+	auto permu = Permutations(cast(int)cstatsArray.length, 3, 5);
 	foreach(perm; permu) {
 		auto mm = new MMCStat!32();
 		auto learnRsltPerm = LearnRslt!(Size)(&rslts);

@@ -253,12 +253,12 @@ Result calcACforPathBasedFast(BitsetStoreType,BitsetType,F,G)(ref F paths,
 			}
 		}
 	}
-	logf("andBreak %s andWrite %s", andBreak, andWrite);
+	//logf("andBreak %s andWrite %s", andBreak, andWrite);
 	read.toFile();
 	write.toFile();
 
 	auto tmpRet = calcAvailForTree!BitsetStoreType(to!int(numNodes), read, write);
-	logf("after calcAvail");
+	//logf("after calcAvail");
 	return tmpRet;
 }
 

@@ -99,7 +99,7 @@ unittest {
 	auto lnt = findBestLNT(g, cmpEdgeIntersectionsCnt);
 	*/
 
-	logf("array size %s", buildIndexArray(16));
+	//logf("array size %s", buildIndexArray(16));
 }
 
 ubyte[] buildIndexArray(const size_t len) {

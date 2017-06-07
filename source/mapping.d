@@ -710,7 +710,7 @@ unittest {
 	auto lattice = Lattice(2,2);
 	auto latticeRslt = lattice.calcAC();
 
-	logf("\n\n\n");
+	//logf("\n\n\n");
 	auto map = Mappings!(32,32)(lattice.graph, lattice.graph, [ROW(0.91)], null);
 	//auto map = Mappings!(32,32)(lattice.graph, lattice.graph);
 	auto mapRslt = map.calcAC(lattice.read, lattice.write);
