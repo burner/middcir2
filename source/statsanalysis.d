@@ -307,10 +307,12 @@ struct GraphStats(int Size) {
 		this.graph.validate();
 
 		for(size_t i = 0; i < 7; ++i) {
-			enforce(approxEqual(results[0][i].readAvail[100], 1.0),
-				format("%d %.9f", i, results[0][i].readAvail[100]));
-			enforce(approxEqual(results[1][i].writeAvail[100], 1.0),
-				format("%d %.9f", i, results[1][i].readAvail[100]));
+			ensure(approxEqual(results[0][i].readAvail[100], 1.0),
+				format("%d %.9f", i, results[0][i].readAvail[100]),
+				this.graph.graph.id);
+			ensure(approxEqual(results[1][i].writeAvail[100], 1.0),
+				format("%d %.9f", i, results[1][i].readAvail[100]),
+				this.graph.graph.id);
 		}
 
 		foreach(ref it; this.results) {
@@ -329,13 +331,17 @@ struct GraphStats(int Size) {
 				}
 				foreach(kt; jt.readCosts) {
 					enforce(isNaN(kt) || 
-						(floatCmp!">"(kt, 0.0) && floatCmp!"<"(kt, this.graph.graph.length)), 
+						(floatCmp!">"(kt, 0.0) 
+						 && floatCmp!"<"(kt, this.graph.graph.length)
+						 ), 
 							format("%f", kt)
 					);
 				}
 				foreach(kt; jt.writeCosts) {
 					enforce(isNaN(kt) || 
-						(floatCmp!">"(kt, 0.0) && floatCmp!"<"(kt, this.graph.graph.length)), 
+						(floatCmp!">"(kt, 0.0) 
+						 && floatCmp!"<"(kt, this.graph.graph.length)
+						 ), 
 							format("%f", kt)
 					);
 				}

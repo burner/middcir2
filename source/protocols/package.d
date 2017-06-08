@@ -11,12 +11,12 @@ import graph;
 
 import protocols.crossing;
 
-Result getResult() {
+Result getResult(double init = double.nan) {
 	Result ret;
-	ret.readAvail[] = double.nan;
-	ret.writeAvail[] = double.nan;
-	ret.readCosts[] = double.nan;
-	ret.writeCosts[] = double.nan;
+	ret.readAvail[] = init;
+	ret.writeAvail[] = init;
+	ret.readCosts[] = init;
+	ret.writeCosts[] = init;
 	return ret;
 }
 
@@ -98,7 +98,7 @@ struct Result {
 Result calcAvailForTree(BitsetStoreType)(const int numNodes,
 		ref BitsetStoreType read, ref BitsetStoreType write)
 {
-	auto ret = getResult();
+	auto ret = getResult(0.0);
 	calcAvailForTreeImpl!BitsetStoreType(numNodes, read, ret.readAvail, 
 		ret.readCosts
 	);

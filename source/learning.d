@@ -54,19 +54,25 @@ class CStat(alias Stat, int Size) : IStat!Size {
 }
 
 auto cstatsArray = [
-	new CStat!(BetweenneesMedian,32), new CStat!(BetweenneesMin,32), 
-	new CStat!(BetweenneesMax,32), new CStat!(BetweenneesAverage,32),
-	new CStat!(BetweenneesMode,32),
+	//new CStat!(BetweenneesMedian,32), 
+	//new CStat!(BetweenneesMin,32), 
+	//new CStat!(BetweenneesMax,32), 
+	new CStat!(BetweenneesAverage,32),
+	//new CStat!(BetweenneesMode,32),
 
-	new CStat!(DiameterAverage,32), new CStat!(DiameterMedian,32), 
-	new CStat!(DiameterMax,32), new CStat!(DiameterMin,32), 
-	new CStat!(DiameterMode,32),
+	new CStat!(DiameterAverage,32), 
+	//new CStat!(DiameterMedian,32), 
+	//new CStat!(DiameterMax,32), 
+	//new CStat!(DiameterMin,32), 
+	//new CStat!(DiameterMode,32),
 
 	new CStat!(Connectivity,32), 
 
-	new CStat!(DegreeAverage,32), new CStat!(DegreeMedian,32), 
-	new CStat!(DegreeMode,32), new CStat!(DegreeMin,32), 
-	new CStat!(DegreeMax,32), 
+	new CStat!(DegreeAverage,32), 
+	//new CStat!(DegreeMedian,32), 
+	//new CStat!(DegreeMode,32), 
+	//new CStat!(DegreeMin,32), 
+	//new CStat!(DegreeMax,32), 
 ];
 
 class MMCStat(int Size) {
@@ -468,6 +474,37 @@ struct LearnRsltDim(int Size) {
 		this.dim = dim;
 		this.rslt = CmpRslt();
 	}
+
+	void toLatex(LTW)(ref LTW ltw) const {
+		formattedWrite(ltw, "\\subsubsection{Dimension %s:%s}\n",
+			this.dim.width, this.dim.height);
+
+		foreach(jdx, it; ["Avail", "Costs"]) {
+			formattedWrite(ltw, "\\paragraph{%s Measures}\n",
+				it);
+
+			foreach(idx, row; readOverWriteLevel) {
+				formattedWrite(ltw, "\\subparagraph{Read over Write %.2f}\n",
+					row);
+				formattedWrite(ltw, "\\begin{tabular}{l r}\n");
+				formattedWrite(ltw, "Read Avail & %.10f \\\\ \n",
+					this.rslt.mse[jdx][idx][0]
+				);
+				formattedWrite(ltw, "Write Avail & %.10f \\\\ \n",
+					this.rslt.mse[jdx][idx][1]
+				);
+				formattedWrite(ltw, "Read Costs & %.10f \\\\ \n",
+					this.rslt.mse[jdx][idx][2]
+				);
+				formattedWrite(ltw, "Write Costs & %.10f \\\\ \n",
+					this.rslt.mse[jdx][idx][3]
+				);
+				formattedWrite(ltw, "\\end{tabular}\n");
+			}
+			formattedWrite(ltw, "\n");
+		}
+		formattedWrite(ltw, "\n");
+	}
 }
 
 struct LearnRslt(int Size) {
@@ -496,6 +533,21 @@ struct LearnRslt(int Size) {
 		}
 		foreach(ref it; this.grid[]) {
 			logf("%s:%s %s", it.dim.width, it.dim.height, it.rslt);
+		}
+	}
+
+	void toLatex(LTW)(ref LTW ltw) const {
+		this.toLatex(ltw, "MCS", this.mcs);	
+		this.toLatex(ltw, "Lattice", this.lattice);	
+		this.toLatex(ltw, "Grid", this.grid);	
+	}
+
+	void toLatex(LTW)(ref LTW ltw, string name, 
+			ref const(Array!(LearnRsltDim!Size)) arr) const
+	{
+		formattedWrite(ltw, "\\subsection{%s}\n", name);
+		foreach(ref it; arr[]) {
+			it.toLatex(ltw);
 		}
 	}
 }
@@ -561,10 +613,10 @@ double getWithNaN(double input) {
 pragma(inline, true)
 void mse(ref double store, double a, double b) {
 	enforce(!isNaN(store));
-	//enforce(!isNaN(a));
-	//enforce(!isNaN(b));
-	logf("%.9f %.9f", a, b);
-	store += pow(getWithNaN(a) - getWithNaN(b), 2);
+	enforce(!isNaN(a));
+	enforce(!isNaN(b));
+	//logf("%.9f %.9f", a, b);
+	store += pow(getWithNaN(a) * 100 - getWithNaN(b) * 100, 2);
 }
 
 CmpRslt compare(int Size)(const(GraphStats!Size)* pred,
@@ -656,6 +708,41 @@ struct CompareEntries(int Size) {
 struct CompareEntry(int Size) {
 	LNTDimensions dim;
 	CompareEntries!(Size)[4][7][2] entries;
+
+	void toLatex(LTW)(ref LTW ltw) const {
+		formattedWrite(ltw, "\\subsubsection{Dimension %s:%s}\n",
+			this.dim.width, this.dim.height);
+
+		foreach(jdx, it; ["Avail", "Costs"]) {
+			formattedWrite(ltw, "\\paragraph{%s Measures}\n",
+				it);
+
+			foreach(idx, row; readOverWriteLevel) {
+				formattedWrite(ltw, "\\subparagraph{Read over Write %.2f}\n",
+					row);
+				formattedWrite(ltw, "\\begin{tabular}{l r l}\n");
+				formattedWrite(ltw, "Read Avail & %.10f & %s \\\\ \n",
+					this.entries[jdx][idx][0].value, 
+					this.entries[jdx][idx][0].mm.getName()
+				);
+				formattedWrite(ltw, "Write Avail & %.10f & %s \\\\ \n",
+					this.entries[jdx][idx][1].value, 
+					this.entries[jdx][idx][1].mm.getName()
+				);
+				formattedWrite(ltw, "Read Costs & %.10f & %s \\\\ \n",
+					this.entries[jdx][idx][2].value, 
+					this.entries[jdx][idx][2].mm.getName()
+				);
+				formattedWrite(ltw, "Write Costs & %.10f & %s \\\\ \n",
+					this.entries[jdx][idx][3].value, 
+					this.entries[jdx][idx][3].mm.getName()
+				);
+				formattedWrite(ltw, "\\end{tabular}\n");
+			}
+			formattedWrite(ltw, "\n");
+		}
+		formattedWrite(ltw, "\n");
+	}
 }
 
 struct Compare(int Size) {
@@ -682,6 +769,21 @@ struct Compare(int Size) {
 					}
 				}
 			}
+		}
+	}
+
+	void toLatex(LTW)(ref LTW ltw) const {
+		this.toLatex(ltw, "MCS", this.mcs);	
+		this.toLatex(ltw, "Lattice", this.lattice);	
+		this.toLatex(ltw, "Grid", this.grid);	
+	}
+
+	void toLatex(LTW)(ref LTW ltw, string name, 
+			ref const(Array!(CompareEntry!Size)) arr) const
+	{
+		formattedWrite(ltw, "\\subsection{%s}\n", name);
+		foreach(ref it; arr[]) {
+			it.toLatex(ltw);
 		}
 	}
 
@@ -738,6 +840,27 @@ struct Compare(int Size) {
 	}
 }
 
+void prepareLatexDoc(LTW)(ref LTW ltw) {
+	formattedWrite(ltw, "\\documentclass{scrbook}\n");
+	formattedWrite(ltw, "\\usepackage{graphicx}\n");
+	formattedWrite(ltw, "\\usepackage{standalone}\n");
+	formattedWrite(ltw, "\\usepackage{float}\n");
+	formattedWrite(ltw, "\\usepackage{multirow}\n");
+	formattedWrite(ltw, "\\usepackage{hyperref}\n");
+	formattedWrite(ltw, "\\usepackage{placeins}\n");
+	formattedWrite(ltw, "\\usepackage[cm]{fullpage}\n");
+	formattedWrite(ltw, "\\usepackage{subcaption}\n");
+	formattedWrite(ltw, `\usepackage{tikz}
+\usepackage{pgfplots}
+\usetikzlibrary{decorations.markings, arrows, decorations.pathmorphing,
+   backgrounds, positioning, fit, shapes.geometric}
+	\tikzstyle{place} = [shape=circle,
+    draw, align=center,minimum width=0.70cm,
+    top color=white, bottom color=blue!20]
+\begin{document}
+`);
+}
+
 // how good can "mm" can be used to predict the costs or availability
 // join 4/5 of rslts with mm and jm into Joined
 // predict the avail and costs based on mm for all 1/5 graphs of rslts
@@ -756,10 +879,15 @@ void doLearning(int Size)(string jsonFileName) {
 		it.validate();
 	}
 
+	auto f = File(jsonFileName ~ "ai.tex", "w");
+	auto ltw = f.lockingTextWriter();
+	prepareLatexDoc(ltw);
+
 	Compare!Size results;
 
-	//auto permu = Permutations(cast(int)cstatsArray.length, 1, cast(int)cstatsArray.length);
-	auto permu = Permutations(cast(int)cstatsArray.length, 3, 4);
+	auto permu = Permutations(cast(int)cstatsArray.length, 1, cast(int)cstatsArray.length);
+	//auto permu = Permutations(cast(int)cstatsArray.length, 3, 4);
+	formattedWrite(ltw, "\\chapter{Permutations}\n");
 	foreach(perm; permu) {
 		logf("begin");
 		auto mm = new MMCStat!32();
@@ -769,6 +897,7 @@ void doLearning(int Size)(string jsonFileName) {
 			}
 		}
 
+		formattedWrite(ltw, "\\section{%s}\n", mm.getName());
 		auto learnRsltPerm = LearnRslt!(Size)(&rslts);
 
 		for(size_t sp = 0; sp < numSplits; ++sp) {
@@ -796,10 +925,17 @@ void doLearning(int Size)(string jsonFileName) {
 			joinData(joined, mm);
 			
 			testPrediction(learnRsltPerm, joined, splits[sp], mm);
-			learnRsltPerm.print();
+			//learnRsltPerm.print();
 		}
+
+		logf("%s", mm.getName());
+		learnRsltPerm.print();
+		learnRsltPerm.toLatex(ltw);
 		results.compare(learnRsltPerm, mm);
 		//results.print();
 		logf("end\n");
 	}
+	formattedWrite(ltw, "\\chapter{Result}\n");
+	results.toLatex(ltw);
+	formattedWrite(ltw, "\\end{document}\n");
 }
