@@ -857,6 +857,7 @@ void prepareLatexDoc(LTW)(ref LTW ltw) {
 	\tikzstyle{place} = [shape=circle,
     draw, align=center,minimum width=0.70cm,
     top color=white, bottom color=blue!20]
+\setcounter{tocdepth}{5}
 \begin{document}
 `);
 }

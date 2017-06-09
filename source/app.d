@@ -577,7 +577,7 @@ void main(string[] args) {
 	//genRandomGraphs();
 	//addGraphsToFile();
 	//runMappings("6nodegraphs.json", args);
-	//runMappings("graphs8nodes.json", args);
+	runMappings("graphs8nodes.json", args);
 	//runMappings("9nodegraphs.json", args);
 	//MCSForm();
 	//GridFormXY();
@@ -595,5 +595,5 @@ void main(string[] args) {
 	//statsAna!32("6nodegraphs.json");
 	//statsAna!32("9nodegraphs.json");
 	//doLearning!32("6nodegraphs.json");
-	doLearning!32("graphs8nodes.json");
+	//doLearning!32("graphs8nodes.json");
 }
