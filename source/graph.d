@@ -6,6 +6,7 @@ import std.experimental.logger;
 import gfm.math.vector;
 import math;
 import exceptionhandling;
+import fixedsizearray;
 
 void populate(A,V)(ref A arr, size_t size, V defaultValue) {
 	arr.reserve(size);
@@ -761,4 +762,164 @@ unittest {
 	auto nine = makeNine!16();
 	assert(!six.isHomomorph(nine));	
 	assert(nine.isHomomorph(nine));	
+}
+
+void fillWithPerm(int Size)(ref const(FixedSizeArray!(byte,32)) perm,
+		ref const(Graph!Size) graph,
+		ref FixedSizeArray!(FixedSizeArray!(byte,32),32) mat)
+{
+	import std.exception : enforce;
+	mat.removeAll();
+	mat.insertBack(FixedSizeArray!(byte,32)(), graph.length);
+	assert(mat.length == graph.length);
+	for(size_t i = 0; i < graph.length; ++i) {
+		mat[i].insertBack(0, Size);
+		assert(mat[i].length == Size);
+	}
+
+	for(size_t i = 0; i < graph.length; ++i) {
+		for(size_t b = 0; b < graph.length; ++b) {
+			//logf("%d %d %d %d", i, b, graph.length, mat[i].length);
+			ensure(perm[i] < mat.length);
+			ensure(perm[b] < mat[perm[i]].length);
+			mat[perm[i]][perm[b]] = graph.nodes[i].test(b);
+		}
+	}
+}
+
+unittest {
+	auto g = Graph!16(4);
+	g.setEdge(0,2);
+	g.setEdge(0,3);
+	g.setEdge(2,3);
+
+	FixedSizeArray!(byte,32) perm;
+	perm.insertBack(1);
+	perm.insertBack(0);
+	perm.insertBack(2);
+	perm.insertBack(3);
+
+	FixedSizeArray!(FixedSizeArray!(byte,32)) rslt;
+	fillWithPerm!16(perm, g, rslt);
+
+	assertEqual(rslt.length, 4);
+	for(size_t i = 0; i < rslt.length; ++i) {
+		assertEqual(rslt[i].length, 16);
+	}
+
+	auto tca = [
+		[0, 0, 0, 0],
+		[0, 0, 1, 1],
+		[0, 1, 0, 1],
+		[0, 1, 1, 0]
+	];
+
+	foreach(idx, it; tca) {
+		foreach(jdx, jt; it) {
+			assertEqual(rslt[idx][jdx], jt);
+		}
+	}
+}
+
+bool compare(int Size)(ref const(FixedSizeArray!(FixedSizeArray!(byte,32))) a,
+		ref const(FixedSizeArray!(FixedSizeArray!(byte,32))) b) 
+{
+	if(a.length != b.length) {
+		return false;
+	}
+
+	for(size_t i = 0; i < a.length; ++i) {
+		for(size_t j = 0; j < a.length; ++j) {
+			if(a[i][j] != b[i][j]) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+bool areHomomorph(int Size)(const(Graph!Size) a, const(Graph!Size) b) {
+	if(a.length != b.length) {
+		return false;
+	}
+
+	FixedSizeArray!(FixedSizeArray!(byte,32),32) aMatrix;
+	for(size_t i = 0; i < a.length; ++i) {
+		aMatrix.insertBack(FixedSizeArray!(byte,32)());
+		for(size_t j = 0; j < a.Length; ++j) {
+			aMatrix.back.insertBack(a.nodes[i].test(j));
+		}
+	}
+
+	FixedSizeArray!(FixedSizeArray!(byte,32),32) bMatrix;
+
+	FixedSizeArray!(byte,32) perm;
+	for(byte i = 0; i < a.length; ++i) {
+		perm.insertBack(i);
+	}
+
+	bool ret = areHomomorph!(Size)(aMatrix, bMatrix, perm, b);
+
+	return ret;
+}
+
+bool areHomomorph(int Size)(
+		ref const(FixedSizeArray!(FixedSizeArray!(byte,32),32)) aMatrix,
+		ref FixedSizeArray!(FixedSizeArray!(byte,32),32) bMatrix,
+		ref FixedSizeArray!(byte,32) perm, const(Graph!Size) b)
+{
+	import std.conv : to;
+	import std.stdio : writeln;
+	import std.algorithm : nextPermutation;
+	import permutation;
+
+	// Lets test all combinations to see if there is a homomorphic mapping
+	// Yeah, fun all combinations again.
+	do {
+		fillWithPerm(perm, b, bMatrix);
+		if(compare!Size(aMatrix, bMatrix)) {
+			return true;
+		}
+	} while(nextPermutation(perm[]));
+
+	return false;
+}
+
+unittest {
+	auto six = makeSix!16();
+	assert(areHomomorph(six, six));	
+
+	auto nine = makeNine!16();
+	assert(!areHomomorph(six, nine));	
+	assert(areHomomorph(nine, nine));	
+}
+
+unittest {
+	auto six = makeSix!16();
+	auto sixD = six.dup();
+	assert(areHomomorph(six, sixD));	
+
+	auto z = six.nodes[0];
+	auto f = six.nodes[5];
+
+	for(int i = 0; i < sixD.length; ++i) {
+		sixD.unsetEdge(i, 0);
+		sixD.unsetEdge(i, 5);
+	}
+
+	assert(!areHomomorph!16(six, sixD));
+
+	for(int i = 0; i < six.length; ++i) {
+		if(i != 0 && f.test(i)) {
+			sixD.setEdge(0, i);
+		}
+	}
+	for(int i = 0; i < six.length; ++i) {
+		if(i != 5 && z.test(i)) {
+			sixD.setEdge(5, i);
+		}
+	}
+
+	assert(areHomomorph!16(six, sixD));
 }

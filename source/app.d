@@ -574,10 +574,10 @@ void main(string[] args) {
 	//crossingSixteen();
 	//crossingMCSSixteen();
 	//latticeMapped9quantil();
-	//genRandomGraphs();
+	genRandomGraphs();
 	//addGraphsToFile();
 	//runMappings("6nodegraphs.json", args);
-	runMappings("graphs8nodes.json", args);
+	//runMappings("graphs8nodes.json", args);
 	//runMappings("9nodegraphs.json", args);
 	//MCSForm();
 	//GridFormXY();

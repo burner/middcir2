@@ -55,15 +55,15 @@ class CStat(alias Stat, int Size) : IStat!Size {
 
 auto cstatsArray = [
 	//new CStat!(BetweenneesMedian,32), 
-	//new CStat!(BetweenneesMin,32), 
-	//new CStat!(BetweenneesMax,32), 
+	new CStat!(BetweenneesMin,32), 
+	new CStat!(BetweenneesMax,32), 
 	new CStat!(BetweenneesAverage,32),
 	//new CStat!(BetweenneesMode,32),
 
 	new CStat!(DiameterAverage,32), 
 	//new CStat!(DiameterMedian,32), 
-	//new CStat!(DiameterMax,32), 
-	//new CStat!(DiameterMin,32), 
+	new CStat!(DiameterMax,32), 
+	new CStat!(DiameterMin,32), 
 	//new CStat!(DiameterMode,32),
 
 	new CStat!(Connectivity,32), 
@@ -71,8 +71,8 @@ auto cstatsArray = [
 	new CStat!(DegreeAverage,32), 
 	//new CStat!(DegreeMedian,32), 
 	//new CStat!(DegreeMode,32), 
-	//new CStat!(DegreeMin,32), 
-	//new CStat!(DegreeMax,32), 
+	new CStat!(DegreeMin,32), 
+	new CStat!(DegreeMax,32), 
 ];
 
 class MMCStat(int Size) {
@@ -616,7 +616,7 @@ void mse(ref double store, double a, double b) {
 	enforce(!isNaN(a));
 	enforce(!isNaN(b));
 	//logf("%.9f %.9f", a, b);
-	store += pow(getWithNaN(a) * 100 - getWithNaN(b) * 100, 2);
+	store += pow(getWithNaN(a) - getWithNaN(b), 2);
 }
 
 CmpRslt compare(int Size)(const(GraphStats!Size)* pred,
@@ -710,15 +710,15 @@ struct CompareEntry(int Size) {
 	CompareEntries!(Size)[4][7][2] entries;
 
 	void toLatex(LTW)(ref LTW ltw) const {
-		formattedWrite(ltw, "\\subsubsection{Dimension %s:%s}\n",
+		formattedWrite(ltw, "\\subsection{Dimension %s:%s}\n",
 			this.dim.width, this.dim.height);
 
 		foreach(jdx, it; ["Avail", "Costs"]) {
-			formattedWrite(ltw, "\\paragraph{%s Measures}\n",
+			formattedWrite(ltw, "\\subsubsection{%s Measures}\n",
 				it);
 
 			foreach(idx, row; readOverWriteLevel) {
-				formattedWrite(ltw, "\\subparagraph{Read over Write %.2f}\n",
+				formattedWrite(ltw, "\\paragraph{Read over Write %.2f}\n",
 					row);
 				formattedWrite(ltw, "\\begin{tabular}{l r l}\n");
 				formattedWrite(ltw, "Read Avail & %.10f & %s \\\\ \n",
@@ -763,7 +763,7 @@ struct Compare(int Size) {
 			for(size_t i = 0; i < it.entries.length; ++i) {
 				for(size_t j = 0; j < it.entries[i].length; ++j) {
 					for(size_t k = 0; k < it.entries[i][j].length; ++k) {
-						writefln!"\t\t%d %d %d %.9f %s"(
+						writefln("\t\t%d %d %d %.9f %s",
 							i, j, k, it.entries[i][j][k].value,
 							it.entries[i][j][k].mm.getName());
 					}
@@ -781,7 +781,7 @@ struct Compare(int Size) {
 	void toLatex(LTW)(ref LTW ltw, string name, 
 			ref const(Array!(CompareEntry!Size)) arr) const
 	{
-		formattedWrite(ltw, "\\subsection{%s}\n", name);
+		formattedWrite(ltw, "\\section{%s}\n", name);
 		foreach(ref it; arr[]) {
 			it.toLatex(ltw);
 		}

@@ -3,6 +3,9 @@ module graphgen;
 import std.random;
 import std.container.array : Array;
 import std.experimental.logger;
+import std.format : format;
+
+import fixedsizearray;
 
 import graph;
 
@@ -104,9 +107,31 @@ struct GraphGen(int Size, Rnd) {
 					}
 				}
 			}
+			FixedSizeArray!(FixedSizeArray!(byte,32),32) aMatrix;
+			for(size_t i = 0; i < tmp.length; ++i) {
+				aMatrix.insertBack(FixedSizeArray!(byte,32)());
+				for(size_t j = 0; j < tmp.Length; ++j) {
+					aMatrix.back.insertBack(tmp.nodes[i].test(j));
+				}
+			}
+
+			FixedSizeArray!(FixedSizeArray!(byte,32),32) bMatrix;
+
 			foreach(ref it; existingGraphs) {
 				//if(it.isHomomorph(tmp)) {
-				if(areGraphsIsomorph(tmp, it)) {
+				FixedSizeArray!(byte,32) perm;
+				for(int i = 0; i < this.ggc.numNodes; ++i) {
+					perm.insertBack(i);
+				}	
+
+				bool agi = areGraphsIsomorph(tmp, it);
+				bool agi2 = areHomomorph(aMatrix, bMatrix, perm, it);
+				assert(agi == agi2, format(
+					"agi %d agi2 %d\ntmp\n%s\nit\n%s\n%(%s, %)",
+					agi, agi2, tmp, it, perm[])
+				);
+				//if(areGraphsIsomorph(tmp, it)) {
+				if(agi) {
 					continue outer;
 				}
 			}
