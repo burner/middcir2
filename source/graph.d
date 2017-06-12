@@ -773,8 +773,7 @@ void fillWithPerm(int Size)(ref const(FixedSizeArray!(byte,32)) perm,
 	mat.insertBack(FixedSizeArray!(byte,32)(), graph.length);
 	assert(mat.length == graph.length);
 	for(size_t i = 0; i < graph.length; ++i) {
-		mat[i].insertBack(0, Size);
-		assert(mat[i].length == Size);
+		mat[i].insertBack(0, graph.length);
 	}
 
 	for(size_t i = 0; i < graph.length; ++i) {
@@ -783,6 +782,79 @@ void fillWithPerm(int Size)(ref const(FixedSizeArray!(byte,32)) perm,
 			ensure(perm[i] < mat.length);
 			ensure(perm[b] < mat[perm[i]].length);
 			mat[perm[i]][perm[b]] = graph.nodes[i].test(b);
+		}
+	}
+}
+
+unittest {
+	import bitsetmodule;
+	import std.stdio : writef, writeln;
+	import std.format : format;
+
+	auto g = Graph!16(6);
+	//g.nodes[0] = bitset!(ushort)([1,2,3,5]);
+	//g.nodes[1] = bitset!(ushort)([0,3]);
+	//g.nodes[2] = bitset!(ushort)([0,4,5]);
+	//g.nodes[3] = bitset!(ushort)([0,1]);
+	//g.nodes[4] = bitset!(ushort)([2,5]);
+	//g.nodes[5] = bitset!(ushort)([0,2,4]);
+	g.nodes[0] = bitset!(ushort)([1,3,4,5]);
+	g.nodes[1] = bitset!(ushort)([0,2,3]);
+	g.nodes[2] = bitset!(ushort)([1,3]);
+	g.nodes[3] = bitset!(ushort)([0,1,2]);
+	g.nodes[4] = bitset!(ushort)([0,5]);
+	g.nodes[5] = bitset!(ushort)([0,4]);
+
+	FixedSizeArray!(byte,32) perm;
+	foreach(it; [0,2,4,5,1,3]) {
+		perm.insertBack(it);
+	}
+
+	FixedSizeArray!(FixedSizeArray!(byte,32),32) mat;
+
+	fillWithPerm(perm, g, mat);
+
+	writeln("Graph\n", g, "\nMat");
+	foreach(it; mat[]) {
+		size_t i;
+		foreach(jt; it[]) {
+			if(jt == 1) {
+				writef("%3d", i);
+			}
+			++i;
+		}
+		writeln();
+	}
+
+
+	//
+	//
+	//
+	//
+	//
+	//  TODO found out which one is correct
+	//
+	//
+	//
+	//
+	//
+
+	auto tta = [
+		[1,2,3,5],
+		[0,3],
+		[0,4,5],
+		[0,1],
+		[2,5],
+		[0,2,4]
+	];
+
+	foreach(idx, it; tta) {
+		foreach(jdx, jt; it) {
+			assert(mat[idx][jt] == 1, 
+				format("%d %d\n%d != %d\n%(%(%2d %)\n%)", idx, jdx, 
+					mat[idx][jdx], jt, tta
+				)
+			);
 		}
 	}
 }
@@ -804,7 +876,7 @@ unittest {
 
 	assertEqual(rslt.length, 4);
 	for(size_t i = 0; i < rslt.length; ++i) {
-		assertEqual(rslt[i].length, 16);
+		assertEqual(rslt[i].length, 4);
 	}
 
 	auto tca = [
