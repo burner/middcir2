@@ -92,6 +92,7 @@ struct GraphGen(int Size, Rnd) {
 
 	private void gen(ref Array!(Graph!Size) existingGraphs) {
 		import graphisomorph;
+		import std.algorithm.sorting : sort;
 		outer: while(true) {
 			if(this.empty) {
 				break;
@@ -107,12 +108,16 @@ struct GraphGen(int Size, Rnd) {
 					}
 				}
 			}
+
 			FixedSizeArray!(FixedSizeArray!(byte,32),32) aMatrix;
+			aMatrix.insertBack(FixedSizeArray!(byte,32)(), tmp.length);
 			for(size_t i = 0; i < tmp.length; ++i) {
-				aMatrix.insertBack(FixedSizeArray!(byte,32)());
-				for(size_t j = 0; j < tmp.Length; ++j) {
-					aMatrix.back.insertBack(tmp.nodes[i].test(j));
+				for(size_t j = 0; j < tmp.length; ++j) {
+					if(tmp.nodes[i].test(j)) {
+						aMatrix[i].insertBack(j);
+					}
 				}
+				sort(aMatrix[i][]);
 			}
 
 			FixedSizeArray!(FixedSizeArray!(byte,32),32) bMatrix;

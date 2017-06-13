@@ -774,22 +774,13 @@ void fillWithPerm(int Size)(ref const(FixedSizeArray!(byte,32)) perm,
 	mat.removeAll();
 	mat.insertBack(FixedSizeArray!(byte,32)(), graph.length);
 	assert(mat.length == graph.length);
-	//for(size_t i = 0; i < graph.length; ++i) {
-	//	mat[i].insertBack(0, graph.length);
-	//}
 
 	for(size_t i = 0; i < graph.length; ++i) {
 		for(size_t b = 0; b < graph.length; ++b) {
-			//logf("%d %d %d %d", i, b, graph.length, mat[i].length);
-			//ensure(perm[i] < mat.length);
-			//ensure(perm[b] < mat[perm[i]].length);
-			//mat[perm[i]][perm[b]] = graph.nodes[i].test(b);
 			if(graph.nodes[i].test(b)) {
 				mat[perm[i]].insertBack(perm[b]);
 			}
 		}
-	}
-	for(size_t i = 0; i < graph.length; ++i) {
 		sort(mat[i][]);
 	}
 }
@@ -800,12 +791,6 @@ unittest {
 	import std.format : format;
 
 	auto g = Graph!16(6);
-	//g.nodes[0] = bitset!(ushort)([1,2,3,5]);
-	//g.nodes[1] = bitset!(ushort)([0,3]);
-	//g.nodes[2] = bitset!(ushort)([0,4,5]);
-	//g.nodes[3] = bitset!(ushort)([0,1]);
-	//g.nodes[4] = bitset!(ushort)([2,5]);
-	//g.nodes[5] = bitset!(ushort)([0,2,4]);
 	g.nodes[0] = bitset!(ushort)([1,3,4,5]);
 	g.nodes[1] = bitset!(ushort)([0,2,3]);
 	g.nodes[2] = bitset!(ushort)([1,3]);
@@ -824,28 +809,11 @@ unittest {
 
 	writeln("Graph\n", g, "\nMat");
 	foreach(it; mat[]) {
-		size_t i;
 		foreach(jt; it[]) {
-			//if(jt == 1) {
-				writef("%3d", jt);
-			//}
-			++i;
+			writef("%3d", jt);
 		}
 		writeln();
 	}
-
-
-	//
-	//
-	//
-	//
-	//
-	//  TODO found out which one is correct
-	//
-	//
-	//
-	//
-	//
 
 	auto tta = [
 		[1,2,3,5],
@@ -883,22 +851,22 @@ unittest {
 	fillWithPerm!16(perm, g, rslt);
 
 	assertEqual(rslt.length, 4);
-	//for(size_t i = 0; i < rslt.length; ++i) {
-	//	assertEqual(rslt[i].length, 4);
-	//}
+	for(size_t i = 1; i < rslt.length; ++i) {
+		assertEqual(rslt[i].length, 2);
+	}
 
 	auto tca = [
-		[0, 0, 0, 0],
-		[0, 0, 1, 1],
-		[0, 1, 0, 1],
-		[0, 1, 1, 0]
+		[],
+		[2,3],
+		[1,3],
+		[1,2]
 	];
 
-	//foreach(idx, it; tca) {
-	//	foreach(jdx, jt; it) {
-	//		assertEqual(rslt[idx][jdx], jt);
-	//	}
-	//}
+	foreach(idx, it; tca) {
+		foreach(jdx, jt; it) {
+			assertEqual(rslt[idx][jdx], jt);
+		}
+	}
 }
 
 bool compare(int Size)(ref const(FixedSizeArray!(FixedSizeArray!(byte,32))) a,
@@ -909,7 +877,10 @@ bool compare(int Size)(ref const(FixedSizeArray!(FixedSizeArray!(byte,32))) a,
 	}
 
 	for(size_t i = 0; i < a.length; ++i) {
-		for(size_t j = 0; j < a.length; ++j) {
+		if(a[i].length != b[i].length) {
+			return false;
+		}
+		for(size_t j = 0; j < a[i].length; ++j) {
 			if(a[i][j] != b[i][j]) {
 				return false;
 			}
@@ -920,16 +891,20 @@ bool compare(int Size)(ref const(FixedSizeArray!(FixedSizeArray!(byte,32))) a,
 }
 
 bool areHomomorph(int Size)(const(Graph!Size) a, const(Graph!Size) b) {
+	import std.algorithm.sorting : sort;
 	if(a.length != b.length) {
 		return false;
 	}
 
 	FixedSizeArray!(FixedSizeArray!(byte,32),32) aMatrix;
+	aMatrix.insertBack(FixedSizeArray!(byte,32)(), a.length);
 	for(size_t i = 0; i < a.length; ++i) {
-		aMatrix.insertBack(FixedSizeArray!(byte,32)());
-		for(size_t j = 0; j < a.Length; ++j) {
-			aMatrix.back.insertBack(a.nodes[i].test(j));
+		for(size_t j = 0; j < a.length; ++j) {
+			if(a.nodes[i].test(j)) {
+				aMatrix[i].insertBack(j);
+			}
 		}
+		sort(aMatrix[i][]);
 	}
 
 	FixedSizeArray!(FixedSizeArray!(byte,32),32) bMatrix;
