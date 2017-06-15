@@ -109,7 +109,7 @@ struct GraphGen(int Size, Rnd) {
 				}
 			}
 
-			FixedSizeArray!(FixedSizeArray!(byte,32),32) aMatrix;
+			/*FixedSizeArray!(FixedSizeArray!(byte,32),32) aMatrix;
 			aMatrix.insertBack(FixedSizeArray!(byte,32)(), tmp.length);
 			for(size_t i = 0; i < tmp.length; ++i) {
 				for(size_t j = 0; j < tmp.length; ++j) {
@@ -120,23 +120,25 @@ struct GraphGen(int Size, Rnd) {
 				sort(aMatrix[i][]);
 			}
 
-			FixedSizeArray!(FixedSizeArray!(byte,32),32) bMatrix;
+			FixedSizeArray!(FixedSizeArray!(byte,32),32) bMatrix;*/
 
 			foreach(ref it; existingGraphs) {
 				//if(it.isHomomorph(tmp)) {
-				FixedSizeArray!(byte,32) perm;
+				/*FixedSizeArray!(byte,32) perm;
 				for(int i = 0; i < this.ggc.numNodes; ++i) {
 					perm.insertBack(i);
-				}	
+				}	*/
 
-				bool agi = areGraphsIsomorph(tmp, it);
-				bool agi2 = areHomomorph(aMatrix, bMatrix, perm, it);
-				assert(agi == agi2, format(
-					"agi %d agi2 %d\ntmp\n%s\nit\n%s\n%(%s, %)",
-					agi, agi2, tmp, it, perm[])
-				);
-				//if(areGraphsIsomorph(tmp, it)) {
-				if(agi) {
+				//bool agi = areGraphsIsomorph(tmp, it);
+				//bool agi2 = areHomomorph(aMatrix, bMatrix, perm, it);
+				bool agi2 = areHomomorph(tmp, it);
+				//if(agi != agi2) {
+				//	//logf("agi %d agi2 %d\ntmp\n%s\nit\n%s\n%(%s, %)",
+				//	logf("agi %d agi2 %d\ntmp\n%s\nit\n%s",
+				//	agi, agi2, tmp, it);
+				//}
+				////if(areGraphsIsomorph(tmp, it)) {
+				if(agi2) {
 					continue outer;
 				}
 			}

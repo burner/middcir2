@@ -58,7 +58,9 @@ bool areGraphsIsomorph(int Size)(const Graph!Size a, const Graph!Size b) {
 		inner: foreach(it; perm[]) {
 			// A and B must have the same number of edges
 			if(a.nodes[it].count() != b.nodes[idx].count()) {
-				//writefln("NODE COUNT");
+				//writefln("NODE COUNT %s %s", a.nodes[it].count(),
+				//	b.nodes[idx].count()
+				//);
 				goto next;
 			}
 
@@ -106,4 +108,26 @@ unittest {
 	b.setEdge(5,3);
 
 	assert(areGraphsIsomorph(a, b));
+}
+
+unittest {
+	import bitsetmodule;
+
+	auto g = Graph!16(6);
+	g.nodes[0] = bitset!(ushort)([1,3,4,5]);
+	g.nodes[1] = bitset!(ushort)([0,2,3]);
+	g.nodes[2] = bitset!(ushort)([1,3]);
+	g.nodes[3] = bitset!(ushort)([0,1,2]);
+	g.nodes[4] = bitset!(ushort)([0,5]);
+	g.nodes[5] = bitset!(ushort)([0,4]);
+
+	auto g2 = Graph!16(6);
+	g2.nodes[0] = bitset!(ushort)([1,2,3,5]);
+	g2.nodes[1] = bitset!(ushort)([0,3]);
+	g2.nodes[2] = bitset!(ushort)([0,4,5]);
+	g2.nodes[3] = bitset!(ushort)([0,1]);
+	g2.nodes[4] = bitset!(ushort)([2,5]);
+	g2.nodes[5] = bitset!(ushort)([0,2,4]);
+
+	//assert(areGraphsIsomorph(g, g2));
 }

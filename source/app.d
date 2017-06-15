@@ -466,12 +466,12 @@ void genRandomGraphs() {
 
 	Array!(Graph!16) graphs;
 
-	auto rnd = Random(23378);
+	auto rnd = Random(25378);
 
 	GraphGenConfig ggc;
-	ggc.numNodes = 6;
+	ggc.numNodes = 12;
 	ggc.minEdges = 1;
-	ggc.maxEdges = 4;
+	ggc.maxEdges = 9;
 
 	log("Here");
 	auto gg = graphGenerator!16(128*2, 2*1024, ggc, rnd);
@@ -484,7 +484,7 @@ void genRandomGraphs() {
 		gg.popFront(graphs);
 	}
 
-	graphsToJSON("graphs6nodes.json", graphs);
+	graphsToJSON("graphs12nodes.json", graphs);
 }
 
 void addGraphsToFile(int Size)(const string filename, long numGraphsToAdd) {
@@ -595,5 +595,5 @@ void main(string[] args) {
 	//statsAna!32("6nodegraphs.json");
 	//statsAna!32("9nodegraphs.json");
 	//doLearning!32("6nodegraphs.json");
-	//doLearning!32("graphs8nodes.json");
+	//doLearning!32("graphs9nodes2.json");
 }

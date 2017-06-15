@@ -781,6 +781,8 @@ void fillWithPerm(int Size)(ref const(FixedSizeArray!(byte,32)) perm,
 				mat[perm[i]].insertBack(perm[b]);
 			}
 		}
+	}
+	for(size_t i = 0; i < graph.length; ++i) {
 		sort(mat[i][]);
 	}
 }

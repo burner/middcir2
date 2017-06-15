@@ -565,9 +565,9 @@ Array!LNTDimensions genDims(const long numNodes) {
 	long[][] dimms = bestGridDiffs(numNodes);
 	Array!LNTDimensions ret;
 	foreach(long[] d; dimms) {
-		/*if(d[0] == 1 || d[1] == 1) {
+		if(d[0] == 1 || d[1] == 1) {
 			continue;
-		}*/
+		}
 		ret.insertBack(LNTDimensions(d[0], d[1]));
 	}
 	return ret;

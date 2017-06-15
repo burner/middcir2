@@ -271,6 +271,8 @@ BetweennessCentrality betweennessCentrality(int Size)(ref Graph!Size graph) {
 			for(uint k = j + 1; k < graph.length; ++k) {
 				tmpPath.removeAll();
 				if(paths.path(j, k, tmpPath)) {
+					assert(tmpPath.front == j);
+					assert(tmpPath.back == k);
 					for(size_t n = 1; n < tmpPath.length - 1; ++n) {
 						if(tmpPath[n] == i) {
 							store[tmpPath[n]]++;
