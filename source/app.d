@@ -469,22 +469,22 @@ void genRandomGraphs() {
 	auto rnd = Random(25378);
 
 	GraphGenConfig ggc;
-	ggc.numNodes = 12;
+	ggc.numNodes = 9;
 	ggc.minEdges = 1;
-	ggc.maxEdges = 9;
+	ggc.maxEdges = 8;
 
 	log("Here");
-	auto gg = graphGenerator!16(128*2, 2*1024, ggc, rnd);
+	auto gg = graphGenerator!16(128*2, 3*1024, ggc, rnd);
 	int id;
 	while(!gg.empty) {
 		auto f = gg.front;
 		f.id = id++;
-		writeln(f.toString());
+		writeln(gg.maxTries, "\n", f.toString());
 		graphs.insertBack(f);
 		gg.popFront(graphs);
 	}
 
-	graphsToJSON("graphs12nodes.json", graphs);
+	graphsToJSON("graphs9nodes3.json", graphs);
 }
 
 void addGraphsToFile(int Size)(const string filename, long numGraphsToAdd) {
