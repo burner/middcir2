@@ -76,6 +76,30 @@ auto cstatsArray = [
 	new CStat!(DegreeMax,32), 
 ];
 
+struct MaxMeasures {
+	double maxBetweenness;
+	double maxDiameter;
+	double maxConnectivity;
+	double maxDegree;
+}
+
+MaxMeasures getMaxMeasure(ref const(Array!(GraphWithProperties!Size)) gs) {
+	MaxMeasures mm;
+	mm.maxBetweenness = 0.0;
+	mm.maxDiameter = 0.0;
+	mm.maxConnectivity = 0.0;
+	mm.maxDegree = 0.0;
+
+	foreach(it; gs[]) {
+		mm.maxBetweenness = max(mm.maxBetweenness, it.betweenness.max);
+		mm.maxDiameter = max(mm.maxDiameter, it.diameter.max);
+		mm.maxConnectivity = max(mm.maxConnectivity, it.connectivity);
+		mm.maxDegree = max(mm.maxDegree, it.degree.max);
+	}
+
+	return mm;
+}
+
 class MMCStat(int Size) {
 	FixedSizeArray!(IStat!Size) cstats;
 	string name;
@@ -147,7 +171,9 @@ unittest {
 
 	int count;
 	for(int i = 0; i < cstatsArray.length; ++i) {
-		auto permu = Permutations(cast(int)cstatsArray.length, i, cast(int)cstatsArray.length);
+		auto permu = Permutations(cast(int)cstatsArray.length, i, 
+				cast(int)cstatsArray.length
+			);
 		auto mm = new MMCStat!32();
 		foreach(perm; permu) {
 			for(int j = 0; j < cstatsArray.length; ++j) {
