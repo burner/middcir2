@@ -3,9 +3,11 @@ module graphmeasures;
 import std.experimental.logger;
 import std.traits;
 import std.range;
+import std.math : isNaN;
 import graph;
 import floydmodule;
 import fixedsizearray;
+import exceptionhandling;
 
 bool equals(T)(T a, T b) {
 	static if(isFloatingPoint!T) {
@@ -237,7 +239,7 @@ unittest {
 	}
 }
 
-struct BetweennessCentrality {
+struct BetweennessCentralityOld {
 	double average;
 	double median;
 	double min;
@@ -245,7 +247,7 @@ struct BetweennessCentrality {
 	double mode;
 }
 
-BetweennessCentrality betweennessCentrality(int Size)(ref Graph!Size graph) {
+BetweennessCentralityOld betweennessCentralityOld(int Size)(ref Graph!Size graph) {
 	import std.container.array;
 	import std.algorithm.sorting : sort;
 	import std.algorithm.iteration : sum;
@@ -286,7 +288,7 @@ BetweennessCentrality betweennessCentrality(int Size)(ref Graph!Size graph) {
 
 	sort(store[]);
 
-	BetweennessCentrality ret;
+	BetweennessCentralityOld ret;
 	ret.average = sum(store[]) / cast(double)graph.length;
 	ret.min = cast(double)store.front;
 	ret.max = cast(double)store.back;
@@ -301,4 +303,128 @@ BetweennessCentrality betweennessCentrality(int Size)(ref Graph!Size graph) {
 	ret.mode = m.max;
 
 	return ret;
+}
+
+alias BetweennessCentrality = BetweennessCentralityOld;
+
+BetweennessCentrality betweennessCentrality(int Size)(ref const(Graph!Size) graph)
+{
+	import std.container.array;
+	import std.algorithm.sorting : sort;
+	import std.algorithm.iteration : sum;
+	import bitsetmodule;
+	import permutation;
+	import utils : removeAll;
+
+	alias BitsetTypeType = TypeFromSize!Size;
+	alias BitsetType = Bitset!BitsetTypeType;
+
+	FixedSizeArray!( // dim i
+		FixedSizeArray!( // dim j
+			Array!( // array of shortest paths
+				FixedSizeArray!(uint,32) // the path
+			)
+		, 32)
+	, 32) paths;
+
+	for(size_t i = 0; i < graph.length; ++i) {
+		paths.insertBack(
+			FixedSizeArray!( // dim j
+				Array!( // array of shortest paths
+					FixedSizeArray!(uint,32) // the path
+				)
+			, 32)()
+		);
+		for(size_t j = 0; j < graph.length; ++j) {
+			paths.back.insertBack(Array!(FixedSizeArray!(uint,32))());
+		}
+	}
+	ensure(paths.length == graph.length);
+	for(size_t i = 0; i < graph.length; ++i) {
+		ensure(paths[i].length == graph.length);
+		for(size_t j = 0; j < graph.length; ++j) {
+			ensure(paths[i][j].length == 0);
+		}
+	}
+
+	auto f = floyd!(typeof(graph),Size)(graph);
+
+	auto permu = Permutations(cast(int)graph.length);
+	foreach(perm; permu) {
+		f.execute(graph, perm);
+		for(uint i = 0; i < graph.length; ++i) {
+			for(uint j = i+1; j < graph.length; ++j) {
+				FixedSizeArray!(uint,32) tmpPath;
+				//logf("%s %u %u", perm, i, j);
+				if(f.path(i, j, tmpPath)) {
+					if(paths[i][j].length > 0) {
+						const size_t bestLength = paths[i][j].front.length;
+						ensure(tmpPath.length >= bestLength);
+						if(tmpPath.length == bestLength) {
+							paths[i][j].insertBack(tmpPath);
+						}
+					} else {
+						paths[i][j].insertBack(tmpPath);
+					}
+				}
+			}
+		}
+	}
+
+	FixedSizeArray!(double,32) result;
+	result.insertBack(0.0, graph.length);
+
+	for(size_t i = 0; i < graph.length; ++i) {
+		for(size_t j = i+1; j < graph.length; ++j) {
+			for(size_t idx = 0; idx < graph.length; ++idx) {
+				if(idx == i || idx == j) {
+					continue;
+				}
+				size_t cnt = 0;
+				ensure(paths[i][j].length > 0);
+				foreach(ref cp; paths[i][j][]) {
+					foreach(ref it; cp[]) {
+						if(it == idx) {
+							++cnt;
+						}
+					}
+				}
+				result[idx] += cast(double)(cnt) /
+					cast(double)(paths[i][j].length);
+			}
+		}
+	}
+
+	sort(result[]);
+	BetweennessCentrality ret;
+	ret.average = sum(result[]) / cast(double)graph.length;
+	ret.min = cast(double)result.front;
+	ret.max = cast(double)result.back;
+	if(graph.length % 2 == 0) {
+		ret.median = (result[graph.length / 2] + result[(graph.length / 2) + 1]) 
+			/ 2.0;
+	} else {
+		ret.median = result[graph.length / 2];
+	}
+
+	auto m = computeMode(result[]);
+	ret.mode = m.max;
+
+	return ret;
+}
+
+unittest {
+	auto n = makeNine!16();
+	auto b = betweennessCentrality(n);
+	ensure(!isNaN(b.min));
+	ensure(b.min >= 0.0);
+	ensure(!isNaN(b.max));
+	ensure(b.max >= 0.0);
+	ensure(!isNaN(b.average));
+	ensure(b.average >= 0.0);
+	ensure(!isNaN(b.median));
+	ensure(b.median >= 0.0);
+	ensure(!isNaN(b.mode));
+	ensure(b.mode >= 0.0);
+	logf("%s", b);
 }
