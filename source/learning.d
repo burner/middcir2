@@ -4,6 +4,7 @@ import std.stdio;
 import std.container.array;
 import std.format : format, formattedWrite;
 import std.algorithm.sorting : nextPermutation;
+import std.algorithm.comparison : max;
 import std.meta : AliasSeq;
 import std.exception : enforce;
 import std.experimental.logger;
@@ -83,7 +84,7 @@ struct MaxMeasures {
 	double maxDegree;
 }
 
-MaxMeasures getMaxMeasure(ref const(Array!(GraphWithProperties!Size)) gs) {
+MaxMeasures getMaxMeasure(int Size)(ref const(Array!(GraphWithProperties!Size)) gs) {
 	MaxMeasures mm;
 	mm.maxBetweenness = 0.0;
 	mm.maxDiameter = 0.0;
@@ -98,6 +99,100 @@ MaxMeasures getMaxMeasure(ref const(Array!(GraphWithProperties!Size)) gs) {
 	}
 
 	return mm;
+}
+
+void standardizeProperties(int Size)(ref Array!(GraphWithProperties!Size) gs) {
+	import exceptionhandling;
+
+	const mm = getMaxMeasure!(Size)(gs);
+
+	foreach(ref it; gs[]) {
+		it.diameter.min = it.diameter.min / mm.maxDiameter;
+		it.diameter.average = it.diameter.average / mm.maxDiameter;
+		it.diameter.median = it.diameter.median / mm.maxDiameter;
+		it.diameter.mode = it.diameter.mode / mm.maxDiameter;
+		it.diameter.max = it.diameter.max / mm.maxDiameter;
+
+		it.degree.min = it.degree.min / mm.maxDegree;
+		it.degree.average = it.degree.average / mm.maxDegree;
+		it.degree.median = it.degree.median / mm.maxDegree;
+		it.degree.mode = it.degree.mode / mm.maxDegree;
+		it.degree.max = it.degree.max / mm.maxDegree;
+
+		it.betweenness.min = it.betweenness.min / mm.maxConnectivity;
+		it.betweenness.average = it.betweenness.average / mm.maxConnectivity;
+		it.betweenness.median = it.betweenness.median / mm.maxConnectivity;
+		it.betweenness.mode = it.betweenness.mode / mm.maxConnectivity;
+		it.betweenness.max = it.betweenness.max / mm.maxConnectivity;
+
+		it.connectivity = it.connectivity / mm.maxConnectivity;
+	}
+
+	foreach(ref const it; gs[]) {
+		ensure(isNaN(it.diameter.min));
+		ensure(it.diameter.min >= 0.0);
+		ensure(it.diameter.min <= 1.0);
+
+		ensure(isNaN(it.diameter.average));
+		ensure(it.diameter.average >= 0.0);
+		ensure(it.diameter.average <= 1.0);
+
+		ensure(isNaN(it.diameter.median));
+		ensure(it.diameter.median >= 0.0);
+		ensure(it.diameter.median <= 1.0);
+
+		ensure(isNaN(it.diameter.mode));
+		ensure(it.diameter.mode >= 0.0);
+		ensure(it.diameter.mode <= 1.0);
+
+		ensure(isNaN(it.diameter.max));
+		ensure(it.diameter.max >= 0.0);
+		ensure(it.diameter.max <= 1.0);
+
+		ensure(isNaN(it.degree.min));
+		ensure(it.degree.min >= 0.0);
+		ensure(it.degree.min <= 1.0);
+
+		ensure(isNaN(it.degree.average));
+		ensure(it.degree.average >= 0.0);
+		ensure(it.degree.average <= 1.0);
+
+		ensure(isNaN(it.degree.median));
+		ensure(it.degree.median >= 0.0);
+		ensure(it.degree.median <= 1.0);
+
+		ensure(isNaN(it.degree.mode));
+		ensure(it.degree.mode >= 0.0);
+		ensure(it.degree.mode <= 1.0);
+
+		ensure(isNaN(it.degree.max));
+		ensure(it.degree.max >= 0.0);
+		ensure(it.degree.max <= 1.0);
+
+		ensure(isNaN(it.betweenness.min));
+		ensure(it.betweenness.min >= 0.0);
+		ensure(it.betweenness.min <= 1.0);
+
+		ensure(isNaN(it.betweenness.average));
+		ensure(it.betweenness.average >= 0.0);
+		ensure(it.betweenness.average <= 1.0);
+
+		ensure(isNaN(it.betweenness.median));
+		ensure(it.betweenness.median >= 0.0);
+		ensure(it.betweenness.median <= 1.0);
+
+		ensure(isNaN(it.betweenness.mode));
+		ensure(it.betweenness.mode >= 0.0);
+		ensure(it.betweenness.mode <= 1.0);
+
+		ensure(isNaN(it.betweenness.max));
+		ensure(it.betweenness.max >= 0.0);
+		ensure(it.betweenness.max <= 1.0);
+
+		ensure(isNaN(it.connectivity));
+		ensure(it.connectivity >= 0.0);
+		ensure(it.connectivity <= 1.0);
+	}
 }
 
 class MMCStat(int Size) {
@@ -976,6 +1071,7 @@ void doLearning(int Size)(string jsonFileName) {
 	enum numSplits = 5;
 	string outdir = format("%s_Learning/", jsonFileName);
 	Array!(GraphWithProperties!Size) graphs = loadGraphs!Size(jsonFileName);
+	standardizeProperties!(Size)(graphs);
 	logf("%s", graphs.length);
 	Array!LNTDimensions dims = genDims(graphs[0].graph.length);
 	ProtocolStats!(Size) rslts = loadResultss(graphs, jsonFileName);
