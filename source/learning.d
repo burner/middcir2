@@ -14,6 +14,7 @@ import fixedsizearray;
 import statsanalysis;
 import permutation;
 import bitsetmodule;
+import protocols;
 
 string shortName(string l) {
 	import std.uni : isNumber;
@@ -268,7 +269,8 @@ Array!(GraphStats!Size) joinGraphStats(int Size)(
 		ref const(Array!(GraphStats!Size)) old,
 		const(MMCStat!Size) mm)
 {
-	return joinGraphStatsAvg!Size(old, mm);
+	//return joinGraphStatsAvg!Size(old, mm);
+	return joinGraphStatsMin!Size(old, mm);
 }
 
 Array!(GraphStats!Size) joinGraphStatsIgnoreSame(int Size)(
@@ -321,6 +323,84 @@ Array!(GraphStats!Size) joinGraphStatsAvg(int Size)(
 
 	return ret;
 }
+
+Result[7][2] minResult(int Size)(ref Array!(GraphStats!Size) arr) {
+	import std.algorithm.comparison : min;
+	Result[7][2] ret;
+	for(size_t i = 0; i < ret.length; ++i) {
+		for(size_t j = 0; j < ret.length; ++j) {
+			ret[i][j] = getResult(9999.9); // Every real value should be smaller
+			foreach(it; arr[]) {
+				for(size_t idx = 0; idx < 101; ++idx) {
+					ret[i][j].readAvail[idx] =
+						min(
+							it.results[i][j].readAvail[idx],
+						   	ret[i][j].readAvail[idx]
+						);
+					ret[i][j].writeAvail[idx] =
+						min(
+							it.results[i][j].writeAvail[idx],
+						   	ret[i][j].writeAvail[idx]
+						);
+					ret[i][j].readCosts[idx] =
+						min(
+							it.results[i][j].readCosts[idx],
+						   	ret[i][j].readCosts[idx]
+						);
+					ret[i][j].writeCosts[idx] =
+						min(
+							it.results[i][j].writeCosts[idx],
+						   	ret[i][j].writeCosts[idx]
+						);
+				}
+			}
+		}
+	}
+	return ret;
+}
+
+Array!(GraphStats!Size) joinGraphStatsMin(int Size)(
+		ref const(Array!(GraphStats!Size)) old,
+		const(MMCStat!Size) mm)
+{
+	return joinGraphStatsMulti!(Size, minResult)(old, mm);
+}
+
+Array!(GraphStats!Size) joinGraphStatsMulti(int Size, alias Func)(
+		ref const(Array!(GraphStats!Size)) old,
+		const(MMCStat!Size) mm)
+{
+	import utils : removeAll;
+	Array!(GraphStats!Size) ret;
+
+	Array!(GraphStats!(Size)) tmp;
+	int addCount = 1;
+	foreach(ref it; old[]) {
+		if(ret.empty) {
+			ret.insertBack(GraphStats!Size(it));
+		} else {
+			if(mm.equal(ret.back, it)) {
+				tmp.insertBack(GraphStats!(Size)(it));
+				++addCount;
+			} else {
+				if(addCount > 1) {
+					tmp.insertBack(ret.back);
+					ret.back.results = Func!Size(tmp);
+					tmp.removeAll();
+					addCount = 1;
+				}
+				ret.insertBack(GraphStats!Size(it));
+			}
+		}
+	}
+	if(addCount > 1) {
+		ret.back.results = Func!Size(tmp);
+		addCount = 1;
+	}
+
+	return ret;
+}
+
 Data!Size joinData(int Size)(ref const(Data!Size) old,
 	   	const(MMCStat!Size) mm)
 {

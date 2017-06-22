@@ -574,7 +574,7 @@ void main(string[] args) {
 	//crossingSixteen();
 	//crossingMCSSixteen();
 	//latticeMapped9quantil();
-	genRandomGraphs();
+	//genRandomGraphs();
 	//addGraphsToFile();
 	//runMappings("6nodegraphs.json", args);
 	//runMappings("graphs8nodes.json", args);
@@ -594,6 +594,6 @@ void main(string[] args) {
 	//statsAna!16("graphs7nodes.json");
 	//statsAna!32("6nodegraphs.json");
 	//statsAna!32("9nodegraphs.json");
-	//doLearning!32("6nodegraphs.json");
+	doLearning!32("6nodegraphs.json");
 	//doLearning!32("graphs9nodes2.json");
 }

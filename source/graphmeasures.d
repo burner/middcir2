@@ -416,6 +416,7 @@ BetweennessCentrality betweennessCentrality(int Size)(ref const(Graph!Size) grap
 unittest {
 	auto n = makeNine!16();
 	auto b = betweennessCentrality(n);
+	auto bo = betweennessCentralityOld(n);
 	ensure(!isNaN(b.min));
 	ensure(b.min >= 0.0);
 	ensure(!isNaN(b.max));
@@ -426,5 +427,5 @@ unittest {
 	ensure(b.median >= 0.0);
 	ensure(!isNaN(b.mode));
 	ensure(b.mode >= 0.0);
-	logf("%s", b);
+	//logf("%s\n%s", b, bo);
 }
