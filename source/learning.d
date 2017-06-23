@@ -98,6 +98,11 @@ MaxMeasures getMaxMeasure(int Size)(ref const(Array!(GraphWithProperties!Size)) 
 		mm.maxDegree = max(mm.maxDegree, it.degree.max);
 	}
 
+	mm.maxBetweenness *= 10;
+	mm.maxDiameter *= 10;
+	mm.maxConnectivity *= 10;
+	mm.maxDegree *= 10;
+
 	return mm;
 }
 
@@ -129,69 +134,69 @@ void standardizeProperties(int Size)(ref Array!(GraphWithProperties!Size) gs) {
 	}
 
 	foreach(ref const it; gs[]) {
-		ensure(isNaN(it.diameter.min));
+		ensure(!isNaN(it.diameter.min));
 		ensure(it.diameter.min >= 0.0);
-		ensure(it.diameter.min <= 1.0);
+		ensure(it.diameter.min <= 10.0);
 
-		ensure(isNaN(it.diameter.average));
+		ensure(!isNaN(it.diameter.average));
 		ensure(it.diameter.average >= 0.0);
-		ensure(it.diameter.average <= 1.0);
+		ensure(it.diameter.average <= 10.0);
 
-		ensure(isNaN(it.diameter.median));
+		ensure(!isNaN(it.diameter.median));
 		ensure(it.diameter.median >= 0.0);
-		ensure(it.diameter.median <= 1.0);
+		ensure(it.diameter.median <= 10.0);
 
-		ensure(isNaN(it.diameter.mode));
+		ensure(!isNaN(it.diameter.mode));
 		ensure(it.diameter.mode >= 0.0);
-		ensure(it.diameter.mode <= 1.0);
+		ensure(it.diameter.mode <= 10.0);
 
-		ensure(isNaN(it.diameter.max));
+		ensure(!isNaN(it.diameter.max));
 		ensure(it.diameter.max >= 0.0);
-		ensure(it.diameter.max <= 1.0);
+		ensure(it.diameter.max <= 10.0);
 
-		ensure(isNaN(it.degree.min));
+		ensure(!isNaN(it.degree.min));
 		ensure(it.degree.min >= 0.0);
-		ensure(it.degree.min <= 1.0);
+		ensure(it.degree.min <= 10.0);
 
-		ensure(isNaN(it.degree.average));
+		ensure(!isNaN(it.degree.average));
 		ensure(it.degree.average >= 0.0);
-		ensure(it.degree.average <= 1.0);
+		ensure(it.degree.average <= 10.0);
 
-		ensure(isNaN(it.degree.median));
+		ensure(!isNaN(it.degree.median));
 		ensure(it.degree.median >= 0.0);
-		ensure(it.degree.median <= 1.0);
+		ensure(it.degree.median <= 10.0);
 
-		ensure(isNaN(it.degree.mode));
+		ensure(!isNaN(it.degree.mode));
 		ensure(it.degree.mode >= 0.0);
-		ensure(it.degree.mode <= 1.0);
+		ensure(it.degree.mode <= 10.0);
 
-		ensure(isNaN(it.degree.max));
+		ensure(!isNaN(it.degree.max));
 		ensure(it.degree.max >= 0.0);
-		ensure(it.degree.max <= 1.0);
+		ensure(it.degree.max <= 10.0);
 
-		ensure(isNaN(it.betweenness.min));
+		ensure(!isNaN(it.betweenness.min));
 		ensure(it.betweenness.min >= 0.0);
-		ensure(it.betweenness.min <= 1.0);
+		ensure(it.betweenness.min <= 10.0);
 
-		ensure(isNaN(it.betweenness.average));
+		ensure(!isNaN(it.betweenness.average));
 		ensure(it.betweenness.average >= 0.0);
-		ensure(it.betweenness.average <= 1.0);
+		ensure(it.betweenness.average <= 10.0);
 
-		ensure(isNaN(it.betweenness.median));
+		ensure(!isNaN(it.betweenness.median));
 		ensure(it.betweenness.median >= 0.0);
-		ensure(it.betweenness.median <= 1.0);
+		ensure(it.betweenness.median <= 10.0);
 
-		ensure(isNaN(it.betweenness.mode));
+		ensure(!isNaN(it.betweenness.mode));
 		ensure(it.betweenness.mode >= 0.0);
-		ensure(it.betweenness.mode <= 1.0);
+		ensure(it.betweenness.mode <= 10.0);
 
-		ensure(isNaN(it.betweenness.max));
+		ensure(!isNaN(it.betweenness.max));
 		ensure(it.betweenness.max >= 0.0);
-		ensure(it.betweenness.max <= 1.0);
+		ensure(it.betweenness.max <= 10.0);
 
-		ensure(isNaN(it.connectivity));
+		ensure(!isNaN(it.connectivity));
 		ensure(it.connectivity >= 0.0);
-		ensure(it.connectivity <= 1.0);
+		ensure(it.connectivity <= 10.0);
 	}
 }
 
@@ -1061,6 +1066,93 @@ void prepareLatexDoc(LTW)(ref LTW ltw) {
 \setcounter{tocdepth}{5}
 \begin{document}
 `);
+}
+
+struct GraphStatsDistance(int Size) {
+	GraphStats!(Size)* ptr;
+	double distance;
+
+	int opCmp(ref const GraphStatsDistance!(Size) s) const {
+		if(this.distance < s.distance) {
+			return -1;
+		} else if(this.distance > s.distance) {
+			return 1;
+		} else if(approxEqual(this.distance, s.distance)) {
+			return 0;
+		}
+		throw new Exception(format(
+			"GraphStatsDistance opCmp failed this '%s' other '%s'",
+			this.distance, s.distance
+		));
+	}
+}
+
+double calcDistance(int Size)(ref const(GraphStats!Size) a,
+		ref const(GraphStats!Size) b, const(MMStat!Size) mm)
+{
+	double ret = 0.0;
+	foreach(ref it; mm.cstats[]) {
+		ret += pow(it.select(b) - it.select(a), 2.0)
+	}
+
+	return sqrt(ret);
+}
+
+FixedSizeArray!(GraphStatsDistance!Size)*,32) getKNext(int Size)(
+		ref Array!(ProtocolStats!Size) pss,
+		const(size_t) which,
+		ref const(LNTDimensions) dim, ref const(GraphStats!Size) toFind, 
+		const(MMCStat!Size) mm, const(size_t) k)
+{
+	FixedSizeArray!(GraphStatsDistance!Size)*,32) ret;
+	foreach(ref psIt; pss[]) {
+		GraphStatss!(Size)* ps = 
+			(which == 0 ? &psIt.mcs 
+				: (which == 1 ? &psIt.lattice :
+					: (which == 2 ? &psIt.grid : null)
+				)
+			);
+		ensure(ps !is null);
+		foreach(ref data; (*ps).data[]) {
+			if(data.key == dim) {
+				foreach(ref ss; data.values[]) {
+					const dis = calcDistance!Size(toFind, ss);
+					ret.insertBack(GraphStatsDistance!(Size)(&ss, dis));
+					sort(ret[]);
+					if(ret.length > k) {
+						ret.removeBack();
+					}
+				}
+			}
+		}
+	}
+	return ret;
+}
+
+GraphStats!(Size) combine(int Size,Func)
+		(ref FixedSizeArray!(GraphStats!(Size)) arr)
+{
+	GraphStats!Size ret;
+	return ret;
+}
+
+void knn(int Size,Func)(Array!(ProtocolStats!Size) splits, const(size_t) fold,
+	   	ref LearnRslt!(Size) rslt, const(size_t) k, const(MMCStat!Size) mm) 
+{
+	foreach(size_t i, ref const(GraphStatss!Size) it; 
+			[splits[fold].mcs, splits[fold].lattice, splits[fold].grid])
+	{
+		foreach(ref const(Data!Size) jt; it.data[]) {
+			auto rslt = CmpRslt();
+			foreach(ref const(GraphStats!Size) kt; jt.values[]) {
+				FixedSizeArray!(GraphStats!Size)*,32) preds = 
+					getKNext!Size(splits, i, jt.key, kt, mm, fold);
+				GraphStats!(Size) tmp = combine!(Size,Func)(preds);
+				auto tmpRslt = compare(pred, &kt);
+				rslt.add(tmpRslt);
+			}
+		}
+	}
 }
 
 // how good can "mm" can be used to predict the costs or availability
