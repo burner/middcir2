@@ -65,25 +65,25 @@ class CStat(alias Stat, int Size) : IStat!Size {
 }
 
 auto cstatsArray = [
-	new CStat!(BetweenneesMedian,32)(0), 
+	//new CStat!(BetweenneesMedian,32)(0), 
 	new CStat!(BetweenneesMin,32)(0), 
 	new CStat!(BetweenneesMax,32)(0), 
 	new CStat!(BetweenneesAverage,32)(0),
-	new CStat!(BetweenneesMode,32)(0),
+	//new CStat!(BetweenneesMode,32)(0),
 
-	new CStat!(DiameterAverage,32)(1), 
+	//new CStat!(DiameterAverage,32)(1), 
 	new CStat!(DiameterMedian,32)(1), 
 	new CStat!(DiameterMax,32)(1), 
 	new CStat!(DiameterMin,32)(1), 
-	new CStat!(DiameterMode,32)(1),
+	//new CStat!(DiameterMode,32)(1),
 
 	new CStat!(Connectivity,32)(2), 
 
-	new CStat!(DegreeAverage,32)(3), 
+	//new CStat!(DegreeAverage,32)(3), 
 	new CStat!(DegreeMedian,32)(3), 
 	new CStat!(DegreeMode,32)(3), 
 	new CStat!(DegreeMin,32)(3), 
-	new CStat!(DegreeMax,32)(3), 
+	//new CStat!(DegreeMax,32)(3), 
 ];
 
 struct MaxMeasures {
@@ -414,6 +414,11 @@ Array!(OptimalMappings!(Size)) split(int Size)(ref OptimalMappings!(Size) old,
 		}
 	}
 
+	ensure(ret.length == numSplits);
+	foreach(ref it; ret[]) {
+		it.validate();
+	}
+
 	return ret;
 }
 
@@ -434,7 +439,8 @@ struct OptLearnRsltDim(int Size) {
 			formattedWrite(ltw, "\\paragraph{%s Measures}\n",
 				it);
 
-			foreach(idx, row; readOverWriteLevel) {
+			size_t idx = 0;
+			foreach(row; readOverWriteLevel) {
 				formattedWrite(ltw, "\\subparagraph{Read over Write %.2f}\n",
 					row);
 				formattedWrite(ltw, "\\begin{tabular}{l r}\n");
@@ -451,7 +457,9 @@ struct OptLearnRsltDim(int Size) {
 					this.rslt.data[jdx][idx][3]
 				);
 				formattedWrite(ltw, "\\end{tabular}\n");
+				++idx;
 			}
+			ensure(idx == 7);
 			formattedWrite(ltw, "\n");
 		}
 		formattedWrite(ltw, "\n");
@@ -504,7 +512,8 @@ struct OptCompareEntry(int Size) {
 			formattedWrite(ltw, "\\subsubsection{%s Measures}\n",
 				it);
 
-			foreach(idx, row; readOverWriteLevel) {
+			size_t idx = 0;
+			foreach(row; readOverWriteLevel) {
 				formattedWrite(ltw, "\\paragraph{Read over Write %.2f}\n",
 					row);
 				formattedWrite(ltw, "\\begin{tabular}{l r l}\n");
@@ -525,7 +534,9 @@ struct OptCompareEntry(int Size) {
 					this.entries[jdx][idx][3].mm.getName()
 				);
 				formattedWrite(ltw, "\\end{tabular}\n");
+				++idx;
 			}
+			ensure(idx == 7);
 			formattedWrite(ltw, "\n");
 		}
 		formattedWrite(ltw, "\n");
@@ -563,9 +574,15 @@ struct OptCompare(int Size) {
 	void compareSwap(ref OptCompareEntries!(Size)[4][7][2] store, 
 			ref OptCompareEntries!(Size)[4][7][2] tmp)
 	{
-		for(size_t i = 0; i < store.length; ++i) {
-			for(size_t j = 0; j < store[i].length; ++j) {
-				for(size_t k = 0; k < store[i][j].length; ++k) {
+		const iLen = store.length;
+		ensure(iLen == 2);
+		for(size_t i = 0; i < iLen; ++i) {
+			const jLen = store[i].length;
+			ensure(jLen == 7);
+			for(size_t j = 0; j < jLen; ++j) {
+				const kLen = store[i][j].length;
+				ensure(kLen == 4);
+				for(size_t k = 0; k < kLen; ++k) {
 					if(tmp[i][j][k].value < store[i][j][k].value) {
 						store[i][j][k].value = tmp[i][j][k].value;
 						store[i][j][k].mm = tmp[i][j][k].mm;
@@ -579,9 +596,15 @@ struct OptCompare(int Size) {
 			MMCStat!Size mm) 
 	{
 		OptCompareEntries!(Size)[4][7][2] ret;
-		for(size_t i = 0; i < ret.length; ++i) {
-			for(size_t j = 0; j < ret[i].length; ++j) {
-				for(size_t k = 0; k < ret[i][j].length; ++k) {
+		const iLen = ret.length;
+		ensure(iLen == 2);
+		for(size_t i = 0; i < iLen; ++i) {
+			const jLen = ret[i].length;
+			ensure(jLen == 7);
+			for(size_t j = 0; j < jLen; ++j) {
+				const kLen = ret[i][j].length;
+				ensure(kLen == 4);
+				for(size_t k = 0; k < kLen; ++k) {
 					ret[i][j][k].value = cr.data[i][j][k];
 					ret[i][j][k].mm = mm;
 				}
@@ -632,8 +655,8 @@ GraphStats!(Size) combine(int Size, alias Func)
 	return Func(arr);
 }
 
-OptCmpRslt compare(int Size)(const(GraphStats!Size)* pred,
-	   	const(GraphStats!Size)* actual) 
+OptCmpRslt compare(int Size)(ref const(GraphStats!Size) pred,
+	   	ref const(GraphStats!Size) actual) 
 {
 	pragma(inline, true)
 	double getWithNaN(double input) {
@@ -642,57 +665,59 @@ OptCmpRslt compare(int Size)(const(GraphStats!Size)* pred,
 	
 	pragma(inline, true)
 	void mse(ref double store, double a, double b) {
-		enforce(!isNaN(store));
-		enforce(!isNaN(a));
-		enforce(!isNaN(b));
+		ensure(!isNaN(store));
+		ensure(!isNaN(a));
+		ensure(!isNaN(b));
 		//logf("%.9f %.9f", a, b);
-		store += pow(getWithNaN(a) - getWithNaN(b), 2);
+		//store += pow(getWithNaN(a) - getWithNaN(b), 2);
+		const an = getWithNaN(a);
+		const bn = getWithNaN(b);
+
+		if(an > bn) {
+			store = an - bn;
+		} else {
+			store = bn - an;
+		}
 	}
 
-	enforce(pred !is null);
-	enforce(actual !is null);
-
 	auto ret = OptCmpRslt();
-	for(size_t i = 0; i < pred.results.length; ++i) {
-		for(size_t j = 0; j < pred.results[i].length; ++j) {
+	const iLen = pred.results.length;
+	ensure(iLen == 2, format("iLen %d", iLen));
+	for(size_t i = 0; i < iLen; ++i) {
+		const jLen = pred.results[i].length;
+		ensure(jLen == 7, format("jLen %d", jLen));
+		for(size_t j = 0; j < jLen; ++j) {
 			for(size_t k = 0; k < 101; ++k) {
-				inner: for(size_t h = 0; h < 4; ++h) {
-					switch(h) {
-						case 0:
-							mse(ret.data[i][j][h],
-									pred.results[i][j].readAvail[k],
-									actual.results[i][j].readAvail[k],
-								);
-							continue inner;
-						case 1:
-							mse(ret.data[i][j][h],
-									pred.results[i][j].writeAvail[k],
-									actual.results[i][j].writeAvail[k],
-								);
-							continue inner;
-						case 2:
-							mse(ret.data[i][j][h],
-									pred.results[i][j].readCosts[k],
-									actual.results[i][j].readCosts[k],
-								);
-							continue inner;
-						case 3:
-							mse(ret.data[i][j][h],
-									pred.results[i][j].writeCosts[k],
-									actual.results[i][j].writeCosts[k],
-								);
-							continue inner;
-						default:
-							assert(false);
-					}
-				}
+				//logf("%d %d", i, j);
+				mse(ret.data[i][j][0],
+						pred.results[i][j].readAvail[k],
+						actual.results[i][j].readAvail[k],
+					);
+				mse(ret.data[i][j][1],
+						pred.results[i][j].writeAvail[k],
+						actual.results[i][j].writeAvail[k],
+					);
+				mse(ret.data[i][j][2],
+						pred.results[i][j].readCosts[k],
+						actual.results[i][j].readCosts[k],
+					);
+				mse(ret.data[i][j][3],
+						pred.results[i][j].writeCosts[k],
+						actual.results[i][j].writeCosts[k],
+					);
 			}
 		}
 	}
 
-	for(size_t i = 0; i < ret.data.length; ++i) {
-		for(size_t j = 0; j < ret.data[i].length; ++j) {
-			for(size_t k = 0; k < ret.data[i][j].length; ++k) {
+	const iLen2 = ret.data.length;
+	ensure(iLen2 == 2);
+	for(size_t i = 0; i < iLen2; ++i) {
+		const jLen2 = ret.data[i].length;
+		ensure(jLen2 == 7);
+		for(size_t j = 0; j < jLen2; ++j) {
+			const kLen2 = ret.data[i][j].length;
+			ensure(kLen2 == 4);
+			for(size_t k = 0; k < kLen2; ++k) {
 				ret.data[i][j][k] /= 101.0;
 			}
 		}
@@ -703,6 +728,11 @@ OptCmpRslt compare(int Size)(const(GraphStats!Size)* pred,
 struct GraphStatsDistance(int Size) {
 	GraphStats!(Size) ptr;
 	double distance;
+
+	this(GraphStats!(Size) ptr, double distance) {
+		this.ptr = ptr;
+		this.distance = distance;
+	}
 
 	int opCmp(ref const GraphStatsDistance!(Size) s) const {
 		if(this.distance < s.distance) {
@@ -778,7 +808,7 @@ void knn(int Size, alias Func)(
 				getKNext!Size(splits, select, it.key, gs, mm, k);
 			//logf("preds length %s", preds.length);
 			GraphStats!(Size) tmp = combine!(Size,Func)(preds);
-			auto tmpRslt = compare(&tmp, &gs);
+			auto tmpRslt = compare(tmp, gs);
 
 			rslt.get(it.key).rslt.add(tmpRslt);
 		}
@@ -786,7 +816,7 @@ void knn(int Size, alias Func)(
 }
 
 void prepareLatexDoc(LTW)(ref LTW ltw) {
-	formattedWrite(ltw, "\\documentclass{scrbook}\n");
+	formattedWrite(ltw, "\\documentclass[crop=false,class=scrbook]{standalone}\n");
 	formattedWrite(ltw, "\\usepackage{graphicx}\n");
 	formattedWrite(ltw, "\\usepackage{standalone}\n");
 	formattedWrite(ltw, "\\usepackage{float}\n");
@@ -818,6 +848,38 @@ bool areMeasuresUnique(int Size)(const(MMCStat!Size) mm) {
 	return true;
 }
 
+void doLearning2(int Size)(string jsonFileName) {
+	doLearning2!(Size)(jsonFileName, "MCS");
+	doLearning2!(Size)(jsonFileName, "Lattice");
+	doLearning2!(Size)(jsonFileName, "Grid");
+
+	auto f = File(jsonFileName ~ "ai2.tex", "w");
+	auto ltw = f.lockingTextWriter();
+	formattedWrite(ltw, "\\documentclass{scrbook}\n");
+	formattedWrite(ltw, "\\usepackage{graphicx}\n");
+	formattedWrite(ltw, "\\usepackage{standalone}\n");
+	formattedWrite(ltw, "\\usepackage{float}\n");
+	formattedWrite(ltw, "\\usepackage{multirow}\n");
+	formattedWrite(ltw, "\\usepackage{hyperref}\n");
+	formattedWrite(ltw, "\\usepackage{placeins}\n");
+	formattedWrite(ltw, "\\usepackage[cm]{fullpage}\n");
+	formattedWrite(ltw, "\\usepackage{subcaption}\n");
+	formattedWrite(ltw, `\usepackage{tikz}
+\usepackage{pgfplots}
+\usetikzlibrary{decorations.markings, arrows, decorations.pathmorphing,
+   backgrounds, positioning, fit, shapes.geometric}
+	\tikzstyle{place} = [shape=circle,
+    draw, align=center,minimum width=0.70cm,
+    top color=white, bottom color=blue!20]
+\setcounter{tocdepth}{5}
+\begin{document}
+`);
+	formattedWrite(ltw, "\\input{%s_%sai2}\n", jsonFileName, "MCS");
+	formattedWrite(ltw, "\\input{%s_%sai2}\n", jsonFileName, "Lattice");
+	formattedWrite(ltw, "\\input{%s_%sai2}\n", jsonFileName, "Grid");
+	formattedWrite(ltw, "\\end{document}\n");
+}
+
 // how good can "mm" can be used to predict the costs or availability
 // join 4/5 of rslts with mm and jm into Joined
 // predict the avail and costs based on mm for all 1/5 graphs of rslts
@@ -840,13 +902,14 @@ void doLearning2(int Size)(string jsonFileName, string protocol) {
 		it.validate();
 	}
 
-	auto f = File(jsonFileName ~ "ai2.tex", "w");
+	auto f = File(jsonFileName ~ "_" ~ protocol ~ "ai2.tex", "w");
 	auto ltw = f.lockingTextWriter();
 	prepareLatexDoc(ltw);
 
 	OptCompare!Size results;
 
 	auto permu = Permutations(cast(int)cstatsArray.length, 1, cast(int)cstatsArray.length);
+	formattedWrite(ltw, "\\part{%s}\n", protocol);
 	formattedWrite(ltw, "\\chapter{Permutations}\n");
 	foreach(perm; permu) {
 		logf("begin");
