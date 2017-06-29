@@ -3,14 +3,16 @@ module learning;
 import std.stdio;
 import std.container.array;
 import std.format : format, formattedWrite;
-import std.algorithm.sorting : nextPermutation;
+import std.algorithm.sorting : sort, nextPermutation;
 import std.algorithm.comparison : max;
 import std.meta : AliasSeq;
 import std.exception : enforce;
 import std.experimental.logger;
-import std.math : isNaN, pow, approxEqual;
+import std.math : isNaN, pow, approxEqual, sqrt;
+import std.conv : to;
 
 import fixedsizearray;
+import exceptionhandling;
 
 import statsanalysis;
 import permutation;
@@ -1088,68 +1090,123 @@ struct GraphStatsDistance(int Size) {
 }
 
 double calcDistance(int Size)(ref const(GraphStats!Size) a,
-		ref const(GraphStats!Size) b, const(MMStat!Size) mm)
+		ref const(GraphStats!Size) b, const(MMCStat!Size) mm)
 {
 	double ret = 0.0;
 	foreach(ref it; mm.cstats[]) {
-		ret += pow(it.select(b) - it.select(a), 2.0)
+		ret += pow(it.select(b) - it.select(a), 2.0);
 	}
 
 	return sqrt(ret);
 }
 
-FixedSizeArray!(GraphStatsDistance!Size)*,32) getKNext(int Size)(
+FixedSizeArray!(GraphStatsDistance!(Size),32) getKNext(int Size)(
 		ref Array!(ProtocolStats!Size) pss,
 		const(size_t) which,
 		ref const(LNTDimensions) dim, ref const(GraphStats!Size) toFind, 
 		const(MMCStat!Size) mm, const(size_t) k)
 {
-	FixedSizeArray!(GraphStatsDistance!Size)*,32) ret;
+	FixedSizeArray!(GraphStatsDistance!(Size),32) ret;
 	foreach(ref psIt; pss[]) {
 		GraphStatss!(Size)* ps = 
 			(which == 0 ? &psIt.mcs 
-				: (which == 1 ? &psIt.lattice :
+				: (which == 1 ? &psIt.lattice
 					: (which == 2 ? &psIt.grid : null)
 				)
 			);
 		ensure(ps !is null);
+		ensure((*ps).data.length > 0);
 		foreach(ref data; (*ps).data[]) {
 			if(data.key == dim) {
 				foreach(ref ss; data.values[]) {
-					const dis = calcDistance!Size(toFind, ss);
+					const dis = calcDistance!Size(toFind, ss, mm);
 					ret.insertBack(GraphStatsDistance!(Size)(&ss, dis));
 					sort(ret[]);
 					if(ret.length > k) {
 						ret.removeBack();
 					}
 				}
+			} else {
+				logf("%s %s", data.key, dim);
 			}
 		}
 	}
+	ensure(ret.length == k);
 	return ret;
 }
 
-GraphStats!(Size) combine(int Size,Func)
-		(ref FixedSizeArray!(GraphStats!(Size)) arr)
+GraphStats!(Size) combineMin(int Size)
+		(ref FixedSizeArray!(GraphStatsDistance!(Size)) arr)
 {
-	GraphStats!Size ret;
-	return ret;
+	ensure(arr.length > 0);
+	return *(arr.front.ptr);
 }
 
-void knn(int Size,Func)(Array!(ProtocolStats!Size) splits, const(size_t) fold,
+GraphStats!(Size) combineMax(int Size)
+		(ref FixedSizeArray!(GraphStatsDistance!(Size)) arr)
+{
+	ensure(arr.length > 0);
+	return *(arr.back.ptr);
+}
+
+GraphStats!(Size) combineAvg(int Size)
+		(ref FixedSizeArray!(GraphStatsDistance!(Size)) arr)
+{
+	ensure(arr.length > 0);
+	GraphStats!(Size) accu = *(arr.front.ptr);
+	if(arr.length > 1) {
+		foreach(ref it; arr[1 .. arr.length]) {
+			accu.add(*(it.ptr));
+		}
+	}
+	accu.div(to!int(arr.length));
+	return accu;
+}
+
+GraphStats!(Size) combine(int Size, alias Func)
+		(ref FixedSizeArray!(GraphStatsDistance!(Size)) arr)
+{
+	return Func(arr);
+}
+
+ref Array!(LearnRsltDim!Size) getLearnRsltDim(int Size)(
+		ref LearnRslt!(Size) rslt, const size_t i)
+{
+	switch(i) {
+		case 0:
+			return rslt.mcs;
+		case 1:
+			return rslt.lattice;
+		case 2:
+			return rslt.grid;
+		default:
+			assert(false);
+	}
+	assert(false);
+}
+
+
+void knn(int Size, alias Func)(
+		Array!(ProtocolStats!Size) splits, const(size_t) fold,
 	   	ref LearnRslt!(Size) rslt, const(size_t) k, const(MMCStat!Size) mm) 
 {
 	foreach(size_t i, ref const(GraphStatss!Size) it; 
 			[splits[fold].mcs, splits[fold].lattice, splits[fold].grid])
 	{
 		foreach(ref const(Data!Size) jt; it.data[]) {
-			auto rslt = CmpRslt();
+			//auto rsltTmp = CmpRslt();
 			foreach(ref const(GraphStats!Size) kt; jt.values[]) {
-				FixedSizeArray!(GraphStats!Size)*,32) preds = 
+				FixedSizeArray!(GraphStatsDistance!(Size),32) preds = 
 					getKNext!Size(splits, i, jt.key, kt, mm, fold);
+				logf("preds length %s", preds.length);
 				GraphStats!(Size) tmp = combine!(Size,Func)(preds);
-				auto tmpRslt = compare(pred, &kt);
-				rslt.add(tmpRslt);
+				auto tmpRslt = compare(&tmp, &kt);
+
+				foreach(ref lt; getLearnRsltDim!(Size)(rslt, i)[]) {
+					if(lt.dim == jt.key) {
+						lt.rslt.add(tmpRslt);
+					}
+				}
 			}
 		}
 	}
@@ -1196,13 +1253,14 @@ void doLearning(int Size)(string jsonFileName) {
 		auto learnRsltPerm = LearnRslt!(Size)(&rslts);
 
 		for(size_t sp = 0; sp < numSplits; ++sp) {
+			knn!(Size,combineAvg)(splits, sp, learnRsltPerm, numSplits, mm);
 			//logf("%s %s", sp, perm.count());
 
-			ProtocolStats!Size joined = join(splits, sp);
-			joined.validate();
-			sort!Size(joined, mm);
-			assert(checkSorted(joined, mm));
-			joined.validate();
+			//ProtocolStats!Size joined = join(splits, sp);
+			//joined.validate();
+			//sort!Size(joined, mm);
+			//assert(checkSorted(joined, mm));
+			//joined.validate();
 
 			//logf("rslt.mcs %s", joined.mcs.data.length);
 			//logf("rslt.lattice %s", joined.lattice.data.length);
@@ -1217,9 +1275,9 @@ void doLearning(int Size)(string jsonFileName) {
 			//	logf("grid %s", jt.values.length);
 			//}
 
-			joinData(joined, mm);
-			
-			testPrediction(learnRsltPerm, joined, splits[sp], mm);
+			//joinData(joined, mm);
+			//
+			//testPrediction(learnRsltPerm, joined, splits[sp], mm);
 			//learnRsltPerm.print();
 		}
 

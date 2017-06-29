@@ -12,7 +12,8 @@ import protocols.mcs;
 import protocols.grid;
 import protocols.lattice;
 import protocols.crossing;
-import learning;
+//import learning;
+import learning2;
 import plot;
 import planar;
 import plot.gnuplot;
@@ -594,6 +595,7 @@ void main(string[] args) {
 	//statsAna!16("graphs7nodes.json");
 	//statsAna!32("6nodegraphs.json");
 	//statsAna!32("9nodegraphs.json");
-	doLearning!32("6nodegraphs.json");
+	//doLearning!32("6nodegraphs.json");
+	doLearning2!32("6nodegraphs.json", "MCS");
 	//doLearning!32("graphs9nodes2.json");
 }
