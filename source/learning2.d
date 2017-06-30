@@ -351,6 +351,12 @@ struct OptMapData(int Size) {
 			it.validate();
 		}
 	}
+
+	void scale() {
+		foreach(ref it; this.values[]) {
+			it.scale();
+		}
+	}
 }
 
 struct OptimalMappings(int Size) {
@@ -359,6 +365,12 @@ struct OptimalMappings(int Size) {
 	void validate() const {
 		foreach(ref it; this.data[]) {
 			it.validate();
+		}
+	}
+
+	void scale() {
+		foreach(ref it; this.data[]) {
+			it.scale();
 		}
 	}
 }
@@ -415,9 +427,9 @@ Array!(OptimalMappings!(Size)) split(int Size)(ref OptimalMappings!(Size) old,
 	}
 
 	ensure(ret.length == numSplits);
-	foreach(ref it; ret[]) {
-		it.validate();
-	}
+	//foreach(ref it; ret[]) {
+	//	it.validate();
+	//}
 
 	return ret;
 }
@@ -620,6 +632,36 @@ struct OptCompare(int Size) {
 		}
 	}
 }
+
+GraphStats!(Size) combineMedian(int Size)
+		(ref FixedSizeArray!(GraphStatsDistance!(Size)) arr)
+{
+	ensure(arr.length > 0);
+	if(arr.length % 2 == 1) {
+		return arr[arr.length / 2].ptr;
+	} else {
+		if(arr.length > 1) {
+			GraphStats!(Size) a = arr[arr.length / 2].ptr;
+			GraphStats!(Size) b = arr[(arr.length / 2) + 1].ptr;
+			const size_t iLen = a.results.length;
+			ensure(iLen == 2);
+			for(size_t i = 0; i < iLen; ++i) {
+				const size_t jLen = a.results[i].length;
+				ensure(jLen == 7);
+				for(size_t j = 0; j < jLen; ++j) {
+					a.results[i][j].readAvail[] += b.results[i][j].readAvail[];
+					a.results[i][j].writeAvail[] += b.results[i][j].writeAvail[];
+					a.results[i][j].readCosts[] += b.results[i][j].readCosts[];
+					a.results[i][j].writeCosts[] += b.results[i][j].writeCosts[];
+				}
+			}
+			return a;
+		} else {
+			return arr[arr.length / 2].ptr;
+		}
+	}
+}
+
 
 GraphStats!(Size) combineMin(int Size)
 		(ref FixedSizeArray!(GraphStatsDistance!(Size)) arr)
@@ -896,11 +938,12 @@ void doLearning2(int Size)(string jsonFileName, string protocol) {
 			graphs[0].graph.length
 		);
 	rslts.validate();
+	rslts.scale();
 
 	Array!(OptimalMappings!Size) splits = split(rslts, numSplits);
-	foreach(ref it; splits) {
-		it.validate();
-	}
+	//foreach(ref it; splits) { // ERROR doesn't work after scale()
+	//	it.validate();
+	//}
 
 	auto f = File(jsonFileName ~ "_" ~ protocol ~ "ai2.tex", "w");
 	auto ltw = f.lockingTextWriter();
@@ -929,7 +972,7 @@ void doLearning2(int Size)(string jsonFileName, string protocol) {
 		auto learnRsltPerm = OptLearnRslt!(Size)(&rslts);
 
 		for(size_t sp = 0; sp < numSplits; ++sp) {
-			knn!(Size,combineAvg)(splits, sp, learnRsltPerm, mm, 7);
+			knn!(Size,combineMedian)(splits, sp, learnRsltPerm, mm, 7);
 		}
 
 		logf("%s", mm.getName());

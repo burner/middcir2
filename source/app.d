@@ -596,6 +596,6 @@ void main(string[] args) {
 	//statsAna!32("6nodegraphs.json");
 	//statsAna!32("9nodegraphs.json");
 	//doLearning!32("6nodegraphs.json");
-	//doLearning2!32("6nodegraphs.json");
-	doLearning2!32("graphs9nodes2.json");
+	doLearning2!32("graphs6nodes3.json");
+	//doLearning2!32("graphs9nodes2.json");
 }

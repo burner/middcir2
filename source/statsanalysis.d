@@ -355,6 +355,16 @@ struct GraphStats(int Size) {
 		}
 	}
 
+	void scale() {
+		const iLen = this.results.length;
+		for(size_t i = 0; i < iLen; ++i) {
+			const jLen = this.results[i].length;
+			for(size_t j = 0; j < jLen; ++j) {
+				this.results[i][j].scale();
+			}
+		}
+	}
+
 	ref const(double[101]) getData(const size_t idx, 
 			const ResultArraySelect type, const size_t ac) const 
 	{

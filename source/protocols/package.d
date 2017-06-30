@@ -75,6 +75,21 @@ struct Result {
 		assert(approxEqual(dummy, 1.0));
 	}
 
+	void scale() {
+		foreach(idx, it; this.readAvail) {
+			this.readAvail[idx] = it * 100.0;
+		}
+		foreach(idx, it; this.writeAvail) {
+			this.writeAvail[idx] = it * 100.0;
+		}
+		foreach(idx, it; this.readCosts) {
+			this.readCosts[idx] = it * 100.0;
+		}
+		foreach(idx, it; this.writeCosts) {
+			this.writeCosts[idx] = it * 100.0;
+		}
+	}
+
 	Result dup() const {
 		auto ret = getResult();
 
