@@ -76,18 +76,8 @@ struct Result {
 	}
 
 	void scale() {
-		foreach(idx, it; this.readAvail) {
-			this.readAvail[idx] = it * 100.0;
-		}
-		foreach(idx, it; this.writeAvail) {
-			this.writeAvail[idx] = it * 100.0;
-		}
-		foreach(idx, it; this.readCosts) {
-			this.readCosts[idx] = it * 100.0;
-		}
-		foreach(idx, it; this.writeCosts) {
-			this.writeCosts[idx] = it * 100.0;
-		}
+		this.readAvail[] *= 100.0;
+		this.writeAvail[] *= 100.0;
 	}
 
 	Result dup() const {

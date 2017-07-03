@@ -65,25 +65,25 @@ class CStat(alias Stat, int Size) : IStat!Size {
 }
 
 auto cstatsArray = [
-	//new CStat!(BetweenneesMedian,32)(0), 
+	new CStat!(BetweenneesMedian,32)(0), 
 	new CStat!(BetweenneesMin,32)(0), 
 	new CStat!(BetweenneesMax,32)(0), 
 	new CStat!(BetweenneesAverage,32)(0),
-	//new CStat!(BetweenneesMode,32)(0),
+	new CStat!(BetweenneesMode,32)(0),
 
-	//new CStat!(DiameterAverage,32)(1), 
+	new CStat!(DiameterAverage,32)(1), 
 	new CStat!(DiameterMedian,32)(1), 
 	new CStat!(DiameterMax,32)(1), 
 	new CStat!(DiameterMin,32)(1), 
-	//new CStat!(DiameterMode,32)(1),
+	new CStat!(DiameterMode,32)(1),
 
 	new CStat!(Connectivity,32)(2), 
 
-	//new CStat!(DegreeAverage,32)(3), 
+	new CStat!(DegreeAverage,32)(3), 
 	new CStat!(DegreeMedian,32)(3), 
 	new CStat!(DegreeMode,32)(3), 
 	new CStat!(DegreeMin,32)(3), 
-	//new CStat!(DegreeMax,32)(3), 
+	new CStat!(DegreeMax,32)(3), 
 ];
 
 struct MaxMeasures {
@@ -444,16 +444,16 @@ struct OptLearnRsltDim(int Size) {
 	}
 
 	void toLatex(LTW)(ref LTW ltw) const {
-		formattedWrite(ltw, "\\subsubsection{Dimension %s:%s}\n",
+		formattedWrite(ltw, "\\subsection{Dimension %s:%s}\n",
 			this.dim.width, this.dim.height);
 
 		foreach(jdx, it; ["Avail", "Costs"]) {
-			formattedWrite(ltw, "\\paragraph{%s Measures}\n",
+			formattedWrite(ltw, "\\subsubsection{%s Measures}\n",
 				it);
 
 			size_t idx = 0;
 			foreach(row; readOverWriteLevel) {
-				formattedWrite(ltw, "\\subparagraph{Read over Write %.2f}\n",
+				formattedWrite(ltw, "\\paragraph{Read over Write %.2f}\n",
 					row);
 				formattedWrite(ltw, "\\begin{tabular}{l r}\n");
 				formattedWrite(ltw, "Read Avail & %.10f \\\\ \n",
@@ -633,6 +633,83 @@ struct OptCompare(int Size) {
 	}
 }
 
+GraphStats!(Size) combineMode(int Size)
+		(ref FixedSizeArray!(GraphStatsDistance!(Size)) arr)
+{
+	import graphmeasures : computeMode;
+	ensure(arr.length > 0);
+	if(arr.length == 1) {
+		return arr.front.ptr;
+	}
+
+	GraphStats!(Size) ret;
+	const size_t iLen = ret.results.length;
+	ensure(iLen == 2);
+	for(size_t i = 0; i < iLen; ++i) {
+		const size_t jLen = ret.results[i].length;
+		ensure(jLen == 7);
+		for(size_t j = 0; j < jLen; ++j) {
+			ret.results[i][j] = getResult(double.nan);
+		}
+	}
+	for(size_t i = 0; i < iLen; ++i) {
+		const size_t jLen = ret.results[i].length;
+		ensure(jLen == 7);
+		for(size_t j = 0; j < jLen; ++j) {
+			FixedSizeArray!(double)[101] ra;
+			FixedSizeArray!(double)[101] wa;
+			FixedSizeArray!(double)[101] rc;
+			FixedSizeArray!(double)[101] wc;
+
+			foreach(ref it; arr[]) {
+				for(size_t k = 0; k < 101; ++k) {
+					ra[k].insertBack(it.ptr.results[i][j].readAvail[k]);
+					wa[k].insertBack(it.ptr.results[i][j].writeAvail[k]);
+					rc[k].insertBack(it.ptr.results[i][j].readCosts[k]);
+					wc[k].insertBack(it.ptr.results[i][j].writeCosts[k]);
+				}
+			}
+			foreach(ref it; ra) {
+				sort(it[]);
+			}
+			foreach(ref it; wa) {
+				sort(it[]);
+			}
+			foreach(ref it; rc) {
+				sort(it[]);
+			}
+			foreach(ref it; wc) {
+				sort(it[]);
+			}
+			for(size_t k = 0; k < 101; ++k) {
+ 				auto ram = computeMode(ra[k]);
+ 				auto wam = computeMode(wa[k]);
+ 				auto rcm = computeMode(rc[k]);
+ 				auto wcm = computeMode(wc[k]);
+
+				ret.results[i][j].readAvail[k] = ram.max;
+				ret.results[i][j].writeAvail[k] = wam.max;
+				ret.results[i][j].readCosts[k] = rcm.max;
+				ret.results[i][j].writeCosts[k] = wcm.max;
+			}
+		}
+	}
+	for(size_t i = 0; i < iLen; ++i) {
+		const size_t jLen = ret.results[i].length;
+		ensure(jLen == 7);
+		for(size_t j = 0; j < jLen; ++j) {
+			for(size_t k = 0; k < 101; ++k) {
+				ensure(!isNaN(ret.results[i][j].readAvail[k]));
+				ensure(!isNaN(ret.results[i][j].writeAvail[k]));
+				ensure(!isNaN(ret.results[i][j].readCosts[k]));
+				ensure(!isNaN(ret.results[i][j].writeCosts[k]));
+			}
+		}
+	}
+
+	return ret;
+}
+
 GraphStats!(Size) combineMedian(int Size)
 		(ref FixedSizeArray!(GraphStatsDistance!(Size)) arr)
 {
@@ -661,7 +738,6 @@ GraphStats!(Size) combineMedian(int Size)
 		}
 	}
 }
-
 
 GraphStats!(Size) combineMin(int Size)
 		(ref FixedSizeArray!(GraphStatsDistance!(Size)) arr)
@@ -706,20 +782,21 @@ OptCmpRslt compare(int Size)(ref const(GraphStats!Size) pred,
 	}
 	
 	pragma(inline, true)
-	void mse(ref double store, double a, double b) {
-		ensure(!isNaN(store));
+	double mse(double a, double b) {
 		ensure(!isNaN(a));
 		ensure(!isNaN(b));
 		//logf("%.9f %.9f", a, b);
 		//store += pow(getWithNaN(a) - getWithNaN(b), 2);
-		const an = getWithNaN(a);
-		const bn = getWithNaN(b);
+		//const an = getWithNaN(a);
+		//const bn = getWithNaN(b);
 
-		if(an > bn) {
+		/*if(an > bn) {
 			store = an - bn;
 		} else {
 			store = bn - an;
-		}
+		}*/
+		//logf("%15.7f %15.7f", a, b);
+		return pow(a - b, 2);
 	}
 
 	auto ret = OptCmpRslt();
@@ -731,19 +808,19 @@ OptCmpRslt compare(int Size)(ref const(GraphStats!Size) pred,
 		for(size_t j = 0; j < jLen; ++j) {
 			for(size_t k = 0; k < 101; ++k) {
 				//logf("%d %d", i, j);
-				mse(ret.data[i][j][0],
+				ret.data[i][j][0] += mse(
 						pred.results[i][j].readAvail[k],
 						actual.results[i][j].readAvail[k],
 					);
-				mse(ret.data[i][j][1],
+				ret.data[i][j][1] += mse(
 						pred.results[i][j].writeAvail[k],
 						actual.results[i][j].writeAvail[k],
 					);
-				mse(ret.data[i][j][2],
+				ret.data[i][j][2] += mse(
 						pred.results[i][j].readCosts[k],
 						actual.results[i][j].readCosts[k],
 					);
-				mse(ret.data[i][j][3],
+				ret.data[i][j][3] += mse(
 						pred.results[i][j].writeCosts[k],
 						actual.results[i][j].writeCosts[k],
 					);
@@ -890,12 +967,73 @@ bool areMeasuresUnique(int Size)(const(MMCStat!Size) mm) {
 	return true;
 }
 
-void doLearning2(int Size)(string jsonFileName) {
-	doLearning2!(Size)(jsonFileName, "MCS");
-	doLearning2!(Size)(jsonFileName, "Lattice");
-	doLearning2!(Size)(jsonFileName, "Grid");
+Array!(GraphWithProperties!Size) removeDuplicateGraphs(int Size)(
+		ref Array!(GraphWithProperties!Size) old)
+{
+	ensure(old.length > 0);
+	Array!(GraphWithProperties!Size) ret;
+	ret.insertBack(old.front);
+	outer: foreach(ref it; old[1 .. $]) {
+		foreach(ref jt; ret[]) {
+			foreach(m; cstatsArray) {
+				if(approxEqual(m.select(it), m.select(jt))) {
+					logf("%s %15.7f %15.7f", m.XLabel, m.select(it),
+							m.select(jt)
+						);
+					continue outer;
+				}
+			}
+			ret.insertBack(it);
+		}	
+	}
 
-	auto f = File(jsonFileName ~ "ai2.tex", "w");
+	return ret;
+}
+
+void doLearning2(int Size)(string jsonFileName) {
+	doLearning2!(Size, combineAvg)(jsonFileName, "Avg");
+	doLearning2!(Size, combineMode)(jsonFileName, "Mode");
+	doLearning2!(Size, combineMax)(jsonFileName, "Max");
+	doLearning2!(Size, combineMin)(jsonFileName, "Min");
+	doLearning2!(Size, combineMedian)(jsonFileName, "Median");
+}
+
+void doLearning2(int Size, alias Func)(string jsonFileName, string postfix) {
+	enum numSplits = 5;
+	string outdir = format("%s_Learning2/", jsonFileName);
+	Array!(GraphWithProperties!Size) graphs = loadGraphs!Size(jsonFileName);
+
+	//Array!(GraphWithProperties!Size) graphs = removeDuplicateGraphs(allGraphs);
+	//logf("all length %s graphs length %s", allGraphs.length, graphs.length);
+
+	ensure(graphs.length > 0);
+	const size_t numNodes = graphs[0].graph.length;
+	standardizeProperties!(Size)(graphs);
+	logf("%s graphs with %s nodes", graphs.length, numNodes);
+	OptimalMappings!(Size)[3] rslts; 
+	rslts[0] = loadResults(graphs, jsonFileName, "MCS", graphs[0].graph.length);
+	rslts[1] = loadResults(graphs, jsonFileName, "Lattice", 
+			graphs[0].graph.length
+		);
+	rslts[2] = loadResults(graphs, jsonFileName, "Grid", 
+			graphs[0].graph.length
+		);
+	foreach(ref it; rslts) {
+		it.validate();
+		it.scale();
+	}
+
+	doLearning2!(Size,Func)(jsonFileName, "MCS", rslts[0], 
+			numSplits, postfix
+		);
+	doLearning2!(Size,Func)(jsonFileName, "Lattice", rslts[1], 
+			numSplits, postfix
+		);
+	doLearning2!(Size,Func)(jsonFileName, "Grid", rslts[2], 
+			numSplits, postfix
+		);
+
+	auto f = File(jsonFileName ~ "_" ~ postfix ~ "_" ~ "ai2.tex", "w");
 	auto ltw = f.lockingTextWriter();
 	formattedWrite(ltw, "\\documentclass{scrbook}\n");
 	formattedWrite(ltw, "\\usepackage{graphicx}\n");
@@ -916,9 +1054,15 @@ void doLearning2(int Size)(string jsonFileName) {
 \setcounter{tocdepth}{5}
 \begin{document}
 `);
-	formattedWrite(ltw, "\\input{%s_%sai2}\n", jsonFileName, "MCS");
-	formattedWrite(ltw, "\\input{%s_%sai2}\n", jsonFileName, "Lattice");
-	formattedWrite(ltw, "\\input{%s_%sai2}\n", jsonFileName, "Grid");
+	formattedWrite(ltw, "\\input{%s_%s_%s_ai2}\n", jsonFileName, "MCS",
+			postfix
+		);
+	formattedWrite(ltw, "\\input{%s_%s_%s_ai2}\n", jsonFileName, "Lattice",
+			postfix
+		);
+	formattedWrite(ltw, "\\input{%s_%s_%s_ai2}\n", jsonFileName, "Grid",
+			postfix
+		);
 	formattedWrite(ltw, "\\end{document}\n");
 }
 
@@ -926,32 +1070,26 @@ void doLearning2(int Size)(string jsonFileName) {
 // join 4/5 of rslts with mm and jm into Joined
 // predict the avail and costs based on mm for all 1/5 graphs of rslts
 // calc MSE against real value
-void doLearning2(int Size)(string jsonFileName, string protocol) {
-	enum numSplits = 5;
-	string outdir = format("%s_Learning2/", jsonFileName);
-	Array!(GraphWithProperties!Size) graphs = loadGraphs!Size(jsonFileName);
-	ensure(graphs.length > 0);
-	const size_t numNodes = graphs[0].graph.length;
-	standardizeProperties!(Size)(graphs);
-	logf("%s graphs with %s nodes", graphs.length, numNodes);
-	OptimalMappings!Size rslts = loadResults(graphs, jsonFileName, protocol, 
-			graphs[0].graph.length
-		);
-	rslts.validate();
-	rslts.scale();
-
+void doLearning2(int Size, alias Func)(string jsonFileName, string protocol, 
+		ref OptimalMappings!Size rslts, const size_t numSplits, string postfix) 
+{
 	Array!(OptimalMappings!Size) splits = split(rslts, numSplits);
 	//foreach(ref it; splits) { // ERROR doesn't work after scale()
 	//	it.validate();
 	//}
 
-	auto f = File(jsonFileName ~ "_" ~ protocol ~ "ai2.tex", "w");
+	auto f = File(jsonFileName ~ "_" ~ protocol ~ "_" ~ postfix ~ "_" 
+			~ "ai2.tex", "w"
+		);
 	auto ltw = f.lockingTextWriter();
 	prepareLatexDoc(ltw);
 
 	OptCompare!Size results;
 
-	auto permu = Permutations(cast(int)cstatsArray.length, 1, cast(int)cstatsArray.length);
+	auto permu = Permutations(cast(int)cstatsArray.length, 
+			2, cast(int)cstatsArray.length
+			//1, 2
+		);
 	formattedWrite(ltw, "\\part{%s}\n", protocol);
 	formattedWrite(ltw, "\\chapter{Permutations}\n");
 	foreach(perm; permu) {
@@ -972,7 +1110,7 @@ void doLearning2(int Size)(string jsonFileName, string protocol) {
 		auto learnRsltPerm = OptLearnRslt!(Size)(&rslts);
 
 		for(size_t sp = 0; sp < numSplits; ++sp) {
-			knn!(Size,combineMedian)(splits, sp, learnRsltPerm, mm, 7);
+			knn!(Size,Func)(splits, sp, learnRsltPerm, mm, 7);
 		}
 
 		logf("%s", mm.getName());

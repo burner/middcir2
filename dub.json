@@ -1,14 +1,13 @@
 {
 	"name": "middcir2",
 	"authors": [
-		"burner"
+		"Robert burner Schadek"
 	],
 	"description": "A minimal D application.",
-	"copyright": "Copyright © 2016, burner",
+	"copyright": "Copyright © 2017, burner",
 	"license": "proprietary",
 	"dependencies": {
 		"gfm:math": ">=6.1.1",
-		"units-d": "~>0.1.0",
 		"exceptionhandling": ">=0.1.0",
 		"bitfiddle": ">=0.0.5",
 		"fixedsizearray": ">=1.1.0",

@@ -25,6 +25,30 @@ import stats;
 import statsanalysis;
 import config;
 
+class ShortLogger : Logger {
+	import std.stdio : writefln;
+    this(LogLevel lv) @safe {
+        super(lv);
+    }
+
+    override void writeLogMsg(ref LogEntry payload) {
+		import std.string : lastIndexOf;
+		import std.datetime : DateTime;
+		auto i = payload.file.lastIndexOf("/");
+		string f = payload.file;
+		if(i != -1) {
+			f = f[i+1 .. $];
+		}
+
+    	const auto dt = cast(DateTime)payload.timestamp;
+    	const auto fsec = payload.timestamp.fracSecs.total!"msecs";
+
+    	writefln("%04d-%02d-%02dT%02d:%02d:%02d.%03d %s:%s %s",
+    	    dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second,
+    	    fsec, f, payload.line, payload.msg);
+    }
+}
+
 //version(release) {
 	//version = exceptionhandling_release_asserts;
 //}
@@ -556,6 +580,8 @@ void buildSublist(string folderName) {
 }
 
 void main(string[] args) {
+	sharedLog = new ShortLogger(LogLevel.all);
+
 	//parseConfig(args);
 	//lattice(4,4);
 	//gridAgainstGrid(4,4);
@@ -596,6 +622,6 @@ void main(string[] args) {
 	//statsAna!32("6nodegraphs.json");
 	//statsAna!32("9nodegraphs.json");
 	//doLearning!32("6nodegraphs.json");
-	doLearning2!32("graphs6nodes3.json");
+	doLearning2!32("graphs8nodes3.json");
 	//doLearning2!32("graphs9nodes2.json");
 }
