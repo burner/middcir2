@@ -1087,19 +1087,19 @@ void doLearning2(int Size, alias Func)(string jsonFileName, string protocol,
 	OptCompare!Size results;
 
 	auto permu = Permutations(cast(int)cstatsArray.length, 
-			2, cast(int)cstatsArray.length
+			1, cast(int)cstatsArray.length
 			//1, 2
 		);
 	formattedWrite(ltw, "\\part{%s}\n", protocol);
 	formattedWrite(ltw, "\\chapter{Permutations}\n");
 	foreach(perm; permu) {
-		logf("begin");
 		auto mm = new MMCStat!32();
 		for(int j = 0; j < cstatsArray.length; ++j) {
 			if(perm.test(j)) {
 				mm.insertIStat(cstatsArray[j]);
 			}
 		}
+		logf("begin %s %s %s", protocol, postfix, mm.getName());
 
 		if(!areMeasuresUnique(mm)) {
 			logf("ignore %s", mm.getName());
@@ -1113,7 +1113,6 @@ void doLearning2(int Size, alias Func)(string jsonFileName, string protocol,
 			knn!(Size,Func)(splits, sp, learnRsltPerm, mm, 7);
 		}
 
-		logf("%s", mm.getName());
 		learnRsltPerm.toLatex(ltw);
 		results.compare(learnRsltPerm, mm);
 		logf("end");

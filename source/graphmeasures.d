@@ -175,8 +175,8 @@ double computeConnectivity(int Size)(ref Graph!Size graph) {
 	foreach(perm; permu) {
 		BitsetType avail = BitsetType(one.store ^ perm.store);
 		paths.execute(graph, avail);
-		for(uint ai = 0; ai < graph.length; ++ai) {
-			for(uint bi = ai + 1; bi < graph.length; ++bi) {
+		for(uint ai = 0; ai < graph.length && avail.test(ai); ++ai) {
+			for(uint bi = ai + 1; bi < graph.length && avail.test(bi); ++bi) {
 				if(!paths.pathExists(ai, bi)) {
 					return avail.flip().count();
 				}
