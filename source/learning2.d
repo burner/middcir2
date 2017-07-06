@@ -277,8 +277,8 @@ class MMCStat(int Size) {
 }
 
 unittest {
-	IStat!32 n = new CStat!(Connectivity, 32)();
-	n = new CStat!(DiameterAverage,32)();
+	IStat!32 n = new CStat!(Connectivity, 32)(0);
+	n = new CStat!(DiameterAverage,32)(1);
 
 	int count;
 	for(int i = 0; i < cstatsArray.length; ++i) {
@@ -727,9 +727,13 @@ GraphStats!(Size) combineMedian(int Size)
 				ensure(jLen == 7);
 				for(size_t j = 0; j < jLen; ++j) {
 					a.results[i][j].readAvail[] += b.results[i][j].readAvail[];
+					a.results[i][j].readAvail[] /= 2.0;
 					a.results[i][j].writeAvail[] += b.results[i][j].writeAvail[];
+					a.results[i][j].writeAvail[] /= 2.0;
 					a.results[i][j].readCosts[] += b.results[i][j].readCosts[];
+					a.results[i][j].readCosts[] /= 2.0;
 					a.results[i][j].writeCosts[] += b.results[i][j].writeCosts[];
+					a.results[i][j].writeCosts[] /= 2.0;
 				}
 			}
 			return a;
@@ -742,15 +746,98 @@ GraphStats!(Size) combineMedian(int Size)
 GraphStats!(Size) combineMin(int Size)
 		(ref FixedSizeArray!(GraphStatsDistance!(Size)) arr)
 {
+	import std.algorithm.comparison : min;
 	ensure(arr.length > 0);
-	return arr.front.ptr;
+	GraphStats!(Size) ret;
+	const size_t iLen = ret.results.length;
+	ensure(iLen == 2);
+	for(size_t i = 0; i < iLen; ++i) {
+		const size_t jLen = ret.results[i].length;
+		ensure(jLen == 7);
+		for(size_t j = 0; j < jLen; ++j) {
+			ret.results[i][j] = getResult(999999.9);
+			foreach(ref it; arr[]) {
+				for(size_t k = 0; k < 101; ++k) {
+					ret.results[i][j].readAvail[k] = min(
+							ret.results[i][j].readAvail[k],
+							it.ptr.results[i][j].readAvail[k]);
+					ret.results[i][j].writeAvail[k] = min(
+							ret.results[i][j].writeAvail[k],
+							it.ptr.results[i][j].writeAvail[k]);
+					ret.results[i][j].readCosts[k] = min(
+							ret.results[i][j].readCosts[k],
+							it.ptr.results[i][j].readCosts[k]);
+					ret.results[i][j].writeCosts[k] = min(
+							ret.results[i][j].writeCosts[k],
+							it.ptr.results[i][j].writeCosts[k]);
+				}
+			}
+		}
+	}
+	return ret;
 }
 
 GraphStats!(Size) combineMax(int Size)
 		(ref FixedSizeArray!(GraphStatsDistance!(Size)) arr)
 {
+	import std.algorithm.comparison : max;
 	ensure(arr.length > 0);
-	return arr.back.ptr;
+	GraphStats!(Size) ret;
+	const size_t iLen = ret.results.length;
+	ensure(iLen == 2);
+	for(size_t i = 0; i < iLen; ++i) {
+		const size_t jLen = ret.results[i].length;
+		ensure(jLen == 7);
+		for(size_t j = 0; j < jLen; ++j) {
+			ret.results[i][j] = getResult(0.0);
+			foreach(ref it; arr[]) {
+				for(size_t k = 0; k < 101; ++k) {
+					ret.results[i][j].readAvail[k] = max(
+							ret.results[i][j].readAvail[k],
+							it.ptr.results[i][j].readAvail[k]);
+					ret.results[i][j].writeAvail[k] = max(
+							ret.results[i][j].writeAvail[k],
+							it.ptr.results[i][j].writeAvail[k]);
+					ret.results[i][j].readCosts[k] = max(
+							ret.results[i][j].readCosts[k],
+							it.ptr.results[i][j].readCosts[k]);
+					ret.results[i][j].writeCosts[k] = max(
+							ret.results[i][j].writeCosts[k],
+							it.ptr.results[i][j].writeCosts[k]);
+				}
+			}
+		}
+	}
+	return ret;
+}
+
+unittest {
+	GraphStats!(32) a;
+	a.results[0][0].readAvail[0] = 0.9;
+	a.results[0][0].readAvail[1] = 0.2;
+
+	GraphStats!(32) b;
+	b.results[0][0].readAvail[0] = 0.7;
+	b.results[0][0].readAvail[1] = 0.3;
+
+	FixedSizeArray!(GraphStatsDistance!(32)) arr;
+	arr.emplaceBack(a, 1.0);
+	arr.emplaceBack(b, 1.1);
+
+	auto m = combineMax!(32)(arr);
+	assertEqual(m.results[0][0].readAvail[0], 0.9);
+	assertEqual(m.results[0][0].readAvail[1], 0.3);
+	assertEqual(m.results[0][0].readAvail[3], 0.0);
+
+	auto mi = combineMin!(32)(arr);
+	assertEqual(mi.results[0][0].readAvail[0], 0.7);
+	assertEqual(mi.results[0][0].readAvail[1], 0.2);
+
+	arr.emplaceBack(b, 1.2);
+	//auto mo = combineMode!(32)(arr); TODO disable ensure in combineMode to
+	// make it compile
+	//assertEqual(mo.results[0][0].readAvail[0], 0.7);
+	//assertEqual(mo.results[0][0].readAvail[1], 0.3);
 }
 
 GraphStats!(Size) combineAvg(int Size)

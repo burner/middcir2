@@ -63,6 +63,12 @@ unittest {
 	assert(m.max == 2);
 }
 
+unittest {
+	auto r = [ 1.0, 2.0, 2.0, 3.0, 4.0, 7.0, 9.0 ];
+	auto m = computeMode(r);
+	assertEqual(m.max, 2);
+}
+
 struct DiameterResult {
 	double average;
 	double median;

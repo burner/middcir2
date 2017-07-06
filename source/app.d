@@ -555,14 +555,19 @@ void addGraphsToFile() {
 }
 
 void runMappings(string graphsFilename, string[] args) {
-	import std.getopt;
-	int start = 0;
-	int upto = 0;
-	StatsType stype = StatsType.all;
+	//import std.getopt;
+	//int start = 0;
+	//int upto = 0;
+	//StatsType stype = StatsType.all;
 
-	getopt(args, "start", &start, "upto", &upto, "statstype", &stype);
+	//getopt(args, "start", &start, "upto", &upto, "statstype", &stype);
 	
-	auto runner = new StatsRunner!16(graphsFilename, start, upto, stype);
+	logf("%s %s %s", 
+			getConfig().start, getConfig().upto, getConfig().statstype
+		);
+	auto runner = new StatsRunner!16(graphsFilename, 
+			getConfig().start, getConfig().upto, getConfig().statstype
+		);
 	runner.runMappings();
 	/*try {
 		runner.runMappingsThreaded();
@@ -581,8 +586,8 @@ void buildSublist(string folderName) {
 
 void main(string[] args) {
 	sharedLog = new ShortLogger(LogLevel.all);
+	parseConfig(args);
 
-	//parseConfig(args);
 	//lattice(4,4);
 	//gridAgainstGrid(4,4);
 	//MCSAgainstMCS(15);
@@ -605,7 +610,7 @@ void main(string[] args) {
 	//addGraphsToFile();
 	//runMappings("6nodegraphs.json", args);
 	//runMappings("graphs8nodes.json", args);
-	//runMappings("9nodegraphs.json", args);
+	runMappings("9nodegraphs.json", args);
 	//MCSForm();
 	//GridFormXY();
 	//gridVLattice(3,3);
@@ -623,6 +628,6 @@ void main(string[] args) {
 	//statsAna!32("9nodegraphs.json");
 	//doLearning!32("6nodegraphs.json");
 	//doLearning2!32("graphs8nodes3.json");
-	doLearning2!32("graphs9nodes3.json");
+	//doLearning2!32("graphs9nodes3.json");
 	//doLearning2!32("graphs9nodes2.json");
 }

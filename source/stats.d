@@ -14,14 +14,7 @@ import protocols.grid;
 import protocols.lattice;
 import protocols.crossing;
 
-import config : PlatformAlign;
-
-enum StatsType {
-	all,
-	MCS,
-	Lattice,
-	Grid
-}
+import config;
 
 align(8)
 class StatsRunner(int Size) {

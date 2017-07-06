@@ -10,6 +10,7 @@
 		"gfm:math": ">=6.1.1",
 		"exceptionhandling": ">=0.1.0",
 		"bitfiddle": ">=0.0.5",
+		"argsd": ">=0.0.1",
 		"fixedsizearray": ">=1.1.0",
 		"std_data_json": "~>0.18.2",
 		"rc": "~>0.0.2"
