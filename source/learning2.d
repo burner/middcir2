@@ -1158,7 +1158,9 @@ void doLearning2(int Size, alias Func)(string jsonFileName, string postfix,
 			numSplits, postfix, k
 		);
 
-	auto f = File(jsonFileName ~ "_" ~ postfix ~ "_" ~ "ai2.tex", "w");
+	auto f = File(jsonFileName ~ "_" ~ postfix ~ "_" ~ to!string(k) ~ "_" 
+			~ "ai2.tex", "w"
+		);
 	auto ltw = f.lockingTextWriter();
 	formattedWrite(ltw, "\\documentclass{scrbook}\n");
 	formattedWrite(ltw, "\\usepackage{graphicx}\n");
@@ -1179,14 +1181,14 @@ void doLearning2(int Size, alias Func)(string jsonFileName, string postfix,
 \setcounter{tocdepth}{5}
 \begin{document}
 `);
-	formattedWrite(ltw, "\\input{%s_%s_%s_ai2}\n", jsonFileName, "MCS",
-			postfix
+	formattedWrite(ltw, "\\input{%s_%s_%s_%s_ai2}\n", jsonFileName, "MCS",
+			postfix, k
 		);
-	formattedWrite(ltw, "\\input{%s_%s_%s_ai2}\n", jsonFileName, "Lattice",
-			postfix
+	formattedWrite(ltw, "\\input{%s_%s_%s_%s_ai2}\n", jsonFileName, "Lattice",
+			postfix, k
 		);
-	formattedWrite(ltw, "\\input{%s_%s_%s_ai2}\n", jsonFileName, "Grid",
-			postfix
+	formattedWrite(ltw, "\\input{%s_%s_%s_%s_ai2}\n", jsonFileName, "Grid",
+			postfix, k
 		);
 	formattedWrite(ltw, "\\end{document}\n");
 }
@@ -1205,7 +1207,7 @@ void doLearning2(int Size, alias Func)(string jsonFileName, string protocol,
 	//}
 
 	auto f = File(jsonFileName ~ "_" ~ protocol ~ "_" ~ postfix ~ "_" 
-			~ "ai2.tex", "w"
+			to!string(k) ~ "_" ~ "ai2.tex", "w"
 		);
 	auto ltw = f.lockingTextWriter();
 	prepareLatexDoc(ltw);
