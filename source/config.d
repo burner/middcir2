@@ -21,6 +21,9 @@ struct Config {
 	@Arg() int start = 0;
 	@Arg() int upto = 0;
 	@Arg() StatsType statstype = StatsType.all;
+	@Arg("The json file to get the graphs from for learning2") 
+		string learning2filename;
+	@Arg("The k in k nearest neighbours") size_t learning2k = 7;
 
 	int permutationStart() const {
 		//logf("%s", this.permutationCountStart);
@@ -47,11 +50,13 @@ struct Config {
 }
 
 void parseConfig(string[] args) {
-
-	int permuStart = -1;
-	int permuStop = -1;
-	bool continueLattice = false;
-	auto rslt = parseArgs(getWriteableConfig(), args);
+	//int permuStart = -1;
+	//int permuStop = -1;
+	//bool continueLattice = false;
+	bool helpWanted = parseArgs(getWriteableConfig(), args);
+	if(helpWanted) {
+		printArgsHelp(getWriteableConfig(), "The middcir2 program");
+	}
 }
 
 private Config __theConfig;

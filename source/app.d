@@ -6,6 +6,7 @@ import std.format : format;
 import std.algorithm : permutations, Permutations;
 import std.experimental.logger;
 import std.datetime : StopWatch;
+import std.array : empty;
 
 import protocols;
 import protocols.mcs;
@@ -610,7 +611,7 @@ void main(string[] args) {
 	//addGraphsToFile();
 	//runMappings("6nodegraphs.json", args);
 	//runMappings("graphs8nodes.json", args);
-	runMappings("9nodegraphs.json", args);
+	//runMappings("9nodegraphs.json", args);
 	//MCSForm();
 	//GridFormXY();
 	//gridVLattice(3,3);
@@ -627,6 +628,14 @@ void main(string[] args) {
 	//statsAna!32("6nodegraphs.json");
 	//statsAna!32("9nodegraphs.json");
 	//doLearning!32("6nodegraphs.json");
+	if(!getConfig().learning2filename.empty) {
+		logf("%s %s", getConfig().learning2filename,
+				getConfig().learning2k
+			);
+		doLearning2!32(getConfig().learning2filename, 
+				getConfig().learning2k
+			);
+	}
 	//doLearning2!32("graphs8nodes3.json");
 	//doLearning2!32("graphs9nodes3.json");
 	//doLearning2!32("graphs9nodes2.json");

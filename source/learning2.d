@@ -714,33 +714,72 @@ GraphStats!(Size) combineMedian(int Size)
 		(ref FixedSizeArray!(GraphStatsDistance!(Size)) arr)
 {
 	ensure(arr.length > 0);
-	if(arr.length % 2 == 1) {
-		return arr[arr.length / 2].ptr;
-	} else {
-		if(arr.length > 1) {
-			GraphStats!(Size) a = arr[arr.length / 2].ptr;
-			GraphStats!(Size) b = arr[(arr.length / 2) + 1].ptr;
-			const size_t iLen = a.results.length;
-			ensure(iLen == 2);
-			for(size_t i = 0; i < iLen; ++i) {
-				const size_t jLen = a.results[i].length;
-				ensure(jLen == 7);
-				for(size_t j = 0; j < jLen; ++j) {
-					a.results[i][j].readAvail[] += b.results[i][j].readAvail[];
-					a.results[i][j].readAvail[] /= 2.0;
-					a.results[i][j].writeAvail[] += b.results[i][j].writeAvail[];
-					a.results[i][j].writeAvail[] /= 2.0;
-					a.results[i][j].readCosts[] += b.results[i][j].readCosts[];
-					a.results[i][j].readCosts[] /= 2.0;
-					a.results[i][j].writeCosts[] += b.results[i][j].writeCosts[];
-					a.results[i][j].writeCosts[] /= 2.0;
+	GraphStats!(Size) ret;
+	const size_t iLen = ret.results.length;
+	ensure(iLen == 2);
+	for(size_t i = 0; i < iLen; ++i) {
+		const size_t jLen = ret.results[i].length;
+		ensure(jLen == 7);
+		for(size_t j = 0; j < jLen; ++j) {
+			ret.results[i][j] = getResult();
+			FixedSizeArray!(double)[101] ra;
+			FixedSizeArray!(double)[101] wa;
+			FixedSizeArray!(double)[101] rc;
+			FixedSizeArray!(double)[101] wc;
+			foreach(ref it; arr[]) {
+				for(size_t k = 0; k < 101; ++k) {
+					ra[k].insertBack(it.ptr.results[i][j].readAvail[k]);
+					wa[k].insertBack(it.ptr.results[i][j].writeAvail[k]);
+					rc[k].insertBack(it.ptr.results[i][j].readCosts[k]);
+					wc[k].insertBack(it.ptr.results[i][j].writeCosts[k]);
 				}
 			}
-			return a;
-		} else {
-			return arr[arr.length / 2].ptr;
+			for(size_t k = 0; k < 101; ++k) {
+				sort(ra[k][]);
+				sort(wa[k][]);
+				sort(rc[k][]);
+				sort(wc[k][]);
+				if(arr.length % 2 == 1) {
+					ret.results[i][j].readAvail[k] = ra[k][arr.length / 2];
+					ret.results[i][j].writeAvail[k] = wa[k][arr.length / 2];
+					ret.results[i][j].readCosts[k] = rc[k][arr.length / 2];
+					ret.results[i][j].writeCosts[k] = wc[k][arr.length / 2];
+				} else {
+					ret.results[i][j].readAvail[k] = ra[k][arr.length / 2];
+					ret.results[i][j].writeAvail[k] = wa[k][arr.length / 2];
+					ret.results[i][j].readCosts[k] = rc[k][arr.length / 2];
+					ret.results[i][j].writeCosts[k] = wc[k][arr.length / 2];
+					ret.results[i][j].readAvail[k] += 
+						ra[k][(arr.length / 2) + 1];
+					ret.results[i][j].writeAvail[k] += 
+						wa[k][(arr.length / 2) + 1];
+					ret.results[i][j].readCosts[k] += 
+						rc[k][(arr.length / 2) + 1];
+					ret.results[i][j].writeCosts[k] += 
+						wc[k][(arr.length / 2) + 1];
+
+					ret.results[i][j].readAvail[k] /= 2.0;
+					ret.results[i][j].writeAvail[k] /= 2.0;
+					ret.results[i][j].readCosts[k] /= 2.0;
+					ret.results[i][j].writeCosts[k] /= 2.0;
+				}
+			}
 		}
 	}
+	for(size_t i = 0; i < iLen; ++i) {
+		const size_t jLen = ret.results[i].length;
+		ensure(jLen == 7);
+		for(size_t j = 0; j < jLen; ++j) {
+			for(size_t k = 0; k < 101; ++k) {
+				ensure(!isNaN(ret.results[i][j].readAvail[k]));
+				ensure(!isNaN(ret.results[i][j].writeAvail[k]));
+				ensure(!isNaN(ret.results[i][j].readCosts[k]));
+				ensure(!isNaN(ret.results[i][j].writeCosts[k]));
+			}
+		}
+	}
+
+	return ret;
 }
 
 GraphStats!(Size) combineMin(int Size)
@@ -1077,22 +1116,8 @@ Array!(GraphWithProperties!Size) removeDuplicateGraphs(int Size)(
 	return ret;
 }
 
-void doLearning2(int Size)(string jsonFileName) {
-	doLearning2!(Size, combineAvg)(jsonFileName, "Avg");
-	doLearning2!(Size, combineMode)(jsonFileName, "Mode");
-	doLearning2!(Size, combineMax)(jsonFileName, "Max");
-	doLearning2!(Size, combineMin)(jsonFileName, "Min");
-	doLearning2!(Size, combineMedian)(jsonFileName, "Median");
-}
-
-void doLearning2(int Size, alias Func)(string jsonFileName, string postfix) {
-	enum numSplits = 5;
-	string outdir = format("%s_Learning2/", jsonFileName);
+void doLearning2(int Size)(string jsonFileName, const(size_t) k) {
 	Array!(GraphWithProperties!Size) graphs = loadGraphs!Size(jsonFileName);
-
-	//Array!(GraphWithProperties!Size) graphs = removeDuplicateGraphs(allGraphs);
-	//logf("all length %s graphs length %s", allGraphs.length, graphs.length);
-
 	ensure(graphs.length > 0);
 	const size_t numNodes = graphs[0].graph.length;
 	standardizeProperties!(Size)(graphs);
@@ -1110,14 +1135,27 @@ void doLearning2(int Size, alias Func)(string jsonFileName, string postfix) {
 		it.scale();
 	}
 
+	doLearning2!(Size, combineAvg)(jsonFileName, "Avg", k, rslts);
+	doLearning2!(Size, combineMode)(jsonFileName, "Mode", k, rslts);
+	doLearning2!(Size, combineMax)(jsonFileName, "Max", k, rslts);
+	doLearning2!(Size, combineMin)(jsonFileName, "Min", k, rslts);
+	doLearning2!(Size, combineMedian)(jsonFileName, "Median", k, rslts);
+}
+
+void doLearning2(int Size, alias Func)(string jsonFileName, string postfix, 
+		const(size_t) k, ref OptimalMappings!(Size)[3] rslts)
+{
+	enum numSplits = 5;
+	string outdir = format("%s_Learning2/", jsonFileName);
+
 	doLearning2!(Size,Func)(jsonFileName, "MCS", rslts[0], 
-			numSplits, postfix
+			numSplits, postfix, k
 		);
 	doLearning2!(Size,Func)(jsonFileName, "Lattice", rslts[1], 
-			numSplits, postfix
+			numSplits, postfix, k
 		);
 	doLearning2!(Size,Func)(jsonFileName, "Grid", rslts[2], 
-			numSplits, postfix
+			numSplits, postfix, k
 		);
 
 	auto f = File(jsonFileName ~ "_" ~ postfix ~ "_" ~ "ai2.tex", "w");
@@ -1158,7 +1196,8 @@ void doLearning2(int Size, alias Func)(string jsonFileName, string postfix) {
 // predict the avail and costs based on mm for all 1/5 graphs of rslts
 // calc MSE against real value
 void doLearning2(int Size, alias Func)(string jsonFileName, string protocol, 
-		ref OptimalMappings!Size rslts, const size_t numSplits, string postfix) 
+		ref OptimalMappings!Size rslts, const size_t numSplits, string postfix,
+		const(size_t) k) 
 {
 	Array!(OptimalMappings!Size) splits = split(rslts, numSplits);
 	//foreach(ref it; splits) { // ERROR doesn't work after scale()
