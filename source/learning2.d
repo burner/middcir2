@@ -1206,7 +1206,7 @@ void doLearning2(int Size, alias Func)(string jsonFileName, string protocol,
 	//	it.validate();
 	//}
 
-	auto f = File(jsonFileName ~ "_" ~ protocol ~ "_" ~ postfix ~ "_" 
+	auto f = File(jsonFileName ~ "_" ~ protocol ~ "_" ~ postfix ~ "_" ~
 			to!string(k) ~ "_" ~ "ai2.tex", "w"
 		);
 	auto ltw = f.lockingTextWriter();
