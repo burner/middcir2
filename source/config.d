@@ -13,6 +13,11 @@ enum StatsType {
 	Grid
 }
 
+struct SortBy {
+	@Arg()
+	string filename;
+}
+
 struct Config {
 	@Arg() bool runMultiThreaded = false;
 	@Arg() int permutationCountStart = -1;
@@ -24,6 +29,8 @@ struct Config {
 	@Arg("The json file to get the graphs from for learning2") 
 		string learning2filename;
 	@Arg("The k in k nearest neighbours") size_t learning2k = 7;
+
+	@Arg() SortBy sortBy;
 
 	int permutationStart() const {
 		//logf("%s", this.permutationCountStart);

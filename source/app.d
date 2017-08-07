@@ -24,6 +24,7 @@ import graph;
 import mapping;
 import stats;
 import statsanalysis;
+import sortingbystats;
 import config;
 
 class ShortLogger : Logger {
@@ -636,7 +637,13 @@ void main(string[] args) {
 				getConfig().learning2k
 			);
 	}
+
+	if(!getConfig().sortBy.filename.empty) {
+		logf("sort by filename %s", getConfig().sortBy.filename);
+		sortMappedQP!32(getConfig().sortBy.filename);
+	}
 	//doLearning2!32("graphs8nodes3.json");
 	//doLearning2!32("graphs9nodes3.json");
 	//doLearning2!32("graphs9nodes2.json");
+	logf("done");
 }
