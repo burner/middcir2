@@ -21,6 +21,7 @@ void printHeader(LTW)(ref LTW ltw) {
 	formattedWrite(ltw, "\\usepackage{standalone}\n");
 	formattedWrite(ltw, "\\usepackage{float}\n");
 	formattedWrite(ltw, "\\usepackage{multirow}\n");
+	formattedWrite(ltw, "\\usepackage{morefloats}\n");
 	formattedWrite(ltw, "\\usepackage{hyperref}\n");
 	formattedWrite(ltw, "\\usepackage{placeins}\n");
 	formattedWrite(ltw, "\\usepackage[cm]{fullpage}\n");
@@ -65,9 +66,13 @@ void sortMappedQP(int Size)(string jsonFileName) {
 	auto ltw = f.lockingTextWriter();
 	printHeader(ltw);
 
+	auto m = File(foldername ~ "/Makefile", "w");
+	auto mtw = m.lockingTextWriter();
+	formattedWrite(mtw, "all:");
+
 	auto permu = Permutations(cast(int)cstatsArray.length, 
 			//1, cast(int)cstatsArray.length
-			1, 2
+			1, 1
 		);
 	formattedWrite(ltw, "\\chapter{Permutations}\n");
 	auto mm = new MMCStat!32();
@@ -84,11 +89,11 @@ void sortMappedQP(int Size)(string jsonFileName) {
 		}
 
 		infof("working on %s", mm.getName());
-		formattedWrite(ltw, "\\section{%s}\n", mm.getName());
+		formattedWrite(ltw, "\\clearpage\n\\section{%s}\n", mm.getName());
 		foreach(idx, ref rslt; rslts) {
-			formattedWrite(ltw, "\\subsection{Protocol %s}\n", protocols[idx]);
+			formattedWrite(ltw, "\\clearpage\n\\subsection{Protocol %s}\n", protocols[idx]);
 			foreach(ref OptMapData!Size om; rslt.data[]) {
-				formattedWrite(ltw, "\\subsubsection{Dimension %s times %s}\n",
+				formattedWrite(ltw, "\\clearpage\n\\subsubsection{Dimension %s times %s}\n",
 						om.key.height, om.key.width
 					);
 				Array!(GraphStats!Size) tmp;
@@ -98,11 +103,67 @@ void sortMappedQP(int Size)(string jsonFileName) {
 				}
 				ensure(tmp.length > 0);
 				sortMappedQP!Size(tmp, mm);
-				toLatexSortMapped!Size(tmp, mm, protocols[idx], foldername,
-						format("_%sX%s", 
-							om.key.height, om.key.width
-						)
+				string postfix = format("_%sX%s", 
+						om.key.height, om.key.width
 					);
+				toLatexSortMapped!Size(tmp, mm, protocols[idx], foldername,
+						postfix
+					);
+				foreach(w; ["readAvail", "writeAvail", "readCosts", "writeCosts"]) {
+					foreach(it; ["Avail", "Costs"]) {
+						foreach(rdx, row; readOverWriteLevel) {
+							formattedWrite(ltw, "\\begin{figure}[H]\n");
+							formattedWrite(ltw, "\\includegraphics[width=1.0\\textwidth]{%s%s%s%s%03d%s.pdf}\n",
+									mm.getName(), protocols[idx],
+									w, it, cast(int)(row * 100), postfix);
+							formattedWrite(ltw, "\\end{figure}\n");
+
+							formattedWrite(mtw, " %s%s%s%s%03d%s.eps",
+									mm.getName(), protocols[idx],
+									w, it, cast(int)(row * 100), postfix);
+						}
+					}
+				}
+			}
+		}
+	}
+	formattedWrite(mtw, "\n\trubber --pdf index.tex\n\n");
+	permu = Permutations(cast(int)cstatsArray.length, 
+			//1, cast(int)cstatsArray.length
+			1, 1
+		);
+	foreach(perm; permu) {
+		mm.clear();
+		for(int j = 0; j < cstatsArray.length; ++j) {
+			if(perm.test(j)) {
+				mm.insertIStat(cstatsArray[j]);
+			}
+		}
+		if(!areMeasuresUnique(mm)) {
+			logf("ignore %s", mm.getName());
+			continue;
+		}
+
+		foreach(idx, ref rslt; rslts) {
+			foreach(ref OptMapData!Size om; rslt.data[]) {
+				string postfix = format("_%sX%s", 
+						om.key.height, om.key.width
+					);
+				foreach(w; ["readAvail", "writeAvail", "readCosts", "writeCosts"]) {
+					foreach(jdx, it; ["Avail", "Costs"]) {
+						foreach(rdx, row; readOverWriteLevel) {
+							formattedWrite(mtw, "\n%s%s%s%s%03d%s.eps:\n",
+									mm.getName(), protocols[idx],
+									w, it, cast(int)(row * 100), postfix);
+							formattedWrite(mtw, "\tgnuplot %s%s%s%s%03d%s.gp\n",
+									mm.getName(), protocols[idx],
+									w, it, cast(int)(row * 100), postfix);
+							formattedWrite(mtw, "\tepstopdf %s%s%s%s%03d%s.eps\n",
+									mm.getName(), protocols[idx],
+									w, it, cast(int)(row * 100), postfix);
+						}
+					}
+				}
 			}
 		}
 	}
@@ -121,7 +182,7 @@ set xlabel '%1$s'
 set border 3 back lc rgb "black"
 set palette defined (0 0 0 0.5, 1 0 0 1, 2 0 0.5 1, 3 0 1 1, 4 0.5 1 0.5, 5 1 1 0, 6 1 0.5 0, 7 1 0 0, 8 0.5 0 0)
 set grid
-set output '%1$s%2$s%4$s%5$s%6$s.eps'
+set output '%1$s%2$s%5$s%3$s%4$s%6$s.eps'
 plot "%1$s%2$s%5$s%3$s%4$s%6$s.data" using 1:2:3 with image
 `;
 
@@ -132,8 +193,8 @@ void toLatexSortMapped(int Size)(ref Array!(GraphStats!Size) rslt,
 		foreach(jdx, it; ["Avail", "Costs"]) {
 			foreach(rdx, row; readOverWriteLevel) {
 				auto f = File(
-						format("%s/%s%s%s%s%.2f%s.data", folder, mm.getName(), protocol,
-							w, it, row, postfix
+						format("%s/%s%s%s%s%03d%s.data", folder, mm.getName(), protocol,
+							w, it, cast(int)(row * 100), postfix
 						), "w"
 					);
 				auto ltw = f.lockingTextWriter();
@@ -160,13 +221,13 @@ void toLatexSortMapped(int Size)(ref Array!(GraphStats!Size) rslt,
 					}
 				}
 				auto g = File(
-						format("%s/%s%s%s%s%.2f%s.gp", folder, mm.getName(), protocol,
-							w, it, row, postfix
+						format("%s/%s%s%s%s%03d%s.gp", folder, mm.getName(), protocol,
+							w, it, cast(int)(row * 100), postfix
 						), "w"
 					);
 				auto gtw = g.lockingTextWriter();
 				formattedWrite(gtw, gnuplotString, mm.getName(), protocol, it, 
-						format("%.2f", row), w, postfix
+						format("%03d", cast(int)(row * 100)), w, postfix
 					);
 			}
 		}
