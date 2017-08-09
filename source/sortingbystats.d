@@ -74,7 +74,6 @@ void sortMappedQP(int Size)(string jsonFileName) {
 			//1, cast(int)cstatsArray.length
 			1, 1
 		);
-	formattedWrite(ltw, "\\chapter{Permutations}\n");
 	auto mm = new MMCStat!32();
 	foreach(perm; permu) {
 		mm.clear();
@@ -89,11 +88,11 @@ void sortMappedQP(int Size)(string jsonFileName) {
 		}
 
 		infof("working on %s", mm.getName());
-		formattedWrite(ltw, "\\clearpage\n\\section{%s}\n", mm.getName());
+		formattedWrite(ltw, "\\clearpage\n\\chapter{%s}\n", mm.getName());
 		foreach(idx, ref rslt; rslts) {
-			formattedWrite(ltw, "\\clearpage\n\\subsection{Protocol %s}\n", protocols[idx]);
+			formattedWrite(ltw, "\\clearpage\n\\section{Protocol %s}\n", protocols[idx]);
 			foreach(ref OptMapData!Size om; rslt.data[]) {
-				formattedWrite(ltw, "\\clearpage\n\\subsubsection{Dimension %s times %s}\n",
+				formattedWrite(ltw, "\\clearpage\n\\subsection{Dimension %s times %s}\n",
 						om.key.height, om.key.width
 					);
 				Array!(GraphStats!Size) tmp;
@@ -116,6 +115,10 @@ void sortMappedQP(int Size)(string jsonFileName) {
 							formattedWrite(ltw, "\\includegraphics[width=1.0\\textwidth]{%s%s%s%s%03d%s.pdf}\n",
 									mm.getName(), protocols[idx],
 									w, it, cast(int)(row * 100), postfix);
+							formattedWrite(ltw, "\\caption{Low %s High %s}\n",
+									mm.cstats.front.select(tmp.front),
+									mm.cstats.front.select(tmp.back)
+								);
 							formattedWrite(ltw, "\\end{figure}\n");
 
 							formattedWrite(mtw, " %s%s%s%s%03d%s.eps",
