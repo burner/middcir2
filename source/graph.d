@@ -633,6 +633,23 @@ Graph!16 makeLineOfFour() {
 	return makeLine!(16)(4);
 }
 
+Graph!Size makeFive(int Size)() {
+	auto g = Graph!Size(5);
+	g.setNodePos(0, vec3d(0.0,0.0,0.0));
+	g.setNodePos(1, vec3d(3.0,0.0,0.0));
+	g.setNodePos(2, vec3d(0.0,3.0,0.0));
+	g.setNodePos(3, vec3d(3.0,3.0,0.0));
+	g.setNodePos(4, vec3d(5.5,0.0,0.0));
+
+	g.setEdge(0, 1);
+	g.setEdge(0, 2);
+	g.setEdge(2, 3);
+	g.setEdge(3, 1);
+	g.setEdge(1, 4);
+
+	return g;
+}
+
 Graph!Size makeSix(int Size)() {
 	auto g = Graph!Size(6);
 	g.setNodePos(2, vec3d(2,2.5,0.0));

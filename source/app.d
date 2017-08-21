@@ -394,14 +394,14 @@ void latticeMCSMappedCrossing12() {
 }
 
 void mcsMapped() {
-	auto mcs = MCS(6);
+	auto mcs = MCS(5);
 	auto mcsRslt = mcs.calcAC();
-	auto pnt = makeSix!16();
+	auto pnt = makeFive!16();
 
 	auto map = Mappings!(32,16)(mcs.graph, pnt, QTF(1.0), ROW(0.5));
 	auto mapRslt = map.calcAC(mcs.read, mcs.write);
 
-	mappingPlot("Results/MCS6_Mapped", map,
+	mappingPlot("Results/MCS5_Mapped", map,
 			ResultPlot(mcs.name(), mcsRslt),
 			ResultPlot(map.name(mcs.name()), mapRslt)
 	);
@@ -602,7 +602,7 @@ void main(string[] args) {
 	//latticeMCSMappedCrossing12();
 	//crossing12();
 	//latticeMapped2();
-	//mcsMapped();
+	mcsMapped();
 	//gridMapped();
 	//crossings9();
 	//crossingSixteen();
