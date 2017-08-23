@@ -407,6 +407,37 @@ void mcsMapped() {
 	);
 }
 
+void printProperties() {
+	import graphmeasures;
+	auto g = makeFive!16();
+	auto d = computeDegree(g);
+	writefln("Degree:");
+	writefln("\tMin & %s", d.min);
+	writefln("\tAvg & %s", d.average);
+	writefln("\tMedian & %s", d.median);
+	writefln("\tMode & %s", d.mode);
+	writefln("\tMax & %s\n", d.max);
+
+	auto dia = computeDiameter(g);
+	writefln("Diameter:");
+	writefln("\tMin & %s", dia.min);
+	writefln("\tAvg & %s", dia.average);
+	writefln("\tMedian & %s", dia.median);
+	writefln("\tMode & %s", dia.mode);
+	writefln("\tMax & %s\n", dia.max);
+
+	auto bc = betweennessCentrality(g);
+	writefln("Betweenness Centrality:");
+	writefln("\tMin & %s", bc.min);
+	writefln("\tAvg & %s", bc.average);
+	writefln("\tMedian & %s", bc.median);
+	writefln("\tMode & %s", bc.mode);
+	writefln("\tMax & %s\n", bc.max);
+
+	auto c = computeConnectivity(g);
+	writefln("Connectivity: %s", c);
+}
+
 void gridMapped() {
 	auto grid = Grid(2,3);
 	auto gridRslt = grid.calcAC();
@@ -602,7 +633,8 @@ void main(string[] args) {
 	//latticeMCSMappedCrossing12();
 	//crossing12();
 	//latticeMapped2();
-	mcsMapped();
+	//mcsMapped();
+	printProperties();
 	//gridMapped();
 	//crossings9();
 	//crossingSixteen();

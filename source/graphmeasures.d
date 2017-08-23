@@ -181,9 +181,9 @@ double computeConnectivity(int Size)(ref Graph!Size graph) {
 	foreach(perm; permu) {
 		BitsetType avail = BitsetType(one.store ^ perm.store);
 		paths.execute(graph, avail);
-		for(uint ai = 0; ai < graph.length && avail.test(ai); ++ai) {
-			for(uint bi = ai + 1; bi < graph.length && avail.test(bi); ++bi) {
-				if(!paths.pathExists(ai, bi)) {
+		for(uint ai = 0; ai < graph.length; ++ai) {
+			for(uint bi = ai + 1; bi < graph.length; ++bi) {
+				if(avail.test(ai) && avail.test(bi) && !paths.pathExists(ai, bi)) {
 					return avail.flip().count();
 				}
 			}
@@ -191,6 +191,18 @@ double computeConnectivity(int Size)(ref Graph!Size graph) {
 	}	
 
 	return graph.length;
+}
+
+unittest {
+	import std.math : approxEqual;
+	import std.format : format;
+	import std.stdio : File;
+
+	auto f = makeFive!16();
+	//auto fi = File("makeFiveConnectivity.tex", "w");
+	//f.toTikz(fi.lockingTextWriter());
+	double c = computeConnectivity(f);
+	assert(approxEqual(c, 1.0), format("%s", c));
 }
 
 struct DegreeResult {
