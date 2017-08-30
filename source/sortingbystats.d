@@ -72,7 +72,7 @@ void sortMappedQP(int Size)(string jsonFileName) {
 
 	auto permu = Permutations(cast(int)cstatsArray.length, 
 			//1, cast(int)cstatsArray.length
-			1, 1
+			1, 3
 		);
 	auto mm = new MMCStat!32();
 	foreach(perm; permu) {
@@ -133,7 +133,7 @@ void sortMappedQP(int Size)(string jsonFileName) {
 	formattedWrite(mtw, "\n\trubber --pdf index.tex\n\n");
 	permu = Permutations(cast(int)cstatsArray.length, 
 			//1, cast(int)cstatsArray.length
-			1, 1
+			1, 3
 		);
 	foreach(perm; permu) {
 		mm.clear();

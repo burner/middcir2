@@ -12,6 +12,7 @@ import std.experimental.logger;
 import std.format : formattedWrite;
 
 void writeMapping(M)(string prefix, ref File tex, const ref M mapping) {
+	assert(mapping.bestMapping !is null);
 	tex.write("\\begin{tabular}{l ");
 	for(size_t i = 0; i < mapping.bestMapping.mapping.length; ++i) {
 		tex.write("c ");
@@ -166,6 +167,7 @@ void mappingPlot2(Graph,P...)(string path, auto ref Graph pnt, auto ref P ps) {
 
 		mappings ~= Mappings!(32,32)(p.getGraph(), pnt, QTF(1.0), ROW(0.5));
 		static if(is(typeof(p) == Crossings)) {
+			logf("Created Dummy Mapping");
 			mappings.back.createDummyBestMapping();
 			resultsMapping[idx] = results[idx];
 		} else static if(is(typeof(p) == Crossing)) {

@@ -359,6 +359,8 @@ class Mapping(int SizeLnt, int SizePnt) {
 			const ref BitsetStore!uint oWrite) 
 	{
 		this.reconnectQuorums(oRead, this.read, oWrite, this.write);
+		//logf("\n%s\n", oRead.toString());
+		//logf("\n%s", this.read.toString());
 		//this.reconnectQuorums(oWrite, this.write);
 
 		return calcAvailForTree!(typeof(this.read))(to!int(this.lnt.length), this.read, this.write);
@@ -411,6 +413,9 @@ struct Mappings(int SizeLnt, int SizePnt) {
 	}
 
 	@property Mapping!(SizeLnt,SizePnt) bestMapping() {
+		if(this.bestMappingLocal !is null) {
+			return this.bestMappingLocal;
+		}
 		if(this.results.get(ROW(0.5)).payload !is null) {
 			return this.results.get(ROW(0.5)).mapping;
 		} else {

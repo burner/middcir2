@@ -56,12 +56,13 @@ class ShortLogger : Logger {
 //}
 
 void MCSForm() {
-	const NN = 7;
+	const NN = 1;
 	MCSFormula[NN] formula;
 	Result[NN] rslt;
 	ResultPlot[NN] rsltPlot;
 
-	int[NN] nns = [3,5,8,9,16,33,63];
+	//int[NN] nns = [3,5,8,9,16,33,63];
+	int[NN] nns = [5];
 
 	for(int i = 0; i < nns.length; ++i) {
 		formula[i] = MCSFormula(nns[i]);
@@ -72,13 +73,13 @@ void MCSForm() {
 		logf("c %d", i);
 	}
 	gnuPlot("Result/MCS_Many", "", 
-			rsltPlot[0],
-			rsltPlot[1],
-			rsltPlot[2],
-			rsltPlot[3],
-			rsltPlot[4],
-			rsltPlot[5],
-			rsltPlot[6]);
+			rsltPlot[0]);
+			//rsltPlot[1],
+			//rsltPlot[2],
+			//rsltPlot[3],
+			//rsltPlot[4],
+			//rsltPlot[5],
+			//rsltPlot[6]);
 }
 
 void crossingVCrossing() {
@@ -393,18 +394,23 @@ void latticeMCSMappedCrossing12() {
 	mappingPlot2("Results/LatticeMCSCrossing12", pnt, lattice, mcs, crossings);
 }
 
+void mcsCrossing16() {
+	auto pnt = genTestGraph!32();
+	//auto pnt = makeFive!32();
+	auto mcs = MCS(16);
+	auto cro = Crossings(pnt);
+	mappingPlot2("Results/MCSCrossing16", pnt, mcs, cro);
+}
+
 void mcsMapped() {
 	auto mcs = MCS(5);
-	auto mcsRslt = mcs.calcAC();
-	auto pnt = makeFive!16();
+	//auto mcsRslt = mcs.calcAC();
+	auto pnt = makeFive!32();
 
-	auto map = Mappings!(32,16)(mcs.graph, pnt, QTF(1.0), ROW(0.5));
-	auto mapRslt = map.calcAC(mcs.read, mcs.write);
+	//auto map = Mappings!(32,16)(mcs.graph, pnt, QTF(1.0), ROW(0.5));
+	//auto mapRslt = map.calcAC(mcs.read, mcs.write);
 
-	mappingPlot("Results/MCS5_Mapped", map,
-			ResultPlot(mcs.name(), mcsRslt),
-			ResultPlot(map.name(mcs.name()), mapRslt)
-	);
+	mappingPlot2("Results/MCS5_Mapped",	pnt, mcs);
 }
 
 void printProperties() {
@@ -633,12 +639,14 @@ void main(string[] args) {
 	//latticeMCSMappedCrossing12();
 	//crossing12();
 	//latticeMapped2();
+	//MCSForm();
 	//mcsMapped();
-	printProperties();
+	//printProperties();
 	//gridMapped();
 	//crossings9();
 	//crossingSixteen();
 	//crossingMCSSixteen();
+	//mcsCrossing16();
 	//latticeMapped9quantil();
 	//genRandomGraphs();
 	//addGraphsToFile();

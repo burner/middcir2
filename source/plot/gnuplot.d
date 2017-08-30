@@ -104,7 +104,7 @@ set border 3 back lc rgb "black"
 set key left top
 set style data linespoints
 #set key at 50,112
-set xlabel 'Node Availability'
+set xlabel 'Node Availability (p)'
 set ylabel '%s' offset 1,0
 set tics scale 0.75
 plot `;
@@ -122,7 +122,7 @@ set border 3 back lc rgb "black"
 set key right bottom
 set style data linespoints
 #set key at 50,112
-set xlabel 'Node Availability'
+set xlabel 'Node Availability (p)'
 set ylabel '%s' offset 1,0
 set tics scale 0.75
 plot `;
@@ -139,7 +139,7 @@ set border 3 back lc rgb "black"
 set key left top
 set style data linespoints
 #set key at 50,112
-set xlabel 'Node Availability'
+set xlabel 'Node Availability (p)'
 set ylabel '%s' offset 1,0
 set tics scale 0.75
 plot `;
