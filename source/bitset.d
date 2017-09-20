@@ -324,25 +324,36 @@ struct Bitset(Store) if(isIntegral!Store && isUnsigned!Store) {
 			v = v >> 4;
 		}*/
 		//formattedWrite(sink, "%4b", this.store);
-		import std.format : formattedWrite;	
-		formattedWrite(sink, "0b");
-		
-		const ulong mask = 0b0000_0000_0000_0000_0000_0000_0000_1111;
-		const ulong sets  = Store.sizeof * 2;
+		bitsetToString(sink, this.store);
+	}
+}
 
-		ulong bitfield = cast(ulong)this.store;
+string bitsetToString(I)(I bs) {
+	import std.array : appender;
+	auto app = appender!string();
+	bitsetToString(app, bs);
+	return app.data;
+}
 
-		for (size_t i = 0; i < sets; ++i) 
+void bitsetToString(S,I)(auto ref S sink, I bs) {
+	import std.format : formattedWrite;	
+	formattedWrite(sink, "0b");
+	
+	const ulong mask = 0b0000_0000_0000_0000_0000_0000_0000_1111;
+	const ulong sets  = I.sizeof * 2;
+
+	ulong bitfield = cast(ulong)bs;
+
+	for (size_t i = 0; i < sets; ++i) 
+	{
+		if (i > 0)
 		{
-			if (i > 0)
-			{
-				formattedWrite(sink, "_");
-			}
-
-			ulong shift = (sets - i - 1) * 4UL;
-			
-			formattedWrite(sink, "%04b", (bitfield >> shift) & mask);
+			formattedWrite(sink, "_");
 		}
+
+		ulong shift = (sets - i - 1) * 4UL;
+		
+		formattedWrite(sink, "%04b", (bitfield >> shift) & mask);
 	}
 }
 

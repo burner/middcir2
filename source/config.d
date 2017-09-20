@@ -31,6 +31,7 @@ struct Config {
 	@Arg("The k in k nearest neighbours") size_t learning2k = 7;
 
 	@Arg() SortBy sortBy;
+	@Arg() bool testSupsetFast;
 
 	int permutationStart() const {
 		//logf("%s", this.permutationCountStart);

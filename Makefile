@@ -36,3 +36,9 @@ clean:
 	rm -rf .*.eps
 	rm -rf .*.rslt
 	rm -rf .*.gp
+
+fastsup.o: source/fastsupset.c
+	clang -Wall -Wextra -march=native source/fastsupset.c -ggdb -c -o fastsup.o
+
+fastsup.s: source/fastsupset.c
+	clang -Wall -Wextra -march=native source/fastsupset.c -O3 -S -c -o fastsup.s

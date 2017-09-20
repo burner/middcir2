@@ -627,6 +627,12 @@ void main(string[] args) {
 	sharedLog = new ShortLogger(LogLevel.all);
 	parseConfig(args);
 
+	if(getConfig().testSupsetFast) {
+		import testfastsupset;
+		testFastSupset();
+		return;
+	}
+
 	//lattice(4,4);
 	//gridAgainstGrid(4,4);
 	//MCSAgainstMCS(15);

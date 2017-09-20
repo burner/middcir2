@@ -308,5 +308,4 @@ unittest {
 	}
 
 	Result rslt = l.calcAC();
-
 }
