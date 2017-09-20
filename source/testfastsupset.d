@@ -114,19 +114,16 @@ void testFastSupset2() {
 	import permutation;
 
 	auto rnd = Random(1337);
-	auto permu = PermutationsImpl!uint(31, 4, 23);
+	auto permu = PermutationsImpl!uint(31, 6, 14);
 
 	uint[] set;
-	uint[] toFind;
 
 	foreach(perm; permu) {
 		float f = uniform(0.0, 1.0, rnd);
-		if(f < 0.2) {
-			toFind ~= perm.store;
-		} else {
+		if(f > 0.7) {
 			set ~= perm.store;
 		}
 	}
 
-	writefln("%s %s", set.length, toFind.length);
+	writefln("%s", set.length);
 }
