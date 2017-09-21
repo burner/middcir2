@@ -234,6 +234,11 @@ struct Bitset(Store) if(isIntegral!Store && isUnsigned!Store) {
 	}
 
 	bool hasSubSet(const Store rhs) const {
+		//writefln("rhs %s\nstr %s\naft %s", 
+		//		bitsetToString(rhs),
+		//		bitsetToString(this.store), 
+		//		bitsetToString(rhs & this.store)
+		//	);
 		return (rhs & this.store) == rhs;
 	}
 

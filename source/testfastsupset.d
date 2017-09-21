@@ -6,13 +6,18 @@ import std.format : format;
 import std.stdio;
 
 extern(C) uint fastSubsetFind(uint* ptr, size_t len, uint supSet);
+extern(C) uint fastSubsetFind2(uint* ptr, size_t len, uint supSet);
 
 unittest {
 	testFastSupset();
-	testFastSupset2();
 }
 
 void testFastSupset() {
+	//testFastSupset1();
+	testFastSupset2();
+}
+
+void testFastSupset1() {
 	uint[] arr = [
 		// Four
 		0b0000_0000_1111_0000,
@@ -109,21 +114,107 @@ void testFastSupset() {
 	}
 }
 
+private uint oldTest(uint[] array, Bitset!uint bs) {
+	//foreach(uint it; array) {
+	//writefln("bs:\n%s", bitsetToString(bs.store));
+	for(size_t i = 0; i < array.length; ++i) {
+		//writeln(bitsetToString(array[i]));
+		if((array[i] & bs.store) == array[i])
+		//if(bs.hasSubSet(array[i])) 
+		{
+			return array[i];
+		} 
+	}
+	return uint.max;
+}
+
 void testFastSupset2() {
 	import std.random;
 	import permutation;
+	import std.datetime;
+	import randomizedtestbenchmark;
+
+	static assert(Bitset!(uint).sizeof == 4);
 
 	auto rnd = Random(1337);
-	auto permu = PermutationsImpl!uint(31, 6, 14);
+	auto permu = PermutationsImpl!uint(31, 3, 6);
 
 	uint[] set;
+	Bitset!(uint)[] toTest;
 
 	foreach(perm; permu) {
 		float f = uniform(0.0, 1.0, rnd);
 		if(f > 0.7) {
 			set ~= perm.store;
+		} else {
+			toTest ~= perm;
 		}
 	}
+	writeln(set.length);
 
-	writefln("%s", set.length);
+	int l = 7;
+	int h = 9;
+	{
+		auto permu1 = PermutationsImpl!uint(31, l, h);
+		auto sw1 = StopWatch(AutoStart.yes);
+		foreach(perm; permu1) {
+			uint pf = fastSubsetFind(set.ptr, set.length, perm.store);
+			doNotOptimizeAway(pf);
+		}
+		sw1.stop();
+		writefln("New  %6s milliseconds", sw1.peek().msecs);
+	}
+
+	{
+		auto permu1 = PermutationsImpl!uint(31, l, h);
+		auto sw1 = StopWatch(AutoStart.yes);
+		foreach(perm; permu1) {
+			uint pf = fastSubsetFind2(set.ptr, set.length, perm.store);
+			doNotOptimizeAway(pf);
+		}
+		sw1.stop();
+		writefln("New2 %6s milliseconds", sw1.peek().msecs);
+	}
+
+	{
+		auto permu1 = PermutationsImpl!uint(31, l, h);
+		auto sw1 = StopWatch(AutoStart.yes);
+		foreach(perm; permu1) {
+			uint pf = oldTest(set, perm);
+			doNotOptimizeAway(pf);
+		}
+		sw1.stop();
+		writefln("Old  %6s milliseconds", sw1.peek().msecs);
+	}
+
+	{
+		auto permu1 = PermutationsImpl!uint(31, 5, 7);
+		foreach(perm; permu1) {
+			uint pfo = oldTest(set, perm);
+			uint pf = fastSubsetFind2(set.ptr, set.length, perm.store);
+			if(pf != pfo) {
+				writefln("\nTF %s\n\n\nC  %s\nD  %s",
+						bitsetToString(perm.store),
+						bitsetToString(pf),
+						bitsetToString(pfo)
+					);
+				size_t idx = 0;
+				foreach(it; set) {
+					if(it == pf) {
+						writeln("Found");
+						break;
+					}
+					++idx;
+				}
+				writefln("%s\n%s\n%11d %s\n%11d %s\n%11s %s", idx, perm.hasSubSet(set[idx]),
+						perm.store, bitsetToString(perm.store), 
+						set[idx], bitsetToString(set[idx]),
+						" ", bitsetToString(perm.store & set[idx])
+					);
+				throw new Exception("Foo");
+			}
+			doNotOptimizeAway(pf);
+			doNotOptimizeAway(pfo);
+		}
+	}
 }
