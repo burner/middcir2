@@ -593,3 +593,120 @@ struct BitsetArrayArrayRC(T) {
 		}
 	}
 }
+
+extern(C) uint fastSubsetFind(uint* ptr, size_t len, uint supSet);
+extern(C) ushort fastSubsetFind2(ushort* ptr, size_t len, ushort supSet);
+
+align(8) struct BitsetArrayFlat(T) {
+	Bitset!(T)[] keys;
+	Bitset!(T)[][] superSets;
+	string prefix;
+
+	this(string prefix) {
+		this.prefix = prefix;
+		this.superSets = new Bitset!(T)[T.max];
+	}
+
+	void insert(Bitset!T key, Bitset!T value) {
+		T it = this.search(key);
+		if(it != T.max) {
+			//assert(value != (*it).bitset, format("bs(%b) it(%b)", value.store,
+			//		(*it).bitset.store
+			//));
+			this.superSets[it] ~= value;
+		} else {
+			if(getConfig().permutationStart == -1) {
+				assert(key == value, format("%s %s", key, value));
+				//ensure(key == value);
+			}
+			this.keys ~= key;
+			//this.array.insert(bitsetArrayRC(key));
+		}
+	}
+
+	void insert(T t) {
+		auto bs = Bitset!T(t);
+		this.insert(bs);
+	}
+
+	void insert(Bitset!T bs) {
+		T it = this.search(bs);
+		//if(!it.isNull()) {
+		if(it != T.max) {
+			//writefln("%b %b", (*it).bitset.store, bs.store);
+			// TODO figure out if this is really a valid assertion
+			//assert(bs != (*it).bitset, format("bs(%b) it(%b)", bs.store,
+			//		(*it).bitset.store
+			//));
+			this.superSets[it] ~= bs;
+			//(*it).subsets ~= bs;
+		} else {
+			this.keys ~= bs;
+			//this.array.insert(bitsetArrayRC(bs));
+		}
+	}
+
+	bool insertUnique(Bitset!T key) {
+		T it = this.search(key);
+		//if(!it.isNull()) {
+		if(it != T.max) {
+			logf(LogLevel.error, "%s already exists", key.store);
+			return false;
+		} else {
+			this.keys ~= key;
+			//this.array.insert(bitsetArrayRC(key));
+			return true;
+		}
+	}
+
+	T search(Bitset!T bs) {
+		static if(is(T == uint)) {
+			return fastSubsetFind(cast(uint*)this.keys.ptr, this.keys.length,
+					bs.store
+				);
+		} else if(is(T == ushort)) {
+			return fastSubsetFind(cast(ushort*)this.keys.ptr, this.keys.length,
+					bs.store
+				);
+		} else {
+			static assert(false, "Can't search with type " ~ T.stringof);
+		}
+	}
+
+	auto begin() {
+	}
+
+	auto end() {
+	}
+
+	auto opSlice() const {
+		return this.array[];
+	}
+
+	auto opSlice(const size_t low, const size_t high) const {
+		return this.array[low .. high];
+	}
+
+	@property size_t length() const {
+		return this.keys.length;
+	}
+
+	string toString() const {
+		return "";
+	}	
+
+	ref BitsetArrayRC!(T) opIndex(const size_t idx) {
+		return this.array[idx];
+	}
+
+	auto dup() const {
+		import std.traits : Unqual;
+		Unqual!(typeof(this)) ret;
+		ret.keys = this.keys.dup;
+		ret.superSets = this.superSets.dup;
+		return ret;
+	}
+
+	void toFile() {
+	}
+}

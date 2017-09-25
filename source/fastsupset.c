@@ -103,15 +103,19 @@ uint32_t fastSubsetFind(uint32_t* ptr, size_t len, uint32_t supSet) {
 	return UINT_MAX;
 }
 
-uint32_t fastSubsetFind2(uint32_t* ptr, size_t len, uint32_t supSet) {
-	__m128i ss = _mm_set_epi32(
+uint16_t fastSubsetFind2(uint16_t* ptr, size_t len, uint16_t supSet) {
+	__m128i ss = _mm_set_epi16(
+			supSet, supSet, 
+			supSet, supSet,
 			supSet, supSet, 
 			supSet, supSet
 		);
 	//printf("ss\n");
 	//print128_num(ss);
 
-	__m128i mask = _mm_set_epi32(
+	__m128i mask = _mm_set_epi16(
+			0b10000000, 0b01000000, 
+			0b00100000, 0b00010000, 
 			0b00001000, 0b00000100, 
 			0b00000010, 0b00000001
 		);
@@ -119,12 +123,13 @@ uint32_t fastSubsetFind2(uint32_t* ptr, size_t len, uint32_t supSet) {
 
 	size_t i = 0;
 
-	uint32_t tmp[4] = { 0,0,0,0 };
-	uint32_t tmpMerge = 0;
+	uint16_t tmp[8] = { 0,0,0,0,
+						0,0,0,0 };
+	uint16_t tmpMerge = 0;
 	//uint32_t* tmpPtr;
 	int32_t rslt = 0;
-	size_t lenMod8 = len - (len % 4UL);
-	for(; i < lenMod8; i += 4UL) {
+	size_t lenMod8 = len - (len % 8UL);
+	for(; i < lenMod8; i += 8UL) {
 		// load 16 ushorts
 		__m128i tt = _mm_loadu_si128((__m128i*)(ptr + i));
 		//printf("tt\n");
@@ -133,7 +138,7 @@ uint32_t fastSubsetFind2(uint32_t* ptr, size_t len, uint32_t supSet) {
 		// logical and these 16 ushort to supSet
 		__m128i afterAnd = _mm_and_si128(tt, ss);
 
-		__m128i cmp = _mm_cmpeq_epi32 (afterAnd, tt);
+		__m128i cmp = _mm_cmpeq_epi16(afterAnd, tt);
 		__m128i selMask = _mm_and_si128(cmp, mask);
 		//printf("selMask\n");
 		//print128_num(selMask);
@@ -142,7 +147,8 @@ uint32_t fastSubsetFind2(uint32_t* ptr, size_t len, uint32_t supSet) {
 		_mm_storeu_si128((__m128i*)tmp, selMask);
 		//tmpPtr = (uint32_t*)&selMask;
 		//tmpMerge = tmpPtr[0] | tmpPtr[1] | tmpPtr[2] | tmpPtr[3];
-		tmpMerge = (tmp[0] | tmp[1]) | (tmp[2] | tmp[3]);
+		tmpMerge = (tmp[0] | tmp[1]) | (tmp[2] | tmp[3]
+					| tmp[4] | tmp[5]) | (tmp[6] | tmp[7]);
 
 		rslt = __builtin_ffs((int32_t)tmpMerge);
 		//printf("%d\n", rslt);
@@ -160,5 +166,5 @@ uint32_t fastSubsetFind2(uint32_t* ptr, size_t len, uint32_t supSet) {
 			return ptr[i];
 		}
 	}
-	return UINT_MAX;
+	return USHRT_MAX;
 }
