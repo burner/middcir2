@@ -631,30 +631,25 @@ align(8) struct BitsetArrayFlat(T) {
 
 	void insert(Bitset!T bs) {
 		T it = this.search(bs);
-		//if(!it.isNull()) {
 		if(it != T.max) {
-			//writefln("%b %b", (*it).bitset.store, bs.store);
-			// TODO figure out if this is really a valid assertion
-			//assert(bs != (*it).bitset, format("bs(%b) it(%b)", bs.store,
-			//		(*it).bitset.store
-			//));
 			this.superSets[it] ~= bs;
-			//(*it).subsets ~= bs;
 		} else {
 			this.keys ~= bs;
-			//this.array.insert(bitsetArrayRC(bs));
 		}
 	}
 
 	bool insertUnique(Bitset!T key) {
 		T it = this.search(key);
-		//if(!it.isNull()) {
 		if(it != T.max) {
-			logf(LogLevel.error, "%s already exists", key.store);
-			return false;
+			foreach(jt; this.superSets[it]) {
+				if(jt == key) {
+					return false;
+				}
+			}
+			this.superSets[it] ~= key;
+			return true;
 		} else {
 			this.keys ~= key;
-			//this.array.insert(bitsetArrayRC(key));
 			return true;
 		}
 	}
