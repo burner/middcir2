@@ -141,14 +141,14 @@ struct FloydImpl(int Size) {
 	}
 
 	bool path(T)(const uint from, const uint to, ref T rslt) const {
-		rslt.insertBack(from);
+		rslt.insertBack(cast(TypeFromSize!Size)from);
 		ubyte next = this.first[from][to];
 		while(next != INF && next != to) {
-			rslt.insertBack(next);
+			rslt.insertBack(cast(TypeFromSize!Size)next);
 			next = this.first[next][to];
 		}
 
-		rslt.insertBack(to);
+		rslt.insertBack(cast(TypeFromSize!Size)to);
 		return next == to;
 	}
 

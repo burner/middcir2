@@ -625,13 +625,14 @@ struct BitsetArrayFlatItem(T) {
 	}
 
 	@property ref Bitset!(T)[] subsets() {
-		logf("%s %s", this.idx, (*this.flat).superSets.length);
-		return (*this.flat).superSets[this.idx];
+		logf("key %s %s", this.idx, (*this.flat).keys.length);
+		logf("super %s %s", (*this.flat).keys[idx].store, (*this.flat).superSets.length);
+		return (*this.flat).superSets[(*this.flat).keys[this.idx].store];
 	}
 
 	@property ref const(Bitset!(T)[]) subsets() const {
-		logf("%s %s", this.idx, (*this.flat).superSets.length);
-		return (*this.flat).superSets[this.idx];
+		logf("%s %s", (*this.flat).keys[idx].store, (*this.flat).superSets.length);
+		return (*this.flat).superSets[(*this.flat).keys[this.idx].store];
 	}
 
 	@property bool isNull() const {
@@ -651,9 +652,10 @@ struct BitsetArrayFlatIterator(T,S) {
 	long curPos;
 	long endPos = long.max;
 
-	this(S* ptr, long curPos = 0) {
+	this(S* ptr, long curPos) {
 		this.ptr = ptr;
 		this.curPos = curPos;
+		this.endPos = ulong.max;
 	}
 
 	this(S* ptr, size_t start, size_t end) {
@@ -678,7 +680,8 @@ struct BitsetArrayFlatIterator(T,S) {
 	}
 
 	bool opEqual(const(BitsetArrayFlatIterator!(T,S)) rhs) {
-		return this.ptr is rhs.ptr && this.curPos == rhs.curPos;
+		//return this.ptr is rhs.ptr && this.curPos == rhs.curPos;
+		return this.curPos == rhs.curPos;
 	}
 
 	@property BitsetArrayFlatItem!T front() {
@@ -771,13 +774,17 @@ align(8) struct BitsetArrayFlat(T) {
 			}
 			return ulong.max;
 		} else static if(is(T == uint)) {
-			return fastSubsetFind(cast(uint*)this.keys.ptr, this.keys.length,
+			T ret = fastSubsetFind(cast(uint*)this.keys.ptr, this.keys.length,
 					bs.store
 				);
+			logf("found idx %s in %s", ret, this.keys.length);
+			return ret;
 		} else static if(is(T == ushort)) {
-			return fastSubsetFind2(cast(ushort*)this.keys.ptr, this.keys.length,
+			T ret = fastSubsetFind2(cast(ushort*)this.keys.ptr, this.keys.length,
 					bs.store
 				);
+			logf("found idx %s in %s", ret, this.keys.length);
+			return ret;
 		} else {
 			static assert(false, "Can't search with type " ~ T.stringof);
 		}

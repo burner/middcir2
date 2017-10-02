@@ -308,7 +308,7 @@ void latticeMapped() {
 }
 
 void latticeMapped2() {
-	auto lattice = Lattice(3,3);
+	auto lattice = LatticeImpl!32(3,3);
 	auto latticeRslt = lattice.calcAC();
 	auto pnt = makeSix!16();
 
@@ -637,9 +637,9 @@ void main(string[] args) {
 	//gridAgainstGrid(4,4);
 	//MCSAgainstMCS(15);
 	//latticeMapped();
-	latticeMapped2();
+	//latticeMapped2();
 	//latticeMCSMapped6();
-	//latticeMCSMapped9();
+	latticeMCSMapped9();
 	//latticeMCSMappedCrossing6();
 	//latticeMCSMappedCrossing9();
 	//latticeMCSMappedCrossing12();
