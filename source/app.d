@@ -85,11 +85,11 @@ void MCSForm() {
 void crossingVCrossing() {
 	for(int i = 4; i < 5; ++i) {
 		logf("%d x %d", i, i);
-		auto tl = LatticeImpl!64(i, i);
+		auto tl = LatticeImpl!32(i, i);
 		auto tlRslt = tl.calcAC();
 		auto rsltTL = ResultPlot(tl.name(), tlRslt);
 
-		auto crossings1 = CrossingsImpl!64(tl.getGraph(), 
+		auto crossings1 = CrossingsImpl!32(tl.getGraph(), 
 			CrossingsConfig(0, 10)
 		);
 		auto crossingsRslt1 = crossings1.calcAC();
@@ -308,7 +308,7 @@ void latticeMapped() {
 }
 
 void latticeMapped2() {
-	auto lattice = Lattice(2,3);
+	auto lattice = Lattice(3,3);
 	auto latticeRslt = lattice.calcAC();
 	auto pnt = makeSix!16();
 
@@ -637,7 +637,7 @@ void main(string[] args) {
 	//gridAgainstGrid(4,4);
 	//MCSAgainstMCS(15);
 	//latticeMapped();
-	//latticeMapped2();
+	latticeMapped2();
 	//latticeMCSMapped6();
 	//latticeMCSMapped9();
 	//latticeMCSMappedCrossing6();

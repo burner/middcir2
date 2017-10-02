@@ -2,6 +2,8 @@ module sublistjoiner;
 
 import std.experimental.logger;
 
+//import protocols.pathbased : isNullTest, append;
+
 alias SubListJoiner = SubListJoinerImpl!16;
 
 struct SubListJoinerImpl(int Size) {
@@ -64,18 +66,25 @@ struct SubListJoinerImpl(int Size) {
 				maxNodes = max(head.store, maxNodes);
 				auto ptr = dest.search(head);
 				if(ptr.isNull()) {
+				//if(isNullTest!(BitsetStore!BSType)(ptr)) {
 					dest.insert(head);
 					ptr = dest.search(head);
 					assert(!ptr.isNull());
+					//assert(!isNullTest!(BitsetStore!BSType)(ptr));
 					foreach(jt; it["supersets"].array) {
 						(*ptr).subsets ~= Bitset!BSType(cast(BSType)jt.integer());
+						//append(dest, ptr, Bitset!BSType(cast(BSType)jt.integer()));
 						maxNodes = max((*ptr).subsets.back.store, maxNodes);
+						//maxNodes = max(dest.superSets[dest.keys[ptr].store].back.store, maxNodes);
 					}
 				} else {
 					(*ptr).subsets ~= head;
+					//append(dest, ptr, head);
 					foreach(jt; it["supersets"].array) {
 						(*ptr).subsets ~= Bitset!BSType(cast(BSType)jt.integer());
+						//append(dest, ptr, Bitset!BSType(cast(BSType)jt.integer()));
 						maxNodes = max((*ptr).subsets.back.store, maxNodes);
+						//maxNodes = max(dest.superSets[dest.keys[ptr].store].back.store, maxNodes);
 					}
 				}
 			}

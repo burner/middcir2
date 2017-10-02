@@ -203,7 +203,7 @@ private void calcAvailForTreeImpl(BitsetStoreType)(const int numNodes,
 			assert(!test[idx]);
 			test[idx] = true;
 
-			const availBsa = availability(numNodes, bsa.bitset, idx, stepCount);
+			const availBsa = availability(numNodes, bsa.bitset, cast(size_t)idx, stepCount);
 			const minQuorumNodeCnt = popcnt(bsa.bitset.store);
 
 			avail[idx] += availBsa;

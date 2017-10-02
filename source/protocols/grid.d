@@ -29,8 +29,10 @@ struct GridImpl(int Size) {
 		this.width = width;
 		this.height = height;
 		this.rowMask = (1 << this.width) - 1;
-		this.read.array.reserve(Size);
-		this.write.array.reserve(Size);
+		//this.read.array.reserve(Size);
+		//this.write.array.reserve(Size);
+		this.read = BitsetStore!uint();
+		this.write = BitsetStore!uint();
 
 		this.graph = makeCircle!Size(to!int(this.width * this.height));
 		completeConnectGraph(this.graph);

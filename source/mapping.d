@@ -256,6 +256,9 @@ class Mapping(int SizeLnt, int SizePnt) {
 		this.upTo = to!uint(this.lnt.length);
 		this.floyd.init(*this.pnt);
 		this.quorumTestFraction = quorumTestFraction;
+
+		this.read = BitsetStore!uint();
+		this.write = BitsetStore!uint();
 		//this.init(lnt, pnt, mapping, quorumTestFraction);
 	}
 
@@ -273,7 +276,7 @@ class Mapping(int SizeLnt, int SizePnt) {
 		this.quorumTestFraction = quorumTestFraction;
 	}*/
 
-	void reconnectQuorum(ref const(Bitset!uint) quorum, 
+	void reconnectQuorum(const(Bitset!uint) quorum, 
 			ref BitsetStore!uint rsltQuorumSet, Bitset!uint perm)
 	{
 		enum numBits = uint.sizeof * 8;

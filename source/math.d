@@ -26,7 +26,7 @@ unittest {
 	assert(factorial(4) == 24);
 }
 
-double availability(T,S)(const S numNodes, const ref Bitset!T bitSet, 
+double availability(T,S)(const S numNodes, const(Bitset!T) bitSet, 
 		const size_t p, const double stepWidth = 0.01) pure {
 	//import core.bitop : popcnt;
 	import math : popcnt;

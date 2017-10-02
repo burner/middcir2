@@ -7,10 +7,12 @@ import std.format : format;
 import std.stdio;
 import std.experimental.logger;
 
+import config;
 import rbtree;
 import bitsetmodule;
 
-alias BitsetStore(T) = BitsetArrayArray!(T);
+//alias BitsetStore(T) = BitsetArrayArray!(T);
+alias BitsetStore(T) = BitsetArrayFlat!(T);
 //alias BitsetStore(T) = BitsetRBTree!(T); TODO: This seams to be incorrect
 
 bool bitsetLess(T)(const BitsetArray!T l, const BitsetArray!T r) {
@@ -220,7 +222,6 @@ struct BitsetArrayArrayIterator(T,S) {
 align(8):
 struct BitsetArrayArray(T) {
 	import exceptionhandling;
-	import config;
 	align(8) {
 	Array!(BitsetArray!(T)) array;
 	}
@@ -460,6 +461,18 @@ auto getSubsets(BSA,BitsetStoreType)(auto ref BSA bsa,
 				|| is(Unqual!BSA == BitsetArrayRC!ulong)) 
 	{
 		return bsa.subsetsFromFile(tree.prefix);
+	} else static if(is(Unqual!BSA == BitsetArrayFlat!uint)
+				|| is(Unqual!BSA == BitsetArrayFlat!ushort)
+				|| is(Unqual!BSA == BitsetArrayFlat!ulong)) 
+	{
+		return bsa.subsets;
+	} else static if(is(Unqual!BSA == BitsetArrayFlatItem!uint)
+				|| is(Unqual!BSA == BitsetArrayFlatItem!ushort)
+				|| is(Unqual!BSA == BitsetArrayFlatItem!ulong)) 
+	{
+		return bsa.subsets;
+	} else {
+		static assert(false, BSA.stringof);
 	}
 }
 
@@ -594,21 +607,115 @@ struct BitsetArrayArrayRC(T) {
 	}
 }
 
+struct BitsetArrayFlatItem(T) {
+	BitsetArrayFlat!(T)* flat;
+	ulong idx;
+
+	this(BitsetArrayFlat!(T)* flat, ulong idx) {
+		this.flat = flat;
+		this.idx = idx;
+	}
+
+	@property Bitset!T bitset() {
+		return (*this.flat).keys[this.idx];
+	}
+
+	@property const(Bitset!T) bitset() const {
+		return (*this.flat).keys[this.idx];
+	}
+
+	@property ref Bitset!(T)[] subsets() {
+		logf("%s %s", this.idx, (*this.flat).superSets.length);
+		return (*this.flat).superSets[this.idx];
+	}
+
+	@property ref const(Bitset!(T)[]) subsets() const {
+		logf("%s %s", this.idx, (*this.flat).superSets.length);
+		return (*this.flat).superSets[this.idx];
+	}
+
+	@property bool isNull() const {
+		return this.idx == ulong.max;
+	}
+
+	auto opUnary(string s)() if(s == "*") { return this; }
+
+	auto dup() {
+		return typeof(this)(this.flat, this.idx);
+	}
+}
+
+struct BitsetArrayFlatIterator(T,S) {
+	import std.traits : Unqual;
+	S* ptr;
+	long curPos;
+	long endPos = long.max;
+
+	this(S* ptr, long curPos = 0) {
+		this.ptr = ptr;
+		this.curPos = curPos;
+	}
+
+	this(S* ptr, size_t start, size_t end) {
+		this(ptr, cast(long)start);
+		this.endPos = cast(long)endPos;
+	}
+
+	void opUnary(string s)() if(s == "++") { increment(); }
+	void opUnary(string s)() if(s == "--") { decrement(); }
+	BitsetArrayFlatItem!T opUnary(string s)() if(s == "*") { return getData(); }
+
+	BitsetArrayFlatItem!T getData() {
+		return BitsetArrayFlatItem!T(cast(Unqual!(S)*)this.ptr, cast(ulong)this.curPos);
+	}
+
+	void increment() {
+		this.curPos++;
+	}
+
+	void decrement() {
+		this.curPos--;
+	}
+
+	bool opEqual(const(BitsetArrayFlatIterator!(T,S)) rhs) {
+		return this.ptr is rhs.ptr && this.curPos == rhs.curPos;
+	}
+
+	@property BitsetArrayFlatItem!T front() {
+		return this.getData();
+	}
+
+	@property bool empty() {
+		return this.curPos >= (*this.ptr).length
+			|| this.curPos >= this.endPos;
+	}
+
+	void popFront() {
+		this.increment();
+	}
+
+}
+
 extern(C) uint fastSubsetFind(uint* ptr, size_t len, uint supSet);
 extern(C) ushort fastSubsetFind2(ushort* ptr, size_t len, ushort supSet);
 
 align(8) struct BitsetArrayFlat(T) {
+	import std.algorithm.comparison : min;
 	Bitset!(T)[] keys;
 	Bitset!(T)[][] superSets;
-	string prefix;
 
-	this(string prefix) {
-		this.prefix = prefix;
-		this.superSets = new Bitset!(T)[T.max];
+	static auto opCall() {
+		BitsetArrayFlat!T ret;
+		ret.superSets = new Bitset!(T)[][](min(ushort.max, T.max), 0);
+		//logf("superSets size %s", ret.superSets.length);
+		if(ret.superSets.length == 0) {
+			throw new Exception("foo");
+		}
+		return ret;
 	}
 
 	void insert(Bitset!T key, Bitset!T value) {
-		T it = this.search(key);
+		T it = this.searchInternal(key);
 		if(it != T.max) {
 			//assert(value != (*it).bitset, format("bs(%b) it(%b)", value.store,
 			//		(*it).bitset.store
@@ -630,7 +737,7 @@ align(8) struct BitsetArrayFlat(T) {
 	}
 
 	void insert(Bitset!T bs) {
-		T it = this.search(bs);
+		T it = this.searchInternal(bs);
 		if(it != T.max) {
 			this.superSets[it] ~= bs;
 		} else {
@@ -639,7 +746,7 @@ align(8) struct BitsetArrayFlat(T) {
 	}
 
 	bool insertUnique(Bitset!T key) {
-		T it = this.search(key);
+		T it = this.searchInternal(key);
 		if(it != T.max) {
 			foreach(jt; this.superSets[it]) {
 				if(jt == key) {
@@ -654,13 +761,21 @@ align(8) struct BitsetArrayFlat(T) {
 		}
 	}
 
-	T search(Bitset!T bs) {
-		static if(is(T == uint)) {
+	T searchInternal(Bitset!T bs) {
+		static if(is(T == ulong)) {
+			for(size_t i = 0; i < this.keys.length; ++i) {
+				if((this.keys[i].store & bs.store) == this.keys[i].store)
+				{
+					return this.keys[i].store;
+				} 
+			}
+			return ulong.max;
+		} else static if(is(T == uint)) {
 			return fastSubsetFind(cast(uint*)this.keys.ptr, this.keys.length,
 					bs.store
 				);
-		} else if(is(T == ushort)) {
-			return fastSubsetFind(cast(ushort*)this.keys.ptr, this.keys.length,
+		} else static if(is(T == ushort)) {
+			return fastSubsetFind2(cast(ushort*)this.keys.ptr, this.keys.length,
 					bs.store
 				);
 		} else {
@@ -668,18 +783,29 @@ align(8) struct BitsetArrayFlat(T) {
 		}
 	}
 
+	BitsetArrayFlatItem!T search(Bitset!T bs) {
+		T f = this.searchInternal(bs);
+		if(f == T.max) {
+			return BitsetArrayFlatItem!T(&this, ulong.max);
+		} else {
+			return BitsetArrayFlatItem!T(&this, cast(ulong)f);
+		}
+	}
+
 	auto begin() {
+		return BitsetArrayFlatIterator!(T,typeof(this))(&this, 0);
 	}
 
 	auto end() {
+		return BitsetArrayFlatIterator!(T,typeof(this))(&this, this.keys.length);
 	}
 
-	auto opSlice() const {
-		return this.array[];
+	auto opSlice() {
+		return this.begin();
 	}
 
 	auto opSlice(const size_t low, const size_t high) const {
-		return this.array[low .. high];
+		return BitsetArrayFlatIterator!(T,typeof(this))(&this, low, high);
 	}
 
 	@property size_t length() const {
@@ -690,11 +816,11 @@ align(8) struct BitsetArrayFlat(T) {
 		return "";
 	}	
 
-	ref BitsetArrayRC!(T) opIndex(const size_t idx) {
+	/*ref BitsetArrayRC!(T) opIndex(const size_t idx) {
 		return this.array[idx];
-	}
+	}*/
 
-	auto dup() const {
+	auto dup() {
 		import std.traits : Unqual;
 		Unqual!(typeof(this)) ret;
 		ret.keys = this.keys.dup;

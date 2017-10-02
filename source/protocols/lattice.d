@@ -109,6 +109,9 @@ struct LatticeImpl(int Size) {
 						to!(int)(maxNodes + 1);
 				}
 			}
+		} else {
+			this.read = BitsetStore!uint();
+			this.write = BitsetStore!uint();
 		}
 	}
 

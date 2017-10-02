@@ -29,8 +29,8 @@ struct MCS {
 		this.numNodes = nn;
 		this.majority = this.numNodes / 2 + 1;
 		this.half = to!int((this.numNodes / 2.0)+0.51);
-		this.read.array.reserve(32);
-		this.write.array.reserve(32);
+		//this.read.array.reserve(32);
+		//this.write.array.reserve(32);
 		this.graph = makeCircle!32(this.numNodes);
 		completeConnectGraph(this.graph);
 	}

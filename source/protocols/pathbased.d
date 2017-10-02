@@ -132,6 +132,31 @@ void testEmptyIntersection(ref const(Array!(int[2])) a) {
 	}
 }
 
+/*bool isNullTest(BitsetStoreType,T)(ref T t) {
+	import std.traits : Unqual;
+	static if(is(Unqual!BitsetStoreType == BitsetArrayFlat!uint)
+				|| is(Unqual!BitsetStoreType == BitsetArrayFlat!ushort)
+				|| is(Unqual!BitsetStoreType == BitsetArrayFlat!ulong)) 
+	{
+		return t == T.max;
+	} else {
+		return t.isNull;
+	}
+}
+
+void append(BitsetStoreType,T,A)(ref BitsetStoreType bst, ref T t, A a) {
+	import std.traits : Unqual;
+	static if(is(Unqual!BitsetStoreType == BitsetArrayFlat!uint)
+				|| is(Unqual!BitsetStoreType == BitsetArrayFlat!ushort)
+				|| is(Unqual!BitsetStoreType == BitsetArrayFlat!ulong)) 
+	{
+		logf("%s %s", bst.keys[t].store, bst.superSets.length);
+		bst.superSets[bst.keys[t].store] ~= a;
+	} else {
+		(*t).subsets ~= a;
+	}
+}*/
+
 Result calcACforPathBasedFast(BitsetStoreType,BitsetType,F,G)(ref F paths, 
 		ref const(G) graph, const(Array!int) bottom, const(Array!int) top,
 		const(Array!int) left, const(Array!int) right,
@@ -198,14 +223,22 @@ Result calcACforPathBasedFast(BitsetStoreType,BitsetType,F,G)(ref F paths,
 
 		auto subsetRead = read.search(perm);
 		if(!subsetRead.isNull()) {
+		//if(!isNullTest!(BitsetStoreType)(subsetRead)) {
 			(*subsetRead).subsets ~= perm;
+			//append(read, subsetRead, perm);
+
 		}
 		auto subsetWrite = write.search(perm);
 		if(!subsetWrite.isNull()) {
+		//if(!isNullTest!(BitsetStoreType)(subsetWrite)) {
 			(*subsetWrite).subsets ~= perm;
+			//append(write, subsetWrite, perm);
 		}
 
 		if(!subsetRead.isNull() && !subsetWrite.isNull()) {
+		//if(!isNullTest!(BitsetStoreType)(subsetRead)
+				//&& !isNullTest!(BitsetStoreType)(subsetWrite))
+		//{
 			continue;
 		}
 
@@ -231,6 +264,7 @@ Result calcACforPathBasedFast(BitsetStoreType,BitsetType,F,G)(ref F paths,
 		}
 
 		if(subsetRead.isNull()) {
+		//if(isNullTest!BitsetStoreType(subsetRead)) {
 			PathResult!BitsetType readQuorum = selectReadQuorum!BitsetType(
 					verticalPaths, horizontalPaths, diagonalPaths
 			);
@@ -244,6 +278,7 @@ Result calcACforPathBasedFast(BitsetStoreType,BitsetType,F,G)(ref F paths,
 			++andWrite;
 		}
 		if(subsetWrite.isNull() && vPossible && hPossible) {
+		//if(isNullTest!BitsetStoreType(subsetWrite) && vPossible && hPossible) {
 			PathResult!BitsetType writeQuorum = selectWriteQuorum!BitsetType(
 					verticalPaths, horizontalPaths, diagonalPaths
 			);
