@@ -774,17 +774,31 @@ align(8) struct BitsetArrayFlat(T) {
 			}
 			return ulong.max;
 		} else static if(is(T == uint)) {
-			T ret = fastSubsetFind(cast(uint*)this.keys.ptr, this.keys.length,
+			for(size_t i = 0; i < this.keys.length; ++i) {
+				if((this.keys[i].store & bs.store) == this.keys[i].store)
+				{
+					return this.keys[i].store;
+				} 
+			}
+			return uint.max;
+			/*T ret = fastSubsetFind(cast(uint*)this.keys.ptr, this.keys.length,
 					bs.store
 				);
 			logf("found idx %s in %s", ret, this.keys.length);
-			return ret;
+			return ret;*/
 		} else static if(is(T == ushort)) {
-			T ret = fastSubsetFind2(cast(ushort*)this.keys.ptr, this.keys.length,
+			for(size_t i = 0; i < this.keys.length; ++i) {
+				if((this.keys[i].store & bs.store) == this.keys[i].store)
+				{
+					return this.keys[i].store;
+				} 
+			}
+			return ushort.max;
+			/*T ret = fastSubsetFind2(cast(ushort*)this.keys.ptr, this.keys.length,
 					bs.store
 				);
 			logf("found idx %s in %s", ret, this.keys.length);
-			return ret;
+			return ret;*/
 		} else {
 			static assert(false, "Can't search with type " ~ T.stringof);
 		}
