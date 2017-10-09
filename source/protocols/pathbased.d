@@ -224,7 +224,7 @@ Result calcACforPathBasedFast(BitsetStoreType,BitsetType,F,G)(ref F paths,
 		auto subsetRead = read.search(perm);
 		if(!subsetRead.isNull()) {
 		//if(!isNullTest!(BitsetStoreType)(subsetRead)) {
-			logf("%s", perm);
+			//logf("%s", perm);
 			(*subsetRead).subsets ~= perm;
 			//append(read, subsetRead, perm);
 
@@ -232,7 +232,7 @@ Result calcACforPathBasedFast(BitsetStoreType,BitsetType,F,G)(ref F paths,
 		auto subsetWrite = write.search(perm);
 		if(!subsetWrite.isNull()) {
 		//if(!isNullTest!(BitsetStoreType)(subsetWrite)) {
-			logf("%s", perm);
+			//logf("%s", perm);
 			(*subsetWrite).subsets ~= perm;
 			//append(write, subsetWrite, perm);
 		}

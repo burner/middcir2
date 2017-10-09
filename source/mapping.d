@@ -225,6 +225,7 @@ for each element it will try to reconnect the element for every permutation.
 */
 align(8)
 class Mapping(int SizeLnt, int SizePnt) {
+	import bitsetrbtree;
 	align(8) {
 		const(Graph!SizeLnt)* lnt;	
 		const(Graph!SizePnt)* pnt;	
@@ -233,8 +234,10 @@ class Mapping(int SizeLnt, int SizePnt) {
 		uint upTo;
 		Floyd floyd;
 
-		BitsetStore!uint read;
-		BitsetStore!uint write;
+		//BitsetArrayFlat!(uint) read;
+		//BitsetArrayFlat!(uint) write;
+		BitsetStore!(uint) read;
+		BitsetStore!(uint) write;
 
 		const(QTF) quorumTestFraction;
 	}
@@ -259,6 +262,8 @@ class Mapping(int SizeLnt, int SizePnt) {
 
 		this.read = BitsetStore!uint();
 		this.write = BitsetStore!uint();
+		//this.read = BitsetArrayFlat!uint();
+		//this.write = BitsetArrayFlat!uint();
 		//this.init(lnt, pnt, mapping, quorumTestFraction);
 	}
 
@@ -307,12 +312,16 @@ class Mapping(int SizeLnt, int SizePnt) {
 		import std.math : lround;
 		import permutation;
 		auto permu = Permutations(upTo);
-		const size_t quorumSetALen = cast(size_t)min(quorumSetA.length, 
+		/* OPTION activate this and quorumTestFraction to only test a fraction
+		   of the quorums
+		   const size_t quorumSetALen = cast(size_t)min(quorumSetA.length, 
 				max(1, lround(quorumSetA.length * this.quorumTestFraction.value))
 		);
 		const size_t quorumSetBLen = cast(size_t)min(quorumSetB.length, 
 				max(1, lround(quorumSetB.length * this.quorumTestFraction.value))
-		);
+		);*/
+		const size_t quorumSetALen = quorumSetA.length;
+		const size_t quorumSetBLen = quorumSetB.length;
 		logf(false, "%5.6f %s <= %s || %s <= %s", 
 				this.quorumTestFraction,
 				quorumSetALen, quorumSetA.length, 

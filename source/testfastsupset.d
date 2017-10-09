@@ -94,15 +94,16 @@ void testFastSupset1() {
 
 	uint v = 0b0000_0100_1111_0000;
 	uint p1 = fastSubsetFind(arr.ptr, arr.length, v);
-	assert((v & p1) == p1, format("\n%s\n%s", bitsetToString(v), bitsetToString(p1)));
+	assert((v & arr[p1]) == arr[p1], format("\n%s\n%s", bitsetToString(v),
+				bitsetToString(arr[p1])));
 
 	assert(arr.length % 8 != 0);
 	for(size_t i = 0; i < arr.length; ++i) {
 		uint p = arr[i];
 		uint pf = fastSubsetFind(arr.ptr, arr.length, p);
-		assert((p & pf) == pf, format("\n%s\n%s", bitsetToString(v), bitsetToString(p)));
+		assert((p & arr[pf]) == arr[pf], format("\n%s\n%s", bitsetToString(v), bitsetToString(p)));
 		for(size_t j = 0; j < arr.length; ++j) {
-			if(arr[j] == pf) {
+			if(arr[j] == arr[pf]) {
 				break;
 			}
 			assert((p & arr[j]) != arr[j], 
@@ -122,7 +123,7 @@ private uint oldTest(uint[] array, Bitset!uint bs) {
 		if((array[i] & bs.store) == array[i])
 		//if(bs.hasSubSet(array[i])) 
 		{
-			return array[i];
+			return cast(uint)i;
 		} 
 	}
 	return uint.max;
@@ -136,7 +137,7 @@ private ushort oldTest(ushort[] array, Bitset!ushort bs) {
 		if((array[i] & bs.store) == array[i])
 		//if(bs.hasSubSet(array[i])) 
 		{
-			return array[i];
+			return cast(ushort)i;
 		} 
 	}
 	return ushort.max;
@@ -210,12 +211,12 @@ void testFastSupset2() {
 			if(pf != pfo) {
 				writefln("\nTF %s\n\n\nC  %s\nD  %s",
 						bitsetToString(perm.store),
-						bitsetToString(pf),
-						bitsetToString(pfo)
+						bitsetToString(set[pf]),
+						bitsetToString(set[pfo])
 					);
 				size_t idx = 0;
 				foreach(it; set) {
-					if(it == pf) {
+					if(it == set[pf]) {
 						writeln("Found");
 						break;
 					}

@@ -210,8 +210,8 @@ struct LatticeImpl(int Size) {
 		diagonalPairs.insertBack(cast(int[2])[0, highestId]);
 		this.fillSides(bottom, top, left, right);
 		
-		//auto paths = floyd!(typeof(this.graph),64)(this.graph);
 		auto paths = floyd!(typeof(this.graph),Size)(this.graph);
+		//auto paths = floyd2!(typeof(this.graph),Size)(this.graph);
 
 		const uint numNodes = to!uint(this.width * this.height);
 		/*auto ret = calcACforPathBased!(typeof(this.read),BSType)(paths, 

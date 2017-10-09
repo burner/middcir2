@@ -148,25 +148,31 @@ void LatticeXX() {
 
 void LatticeXY() {
 	import std.typecons : Tuple, tuple;
-	const NN = 3;
-	Lattice[NN] formula;
+	import std.datetime : StopWatch, to;
+	const NN = 4;
+	LatticeImpl!(32)[NN] formula;
 	Result[NN] rslt;
 	ResultPlot[NN] rsltPlot;
 
-	Tuple!(int,int)[NN] nns = [tuple(8,1),tuple(2,2),tuple(4,2)];
+	//Tuple!(int,int)[NN] nns = [tuple(8,1),tuple(2,2),tuple(4,2),tuple(5,5)];
+	Tuple!(int,int)[NN] nns = [tuple(4,3), tuple(3,4), tuple(4,4), tuple(4,5)];
 
+	auto sw = StopWatch();
+	sw.start();
 	for(int i = 0; i < nns.length; ++i) {
-		formula[i] = Lattice(nns[i][0],nns[i][1]);
+		formula[i] = LatticeImpl!(32)(nns[i][0],nns[i][1]);
 		logf("a %d", i);
 		rslt[i] = formula[i].calcAC();
 		logf("b %d", i);
 		rsltPlot[i] = ResultPlot(formula[i].name(), rslt[i]);
 		logf("c %d", i);
 	}
+	logf("%s mssecs", sw.peek.to!("msecs", long));
 	gnuPlot("Results/Lattice_XtimesY", "", 
 			rsltPlot[0],
 			rsltPlot[1],
-			rsltPlot[2]
+			rsltPlot[2],
+			rsltPlot[3],
 	);
 }
 
@@ -310,9 +316,9 @@ void latticeMapped() {
 void latticeMapped2() {
 	auto lattice = LatticeImpl!32(3,3);
 	auto latticeRslt = lattice.calcAC();
-	auto pnt = makeSix!16();
+	auto pnt = makeSix!32();
 
-	auto map = Mappings!(32,16)(lattice.graph, pnt, QTF(1.0), ROW(0.5));
+	auto map = Mappings!(32,32)(lattice.graph, pnt, QTF(1.0), ROW(0.5));
 	auto mapRslt = map.calcAC(lattice.read, lattice.write);
 
 	mappingPlot("Results/Lattice2x3Mapped", map,
@@ -637,7 +643,6 @@ void main(string[] args) {
 	//gridAgainstGrid(4,4);
 	//MCSAgainstMCS(15);
 	//latticeMapped();
-	//latticeMapped2();
 	//latticeMCSMapped6();
 	latticeMCSMapped9();
 	//latticeMCSMappedCrossing6();

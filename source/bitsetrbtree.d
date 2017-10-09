@@ -11,8 +11,8 @@ import config;
 import rbtree;
 import bitsetmodule;
 
-//alias BitsetStore(T) = BitsetArrayArray!(T);
-alias BitsetStore(T) = BitsetArrayFlat!(T);
+alias BitsetStore(T) = BitsetArrayArray!(T);
+//alias BitsetStore(T) = BitsetArrayFlat!(T);
 //alias BitsetStore(T) = BitsetRBTree!(T); TODO: This seams to be incorrect
 
 bool bitsetLess(T)(const BitsetArray!T l, const BitsetArray!T r) {
@@ -625,13 +625,13 @@ struct BitsetArrayFlatItem(T) {
 	}
 
 	@property ref Bitset!(T)[] subsets() {
-		logf("key %s %s", this.idx, (*this.flat).keys.length);
-		logf("super %s %s", (*this.flat).keys[idx].store, (*this.flat).superSets.length);
+		//logf("key %s %s", this.idx, (*this.flat).keys.length);
+		//logf("super %s %s", (*this.flat).keys[idx].store, (*this.flat).superSets.length);
 		return (*this.flat).superSets[(*this.flat).keys[this.idx].store];
 	}
 
 	@property ref const(Bitset!(T)[]) subsets() const {
-		logf("%s %s", (*this.flat).keys[idx].store, (*this.flat).superSets.length);
+		//logf("%s %s", (*this.flat).keys[idx].store, (*this.flat).superSets.length);
 		return (*this.flat).superSets[(*this.flat).keys[this.idx].store];
 	}
 
@@ -701,15 +701,29 @@ struct BitsetArrayFlatIterator(T,S) {
 
 extern(C) uint fastSubsetFind(uint* ptr, size_t len, uint supSet);
 extern(C) ushort fastSubsetFind2(ushort* ptr, size_t len, ushort supSet);
+extern(C) uint fastSubsetFindIdx(uint* ptr, size_t len, uint supSet);
+extern(C) ushort fastSubsetFindIdx2(ushort* ptr, size_t len, ushort supSet);
 
 align(8) struct BitsetArrayFlat(T) {
-	import std.algorithm.comparison : min;
+	import std.algorithm.comparison : min, max;
 	Bitset!(T)[] keys;
 	Bitset!(T)[][] superSets;
 
 	static auto opCall() {
 		BitsetArrayFlat!T ret;
-		ret.superSets = new Bitset!(T)[][](min(ushort.max, T.max), 0);
+		//ret.superSets = new Bitset!(T)[][](max(ushort.max, T.max/4096), 0);
+		static if(is(T == ushort)) {
+			const toAlloc = ushort.max;
+		} else static if(is(T == uint)) {
+			const toAlloc = cast(uint)(1)<<20;
+		} else static if(is(T == ulong)) {
+			const toAlloc = cast(ulong)(1)<<37;
+		} else {
+			static assert(false, T.stringof);
+		}
+
+		//logf("%s", toAlloc);
+		ret.superSets = new Bitset!(T)[][](toAlloc, 0);
 		//logf("superSets size %s", ret.superSets.length);
 		if(ret.superSets.length == 0) {
 			throw new Exception("foo");
@@ -769,43 +783,49 @@ align(8) struct BitsetArrayFlat(T) {
 			for(size_t i = 0; i < this.keys.length; ++i) {
 				if((this.keys[i].store & bs.store) == this.keys[i].store)
 				{
-					return this.keys[i].store;
+					//return this.keys[i].store;
+					return i;
 				} 
 			}
 			return ulong.max;
 		} else static if(is(T == uint)) {
-			for(size_t i = 0; i < this.keys.length; ++i) {
+			/*for(size_t i = 0; i < this.keys.length; ++i) {
 				if((this.keys[i].store & bs.store) == this.keys[i].store)
 				{
-					return this.keys[i].store;
+					//return this.keys[i].store;
+					return cast(uint)i;
 				} 
 			}
-			return uint.max;
-			/*T ret = fastSubsetFind(cast(uint*)this.keys.ptr, this.keys.length,
+			return uint.max;*/
+			T ret = fastSubsetFindIdx(cast(uint*)this.keys.ptr, this.keys.length,
 					bs.store
 				);
-			logf("found idx %s in %s", ret, this.keys.length);
-			return ret;*/
+			//logf("found idx %s in %s", ret, this.keys.length);
+			return ret;
 		} else static if(is(T == ushort)) {
-			for(size_t i = 0; i < this.keys.length; ++i) {
+			/*for(size_t i = 0; i < this.keys.length; ++i) {
 				if((this.keys[i].store & bs.store) == this.keys[i].store)
 				{
-					return this.keys[i].store;
+					//return this.keys[i].store;
+					return cast(ushort)i;
 				} 
 			}
-			return ushort.max;
-			/*T ret = fastSubsetFind2(cast(ushort*)this.keys.ptr, this.keys.length,
+			return ushort.max;*/
+			T ret = fastSubsetFindIdx2(cast(ushort*)this.keys.ptr, this.keys.length,
 					bs.store
 				);
 			logf("found idx %s in %s", ret, this.keys.length);
-			return ret;*/
+			return ret;
 		} else {
 			static assert(false, "Can't search with type " ~ T.stringof);
 		}
 	}
 
 	BitsetArrayFlatItem!T search(Bitset!T bs) {
+		//logf("\n%s\n", bs);
+		//logf("\n%(%s\n%)", this.keys[]);
 		T f = this.searchInternal(bs);
+		//logf("found %s", f);
 		if(f == T.max) {
 			return BitsetArrayFlatItem!T(&this, ulong.max);
 		} else {

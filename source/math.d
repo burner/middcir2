@@ -26,6 +26,7 @@ unittest {
 	assert(factorial(4) == 24);
 }
 
+pragma(inline, true)
 double availability(T,S)(const S numNodes, const(Bitset!T) bitSet, 
 		const size_t p, const double stepWidth = 0.01) pure {
 	//import core.bitop : popcnt;
@@ -34,11 +35,12 @@ double availability(T,S)(const S numNodes, const(Bitset!T) bitSet,
 	return availability(numNodes, bitsSet, p, stepWidth);
 }
 
+pragma(inline, true)
 double availability(S)(const S numNodes, const size_t numAvail, const size_t p,
 		const double stepWidth = 0.01) pure 
 {
 	import availabilitylookuptable;
-	const double realP = cast(double)(p) * stepWidth;
+	//const double realP = cast(double)(p) * stepWidth;
 	//return pow(realP, cast(double)numAvail) * pow((1.0 - realP), cast(double)(numNodes - numAvail));
 	return fastAvailabilty(numNodes, numAvail, p);
 }
