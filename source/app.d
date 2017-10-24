@@ -259,19 +259,19 @@ void gridVLattice(int nc, int nr) {
 	auto gridRslt = grid.calcAC();
 	auto rsltGrid = ResultPlot(grid.name(), gridRslt);
 
-	logf("mcs");
-	auto mcs = MCSFormula(nc * nr);
-	auto mcsRslt = mcs.calcAC();
-	auto rsltMCS = ResultPlot(format("MCS-%d", nc * nr) , mcsRslt);
+	//logf("mcs");
+	//auto mcs = MCSFormula(nc * nr);
+	//auto mcsRslt = mcs.calcAC();
+	//auto rsltMCS = ResultPlot(format("MCS-%d", nc * nr) , mcsRslt);
 
 	logf("lattice");
-	auto tl = LatticeImpl!64(nc, nr);
+	auto tl = Lattice(nc, nr);
 	auto tlRslt = tl.calcAC();
 	auto rsltTL = ResultPlot(tl.name(), tlRslt);
 	//closedQuorumListWriter!ulong(tl.write);
 
 	gnuPlot(format("Results/GridVLattice%sX%s", nr, nc), "", rsltGrid,
-			rsltMCS, rsltTL);
+			/*rsltMCS,*/ rsltTL);
 }
 
 void lattice(int nc, int nr) {
@@ -644,7 +644,7 @@ void main(string[] args) {
 	//MCSAgainstMCS(15);
 	//latticeMapped();
 	//latticeMCSMapped6();
-	latticeMCSMapped9();
+	//latticeMCSMapped9();
 	//latticeMCSMappedCrossing6();
 	//latticeMCSMappedCrossing9();
 	//latticeMCSMappedCrossing12();
@@ -666,7 +666,9 @@ void main(string[] args) {
 	//runMappings("9nodegraphs.json", args);
 	//MCSForm();
 	//GridFormXY();
-	//gridVLattice(3,3);
+	gridVLattice(3,3);
+	gridVLattice(4,4);
+	gridVLattice(5,5);
 	//gridVLattice(4,2);
 	//gridVLattice(2,4);
 	//crossingVLattice();
