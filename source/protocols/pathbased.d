@@ -190,7 +190,7 @@ Result calcACforPathBasedFast(BitsetStoreType,BitsetType,F,G)(ref F paths,
 	auto last = 0;
 	foreach(perm; permu) {
 		auto cur = popcnt(perm.store);
-		static if(is(Unqual!BitsetStoreType == BitsetArrayArrayRC!uint)
+		/*static if(is(Unqual!BitsetStoreType == BitsetArrayArrayRC!uint)
 				|| is(Unqual!BitsetStoreType == BitsetArrayArrayRC!ushort)
 				|| is(Unqual!BitsetStoreType == BitsetArrayArrayRC!ulong)) 
 		{
@@ -206,7 +206,7 @@ Result calcACforPathBasedFast(BitsetStoreType,BitsetType,F,G)(ref F paths,
 				}
 				last = cur;
 			}
-		}
+		}*/
 		//logf("%s %s", permu.numNodes, graph.length);
 		bool tPossible = (topTest.store & perm.store) != 0;
 		bool bPossible = (bottomTest.store & perm.store) != 0;

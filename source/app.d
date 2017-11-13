@@ -25,6 +25,7 @@ import mapping;
 import stats;
 import statsanalysis;
 import sortingbystats;
+import boxplotmapping;
 import config;
 
 class ShortLogger : Logger {
@@ -54,6 +55,21 @@ class ShortLogger : Logger {
 //version(release) {
 	//version = exceptionhandling_release_asserts;
 //}
+
+void fiveMapping() {
+	auto mcs = MCS(5);
+	Result mcsR = mcs.calcAC();
+	logf("mcs\n%s", mcs.read);
+
+	auto pnt = makeFive!32();
+	auto f = File("5pnt.tex", "w");
+	f.write(pnt.toTikz());
+
+	auto mapping = new Mapping!(32,32)(mcs.getGraph(), pnt, [4,3,2,1,0]);
+	Result mapR = mapping.calcAC(mcs.read, mcs.write);
+
+	logf("map\n%s", mapping.read);
+}
 
 void MCSForm() {
 	const NN = 1;
@@ -265,10 +281,13 @@ void gridVLattice(int nc, int nr) {
 	//auto rsltMCS = ResultPlot(format("MCS-%d", nc * nr) , mcsRslt);
 
 	logf("lattice");
-	auto tl = Lattice(nc, nr);
+	//auto tl = LatticeImpl!64(nc, nr);
+	auto tl = LatticeImpl!64(nc, nr);
 	auto tlRslt = tl.calcAC();
 	auto rsltTL = ResultPlot(tl.name(), tlRslt);
 	//closedQuorumListWriter!ulong(tl.write);
+
+	logf("gnuplot");
 
 	gnuPlot(format("Results/GridVLattice%sX%s", nr, nc), "", rsltGrid,
 			/*rsltMCS,*/ rsltTL);
@@ -639,6 +658,8 @@ void main(string[] args) {
 		return;
 	}
 
+	boxplot();
+	//fiveMapping();
 	//lattice(4,4);
 	//gridAgainstGrid(4,4);
 	//MCSAgainstMCS(15);
@@ -666,9 +687,9 @@ void main(string[] args) {
 	//runMappings("9nodegraphs.json", args);
 	//MCSForm();
 	//GridFormXY();
-	gridVLattice(3,3);
-	gridVLattice(4,4);
-	gridVLattice(5,5);
+	//gridVLattice(4,7);
+	//gridVLattice(4,4);
+	//gridVLattice(5,5);
 	//gridVLattice(4,2);
 	//gridVLattice(2,4);
 	//crossingVLattice();

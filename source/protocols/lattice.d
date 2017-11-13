@@ -25,13 +25,13 @@ struct LatticeImpl(int Size) {
 	alias BSType = TypeFromSize!Size;
 
 	align(8) {
-	static if(Size == 64) {
+	/*static if(Size == 64) {
 		BitsetArrayArrayRC!BSType read;
 		BitsetArrayArrayRC!BSType write;
-	} else {
+	} else {*/
 		BitsetStore!BSType read;
 		BitsetStore!BSType write;
-	}
+	//}
 
 	alias LGraph = Graph!Size;
 
@@ -65,7 +65,7 @@ struct LatticeImpl(int Size) {
 		this.createNodeAndEdges();
 		size_t numNodes = this.width * this.height;
 
-		static if(Size == 64) {
+		/*static if(Size == 64) {
 			import std.format : format;
 			import std.conv : to;
 
@@ -109,10 +109,10 @@ struct LatticeImpl(int Size) {
 						to!(int)(maxNodes + 1);
 				}
 			}
-		} else {
+		} else {*/
 			this.read = BitsetStore!BSType();
 			this.write = BitsetStore!BSType();
-		}
+		//}
 	}
 
 	static size_t loadFrom(string folderName, ref BitsetArrayArrayRC!BSType store) {

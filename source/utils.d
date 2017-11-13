@@ -229,3 +229,27 @@ unittest {
 	assertEqual(nine[2], cast(long[])[1,9]);
 }
 
+T percentile(T)(T[] arr, double per) {
+	import exceptionhandling;
+	ensure(arr.length);
+	ensure(per <= 1.0);
+	ensure(per >= 0.0);
+
+	size_t idx = cast(size_t)(arr.length * per);
+
+	if(arr.length % 2 == 1) {
+		return arr[idx];
+	} else {
+		if(idx == 0) {
+			return arr[idx];
+		} else {
+			return (arr[idx] + arr[idx - 1]) / 2;
+		}
+	}
+}
+
+unittest {
+	auto a = [0.1, 0.4, 0.6, 1.0];
+	double m = percentile(a, 0.5);
+	assertEquals(m, 0.5);
+}

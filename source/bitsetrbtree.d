@@ -39,7 +39,7 @@ struct BitsetArray(T) {
 		this.bitset = value;
 	}
 
-	void toString(scope void delegate(const(char)[]) sink) const {
+	void toString(scope void delegate(const(char)[]) sink) const @trusted {
 		import std.format : formattedWrite;
 		this.bitset.toString2(sink);
 		//formattedWrite(sink, "%b len(%s) [", this.bitset.store,
@@ -111,7 +111,7 @@ struct BitsetRBTree(T) {
 		return this.tree.length;
 	}
 
-	string toString() const {
+	string toString() const @trusted {
 		return this.tree.toString();
 	}	
 
@@ -312,7 +312,7 @@ struct BitsetArrayArray(T) {
 		return this.array.length;
 	}
 
-	string toString() const {
+	string toString() const @trusted {
 		import std.array : appender;
 		import std.format : formattedWrite;
 		auto app = appender!(string)();
@@ -395,7 +395,7 @@ struct BitsetArrayRC(T) {
 		this.bitset = value;
 	}
 
-	void toString(scope void delegate(const(char)[]) sink) const {
+	void toString(scope void delegate(const(char)[]) sink) const @trusted {
 		import std.format : formattedWrite;
 		this.bitset.toString2(sink);
 		//formattedWrite(sink, "%b len(%s) [", this.bitset.store,
@@ -567,7 +567,7 @@ struct BitsetArrayArrayRC(T) {
 		return this.array.length;
 	}
 
-	string toString() const {
+	string toString() const @trusted {
 		import std.array : appender;
 		import std.format : formattedWrite;
 		auto app = appender!(string)();
@@ -853,7 +853,7 @@ align(8) struct BitsetArrayFlat(T) {
 		return this.keys.length;
 	}
 
-	string toString() const {
+	string toString() const @trusted {
 		return "";
 	}	
 
