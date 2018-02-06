@@ -220,6 +220,42 @@ struct Graph(int Size) {
 		return app.data;
 	}
 
+	string toTikzShort() const {
+		auto app = appender!string();
+		this.toTikzShort(app);
+		return app.data;
+	}
+
+	void toTikzShort(T)(auto ref T app) const {
+		import std.exception : enforce;
+		string topMatter =
+`\begin{tikzpicture}
+`;
+		string bottomMatter = 
+`\end{tikzpicture}
+`;
+		enforce(this.nodePositions.length == this.numNodes);
+		app.put(topMatter);
+		for(int i = 0; i < this.numNodes; ++i) {
+			formattedWrite(app, "\t\\node at(%4.1f, %4.1f) [place] (%s) {%s};\n",
+				this.nodePositions[i].x, this.nodePositions[i].y, i, i
+			);
+		}
+
+		for(int f = 0; f < this.numNodes; ++f) {
+			for(int t = f; t < this.numNodes; ++t) {
+				if(this.testEdge(f, t)) {
+					formattedWrite(app, 
+						"\t\\draw[-,line width=0.5mm,black] (%s) -- (%s);\n",
+						f, t
+					);
+				}
+			}
+		}
+
+		app.put(bottomMatter);
+	}
+
 	void toTikz(T)(auto ref T app) const {
 		import std.exception : enforce;
 		string topMatter =

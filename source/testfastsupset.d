@@ -146,7 +146,7 @@ private ushort oldTest(ushort[] array, Bitset!ushort bs) {
 void testFastSupset2() {
 	import std.random;
 	import permutation;
-	import std.datetime;
+	import std.datetime.stopwatch;
 	import randomizedtestbenchmark;
 
 	static assert(Bitset!(ushort).sizeof == 2);
@@ -189,7 +189,7 @@ void testFastSupset2() {
 			doNotOptimizeAway(pf);
 		}
 		sw1.stop();
-		writefln("New2 %6s nanosec", sw1.peek().hnsecs);
+		writefln("New2 %6s nanosec", sw1.peek().total!("hnsecs")());
 	}
 
 	{
@@ -200,7 +200,7 @@ void testFastSupset2() {
 			doNotOptimizeAway(pf);
 		}
 		sw1.stop();
-		writefln("Old  %6s nanosec", sw1.peek().hnsecs);
+		writefln("Old  %6s nanosec", sw1.peek().total!("hnsecs")());
 	}
 
 	{

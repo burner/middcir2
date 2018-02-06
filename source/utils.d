@@ -249,7 +249,8 @@ T percentile(T)(T[] arr, double per) {
 }
 
 unittest {
+	import exceptionhandling;
 	auto a = [0.1, 0.4, 0.6, 1.0];
 	double m = percentile(a, 0.5);
-	assertEquals(m, 0.5);
+	assertEqual(m, 0.5);
 }

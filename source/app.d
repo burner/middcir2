@@ -5,7 +5,7 @@ import std.range : lockstep;
 import std.format : format;
 import std.algorithm : permutations, Permutations;
 import std.experimental.logger;
-import std.datetime : StopWatch;
+import std.datetime.stopwatch : StopWatch;
 import std.array : empty;
 
 import protocols;
@@ -164,7 +164,8 @@ void LatticeXX() {
 
 void LatticeXY() {
 	import std.typecons : Tuple, tuple;
-	import std.datetime : StopWatch, to;
+	// import std.datetime : StopWatch, to;
+	//import std.datetime : to;
 	const NN = 4;
 	LatticeImpl!(32)[NN] formula;
 	Result[NN] rslt;
@@ -183,7 +184,7 @@ void LatticeXY() {
 		rsltPlot[i] = ResultPlot(formula[i].name(), rslt[i]);
 		logf("c %d", i);
 	}
-	logf("%s mssecs", sw.peek.to!("msecs", long));
+	logf("%s mssecs", sw.peek.total!("msecs")());
 	gnuPlot("Results/Lattice_XtimesY", "", 
 			rsltPlot[0],
 			rsltPlot[1],
@@ -542,7 +543,7 @@ void latticeMapped9quantil() {
 				pnt
 			);
 
-		td[idx] = sw.peek().msecs;
+		td[idx] = sw.peek().total!"msecs"();
 	}
 	resultNTPlot("Results/LatticeQuantil", expand!rps);
 
@@ -574,6 +575,60 @@ void genRandomGraphs() {
 	}
 
 	graphsToJSON("graphs12nodes3.json", graphs);
+}
+
+void checkGraphUnique(string filename) {
+	import graphgen;
+	import graphisomorph;
+	import graphisomorph2;
+	import floydmodule;
+	logf("filename %s", filename);
+	auto f = File(filename ~ "_graphs.tex", "w");
+	f.write(
+`\documentclass[tikz]{standalone}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usetikzlibrary{decorations.markings, arrows, decorations.pathmorphing,
+   backgrounds, positioning, fit, shapes.geometric}
+\IfFileExists{../config.tex}%
+	{\input{../config}}%
+	{
+	\tikzstyle{place} = [shape=circle,
+    draw, align=center,minimum width=0.70cm,
+    top color=white, bottom color=blue!20]
+	}
+\begin{document}
+`);
+	auto graphs = loadGraphsFromJSON!(16)(filename);
+	for(size_t i = 0; i < graphs.length; ++i) {
+		logf("Graph %d", i);
+		FloydImpl!16 floyd;
+		floyd.reserveArrays(graphs[i].numNodes);
+		floyd.execute(graphs[i]);
+		for(int ii = 0; ii < graphs[i].numNodes; ++ii) {
+			for(int jj = ii + 1; jj < graphs[i].numNodes; ++jj) {
+				if(!floyd.pathExists(ii, jj)) {
+					logf("Graph %d is not connected", i);
+				}
+			}
+		}
+		for(size_t j = i + 1; j < graphs.length; ++j) {
+			if(areGraphsIsomorph(graphs[i], graphs[j])) {
+				logf("Graphs %d and %d are isomorph");
+			}
+			if(areGraphsIso2(graphs[i], graphs[j])) {
+				logf("Graphs %d and %d are isomorph test 3");
+			}
+			if(areHomomorph(graphs[i], graphs[j])) {
+				logf("Graphs %d and %d are homomorph");
+			}
+			if(graphs[i].isHomomorph(graphs[j])) {
+				logf("Graphs %d and %d are homomorph test 2");
+			}
+		}
+		f.write(graphs[i].toTikzShort());
+	}
+	f.write("\\end{document}");
 }
 
 void addGraphsToFile(int Size)(const string filename, long numGraphsToAdd) {
@@ -658,7 +713,9 @@ void main(string[] args) {
 		return;
 	}
 
-	boxplot();
+	//boxplot();
+	checkGraphUnique("graphs6nodes3.json");
+	checkGraphUnique("graphs8nodes3.json");
 	//fiveMapping();
 	//lattice(4,4);
 	//gridAgainstGrid(4,4);
