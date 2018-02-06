@@ -716,6 +716,7 @@ void main(string[] args) {
 	//boxplot();
 	checkGraphUnique("graphs6nodes3.json");
 	checkGraphUnique("graphs8nodes3.json");
+	checkGraphUnique("graphs9nodes3.json");
 	//fiveMapping();
 	//lattice(4,4);
 	//gridAgainstGrid(4,4);

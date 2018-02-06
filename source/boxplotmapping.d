@@ -81,8 +81,8 @@ void boxplot(string foldername, string protocol, string xx, string aOrC) {
 		writes[i].sort();
 	}
 
-	writeSortedData(foldername, protocol, aOrC, "read", reads);
-	writeSortedData(foldername, protocol, aOrC, "write", writes);
+	writeSortedData(foldername, protocol, aOrC, "read", reads, xx);
+	writeSortedData(foldername, protocol, aOrC, "write", writes, xx);
 }
 
 double computeStd(double midpoint, double[] data) {
@@ -99,7 +99,7 @@ double computeStd(double midpoint, double[] data) {
 }
 
 void writeSortedData(string foldername, string protocol, string aOrC,
-	   	string row, double[][101] data) 
+	   	string row, double[][101] data, string xx) 
 {
 	import utils : percentile;
 	import std.algorithm.iteration : sum;
@@ -107,13 +107,13 @@ void writeSortedData(string foldername, string protocol, string aOrC,
 		logf("%s %s %s %s", foldername, protocol, aOrC, row);
 		return;
 	}
-	auto f = File(foldername ~ "/Quantils" ~ protocol ~ aOrC ~ row ~ ".data",
+	auto f = File(foldername ~ "/Quantils" ~ protocol ~ aOrC ~ row ~ xx ~ ".data",
 			"w");
 	ensure(data.length == 101);
 	auto ltw = f.lockingTextWriter();
 	for(size_t i = 0; i < 101; ++i) {
 		if(data[i].empty) {
-			logf("%s %s %s %s %s", foldername, protocol, aOrC, row, i);
+			logf("%s %s %s %s %s %s", foldername, protocol, aOrC, row, xx, i);
 			continue;
 		}
 		double avg = sum(data[i], 0.0) / data[i].length;
@@ -130,10 +130,11 @@ void writeSortedData(string foldername, string protocol, string aOrC,
 			);
 	}
 
-	writeGnuplot(foldername, protocol, aOrC, row);
+	writeGnuplot(foldername, protocol, aOrC, row, xx);
 }
 
-void writeGnuplot(string foldername, string protocol, string aOrC, string row) {
+void writeGnuplot(string foldername, string protocol, string aOrC, string row,
+		string xx) {
 	import std.array : appender;
 	if(aOrC == "avail") {
 		{
@@ -157,14 +158,15 @@ plot `;
 
 			auto app = appender!string();
 			formattedWrite(app, gpAvail, 0.0, 
-					"mappingavail" ~ protocol ~ aOrC ~ row ~ ".tex", 
+					"mappingavail" ~ protocol ~ aOrC ~ row ~ xx ~ ".tex", 
 					aOrC == "avail" ? "Operation Availability" : "Operation Cost");
-			formattedWrite(app, "'Quantils" ~ protocol ~ aOrC ~ row ~ ".data'");
+			formattedWrite(app, "'Quantils" ~ protocol ~ aOrC ~ row ~ xx ~ ".data'");
 			formattedWrite(app, " using 1:3:2:6:5 with candlesticks notitle whiskerbars, \\\n");
 			formattedWrite(app, "'' using 1:4:4:4:4 with candlesticks lt -1 notitle, \\\n");
 			formattedWrite(app, "'' using 1:7:7:7:7 with candlesticks lt -1 lc 'red' notitle");
 
-			auto f = File(foldername ~ "/Quantils" ~ protocol ~ aOrC ~ row ~ ".gp", "w");
+			auto f = File(foldername ~ "/Quantils" ~ protocol ~ aOrC ~ row 
+					~ xx ~ ".gp", "w");
 			formattedWrite(f.lockingTextWriter(), "%s", app.data);
 		}
 		{
@@ -188,13 +190,14 @@ plot `;
 
 			auto app = appender!string();
 			formattedWrite(app, gpAvail, 0.0, 
-					"mappingavail" ~ protocol ~ aOrC ~ row ~ "_sd.tex", 
+					"mappingavail" ~ protocol ~ aOrC ~ row ~ xx ~ "_sd.tex", 
 					aOrC == "avail" ? "Operation Availability SD" : "Operation Cost SD");
 			formattedWrite(app, "'Quantils" ~ protocol ~ aOrC ~ row ~ ".data'");
 			formattedWrite(app, " using 1:8 title \"SD Average\", \\\n");
 			formattedWrite(app, "'' using 1:9 lc 'red' title \"SD Median\"");
 
-			auto f = File(foldername ~ "/Quantils" ~ protocol ~ aOrC ~ row ~ "_sd.gp", "w");
+			auto f = File(foldername ~ "/Quantils" ~ protocol ~ aOrC ~ row ~
+					xx ~ "_sd.gp", "w");
 			formattedWrite(f.lockingTextWriter(), "%s", app.data);
 		}
 
@@ -221,14 +224,14 @@ plot `;
 
 			auto app = appender!string();
 			formattedWrite(app, gpAvail, 0.0, 
-					"mappingavail" ~ protocol ~ aOrC ~ row ~ ".tex", 
+					"mappingavail" ~ protocol ~ aOrC ~ row ~ xx ~ ".tex", 
 					aOrC == "avail" ? "Operation Availability" : "Operation Cost");
-			formattedWrite(app, "'Quantils" ~ protocol ~ aOrC ~ row ~ ".data'");
+			formattedWrite(app, "'Quantils" ~ protocol ~ aOrC ~ row ~ xx ~ ".data'");
 			formattedWrite(app, " using 1:3:2:6:5 with candlesticks  notitle whiskerbars, \\\n");
 			formattedWrite(app, "'' using 1:4:4:4:4 with candlesticks lt -1 notitle, \\\n");
 			formattedWrite(app, "'' using 1:7:7:7:7 with candlesticks lt -1 lc 'red' notitle");
 
-			auto f = File(foldername ~ "/Quantils" ~ protocol ~ aOrC ~ row ~ ".gp", "w");
+			auto f = File(foldername ~ "/Quantils" ~ protocol ~ aOrC ~ row ~ xx ~ ".gp", "w");
 			formattedWrite(f.lockingTextWriter(), "%s", app.data);
 		}
 		{
@@ -253,13 +256,14 @@ plot `;
 
 			auto app = appender!string();
 			formattedWrite(app, gpAvail, 0.0, 
-					"mappingavail" ~ protocol ~ aOrC ~ row ~ "_sd.tex", 
+					"mappingavail" ~ protocol ~ aOrC ~ row ~ xx ~ "_sd.tex", 
 					aOrC == "avail" ? "Operation Availability" : "Operation Cost");
-			formattedWrite(app, "'Quantils" ~ protocol ~ aOrC ~ row ~ ".data'");
+			formattedWrite(app, "'Quantils" ~ protocol ~ aOrC ~ row ~ xx ~ ".data'");
 			formattedWrite(app, " using 1:8 title \"SD Average\", \\\n");
 			formattedWrite(app, "'' using 1:9 lc 'red' title \"SD Median\"");
 
-			auto f = File(foldername ~ "/Quantils" ~ protocol ~ aOrC ~ row ~ "_sd.gp", "w");
+			auto f = File(foldername ~ "/Quantils" ~ protocol ~ aOrC ~ row ~
+					xx ~ "_sd.gp", "w");
 			formattedWrite(f.lockingTextWriter(), "%s", app.data);
 		}
 	}
