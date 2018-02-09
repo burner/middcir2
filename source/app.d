@@ -160,7 +160,7 @@ void mcsBoxplot() {
 
 void gridBoxplot() {
 	foreach(it; [[3,3], [2,4], [4,2]]) {
-		auto l = GridFormula(it[0],it[1]);
+		auto l = Grid(it[0],it[1]);
 		auto r = l.calcAC();
 		auto rp = ResultPlot(format("Grid%dx%d", it[0], it[1]), r);
 		gnuPlot(format("Results/Grid%dx%d", it[0], it[1]), "", rp);
