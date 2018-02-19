@@ -1,0 +1,9 @@
+{
+	"name": "statstableoutput",
+	"authors": [
+		"burner"
+	],
+	"description": "A minimal D application.",
+	"copyright": "Copyright © 2018, burner",
+	"license": "proprietary"
+}
