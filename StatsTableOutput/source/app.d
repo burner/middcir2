@@ -3,6 +3,7 @@ import std.conv : to;
 import std.file : readText;
 import std.algorithm.iteration : splitter;
 import std.algorithm.searching : find, startsWith;
+import std.algorithm.sorting : sort;
 import std.typecons : Flag;
 import std.range : dropOne, drop;
 import std.array : split, replace;
@@ -63,55 +64,70 @@ RoWLine[string] splitOutRoWLines(L)(L lines, ReadOrWriteARW rowarw) {
 struct Pair {
 	string proto;
 	string dim;
-	size_t numNodes;
+	size_t knn;
 }
 
 void main() {
-	Counter[string] counter;
-	auto pairs = [
-			Pair("Grid", "4:2", 8),
-			Pair("Grid", "2:4", 8),
-			Pair("MCS", "0:0", 8),
-			Pair("Lattice", "2:4", 8),
-			Pair("Lattice", "4:2", 8),
+	foreach(nn; [2,3,5,7]) {
+		auto pairs = [[
+				Pair("Grid", "4:2", nn),
+				Pair("Grid", "2:4", nn),
+				Pair("MCS", "0:0", nn),
+				Pair("Lattice", "2:4", nn),
+				Pair("Lattice", "4:2", nn),
+			], 
+			[
+				Pair("Grid", "3:3", nn),
+				Pair("MCS", "0:0", nn),
+				Pair("Lattice", "3:3", nn),
+			]
 		];
-	//string protocol = "Grid";
-	size_t knn = 7;
-	//string dimension = "4:2";
-	foreach(pair; pairs) {
-		RoWLine[string][string][ReadOrWriteARW] rslts;
-		foreach(aggre; aggregater) {
-			string fn = format("../graphs8nodes3.json_%s_%s_%u_ai2.tex",
-					pair.proto, aggre, knn
-				);
-			auto lines = readText(fn)
-				.splitter("\n")
-				.find!(a => startsWith(a, "\\chapter{Result}"))
-				.find!(a => 
-						startsWith(a, format(
-							"\\subsection{Dimension %s}",
-							pair.dim)
-						)
-					);
-			foreach(rowc; [ReadOrWriteARW.no, ReadOrWriteARW.yes]) {
-				RoWLine[string] rslt = splitOutRoWLines(lines, rowc);
-				rslts[rowc][aggre] = rslt;
+		Counter.resetGlobalId();
+		Counter[string] counter;
+		foreach(idx, numNodes; [8, 9]) {
+			foreach(pair; pairs[idx]) {
+				RoWLine[string][string][ReadOrWriteARW] rslts;
+				foreach(aggre; aggregater) {
+					string fn = format("../graphs%dnodes3.json_%s_%s_%u_ai2.tex",
+							numNodes, pair.proto, aggre, pair.knn
+						);
+					//writeln(fn);
+					auto lines = readText(fn)
+						.splitter("\n")
+						.find!(a => startsWith(a, "\\chapter{Result}"))
+						.find!(a => 
+								startsWith(a, format(
+									"\\subsection{Dimension %s}",
+									pair.dim)
+								)
+							);
+					foreach(rowc; [ReadOrWriteARW.no, ReadOrWriteARW.yes]) {
+						RoWLine[string] rslt = splitOutRoWLines(lines, rowc);
+						rslts[rowc][aggre] = rslt;
+					}
+				}
+				foreach(rsltType; resultTypes) {
+					printResultTable(rslts, pair.proto, pair.knn, pair.dim, rsltType,
+							numNodes, counter
+						);
+				}
 			}
-		}
-		foreach(rsltType; resultTypes) {
-			printResultTable(rslts, pair.proto, knn, pair.dim, rsltType,
-					pair.numNodes, counter
-				);
+			//writeln(counter);
+			printCounterTable(counter, nn, numNodes);
 		}
 	}
-	writeln(counter);
 }
 
 struct Counter {
 	size_t cnt;
 	size_t id;
+	string ftrSet;
 
 	static size_t globalId = 1;
+
+	static void resetGlobalId() {
+		Counter.globalId = 1;
+	}
 
 	static Counter opCall() {
 		Counter ret;
@@ -121,24 +137,49 @@ struct Counter {
 	}
 }
 
+void printCounterTable(ref Counter[string] counters, size_t knn, 
+		size_t numNodes)
+{
+		Counter[] sortedCnt;
+		foreach(key, value; counters) {
+			sortedCnt ~= value;
+		}
+		sort!((a,b) => a.id < b.id)(sortedCnt);
+		writeln(sortedCnt);
+		string fn = format("counter_%s_%s.tex", knn, numNodes);
+		writeln(fn);
+		auto f = File(fn, "w");
+		f.writeln(`\begin{table}
+\resizebox{\columnwidth}{!}{
+\begin{longtable}{r l r}
+Id & Estimators & Occurrences \\ \hline`);
+		foreach(cnt; sortedCnt) {
+			f.writefln("%s & $\\{$ %s $\\}$ & %s \\\\", cnt.id, cnt.ftrSet,
+					cnt.cnt
+				);
+		}
+		f.writeln(`\end{longtable}}`);
+		f.writefln(`\caption{"The graph properties and graph properties combinations used in the
+\g{knn} where $k = %s$ predictions that lead to the best predictions in at least one
+instance with %s replicas.}`, knn, numNodes);
+		f.writefln(`\label{labtabknnestimators%s%s}`, knn, numNodes);
+		f.writeln(`\end{table}`);
+}
+
 void printResultTable(const RoWLine[string][string][ReadOrWriteARW] rslts,
 		string protocol, size_t knn, string dimension, string operation,
 		size_t numNodes, ref Counter[string] counter) 
 {
 	foreach(rowc; [ReadOrWriteARW.no, ReadOrWriteARW.yes]) {
 		string fn = format(
-				"%s_%s_%u_%s_%s.tex", protocol, dimension, knn,
+				"%s_%s_%u_%s_%s.tex", protocol, dimension.replace(":", "x"), knn,
 				rowc, operation.replace(" ", "_")
 			);
 		writeln(fn);
 		auto f = File(fn, "w");
-		f.writeln(`\documentclass{standalone}
-\input{../config.tex}
-
-\begin{document}
-\begin{table}
+		f.writeln(`\begin{table}
 \resizebox{\columnwidth}{!}{
-\begin{tabular}{ r l | r l | r l | r l | r l}
+\begin{tabular}{r l | r l | r l | r l | r l} \hline
 \multicolumn{2}{c|}{Min} & %
 	\multicolumn{2}{c|}{Average} & %
 	\multicolumn{2}{c|}{Median} & %
@@ -154,6 +195,7 @@ MSE & ID & MSE & ID & MSE & ID & MSE & ID & MSE & ID \\ \hline`);
 				string ftrSet = rslts[rowc][aggre][row].results[operation].ftrSet;
 				if(ftrSet !in counter) {
 					counter[ftrSet] = Counter();
+					counter[ftrSet].ftrSet = ftrSet;
 				}
 				size_t id = counter[ftrSet].id;
 				counter[ftrSet].cnt++;
@@ -173,10 +215,40 @@ MSE & ID & MSE & ID & MSE & ID & MSE & ID & MSE & ID \\ \hline`);
 %s where $k = %u$.}`, 
 		opToCaption(operation), nameToCaptionName(protocol), 
 		dimNameToLNTDesc(dimension, protocol, numNodes), knn);
+		f.writefln("\\label{labtabknn%s}", genLabelName(protocol, operation,
+					dimension, numNodes));
 		f.writeln(`\end{table}
 \end{document}
 `);
 	}
+}
+
+string genLabelName(string protocol, string operation, string dimension,
+		size_t numNodes)
+{
+	string ret;
+	switch(protocol) {
+		case "Grid": ret ~= "gp"; break;
+		case "Lattice": ret ~= "tlp"; break;
+		case "MCS": ret ~= "mcs"; break;
+		default: 
+			assert(false);
+	}
+
+	ret ~= dimension.replace(":", "x");
+
+	switch(operation) {
+		case "Read Avail": ret ~= "readavail"; break;
+		case "Write Avail": ret ~= "writeavail"; break;
+		case "Read Costs": ret ~= "readcosts"; break;
+		case "Write Costs": ret ~= "writecosts"; break;
+		default: 
+			assert(false);
+	}
+
+	ret ~= to!string(numNodes);
+
+	return ret;
 }
 
 string opToCaption(string op) {
