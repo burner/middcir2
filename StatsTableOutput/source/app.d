@@ -172,22 +172,23 @@ void printResultTable(const RoWLine[string][string][ReadOrWriteARW] rslts,
 {
 	foreach(rowc; [ReadOrWriteARW.no, ReadOrWriteARW.yes]) {
 		string fn = format(
-				"%s_%s_%u_%s_%s.tex", protocol, dimension.replace(":", "x"), knn,
-				rowc, operation.replace(" ", "_")
+				"%s_%s_%s_%u_%s_%s.tex", protocol, dimension.replace(":", "x"), 
+				numNodes, knn, rowc, operation.replace(" ", "_")
 			);
 		writeln(fn);
 		auto f = File(fn, "w");
 		f.writeln(`\begin{table}
 \resizebox{\columnwidth}{!}{
-\begin{tabular}{r l | r l | r l | r l | r l} \hline
+\begin{tabular}{c | r l | r l | r l | r l | r l} \hline
+\multicolumn{1}{c}{} & %
 \multicolumn{2}{c|}{Min} & %
 	\multicolumn{2}{c|}{Average} & %
 	\multicolumn{2}{c|}{Median} & %
 	\multicolumn{2}{c|}{Mode} & %
 	\multicolumn{2}{c}{Max} \\ \hline
-MSE & ID & MSE & ID & MSE & ID & MSE & ID & MSE & ID \\ \hline`);
+$wor$ MSE & ID & MSE & ID & MSE & ID & MSE & ID & MSE & ID \\ \hline`);
 		foreach(row; rows) {
-			f.writefln(`\multicolumn{10}{c}{Write over Read %s} \\ \hline`, row);
+			f.writef(`%s &`, row);
 			foreach(idx, aggre; aggregater) {
 				if(idx != 0) {
 					f.write("& ");
