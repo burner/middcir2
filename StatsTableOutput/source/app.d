@@ -218,9 +218,7 @@ $wor$ MSE & ID & MSE & ID & MSE & ID & MSE & ID & MSE & ID \\ \hline`);
 		dimNameToLNTDesc(dimension, protocol, numNodes), knn);
 		f.writefln("\\label{labtabknn%s}", genLabelName(protocol, operation,
 					dimension, numNodes));
-		f.writeln(`\end{table}
-\end{document}
-`);
+		f.writeln(`\end{table}`);
 	}
 }
 
