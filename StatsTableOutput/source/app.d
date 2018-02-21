@@ -6,7 +6,7 @@ import std.algorithm.searching : find, startsWith;
 import std.algorithm.sorting : sort;
 import std.typecons : Flag;
 import std.range : dropOne, drop;
-import std.array : split, replace;
+import std.array : split, replace, empty;
 import std.format : format;
 
 string[] rows = ["0.01", "0.10", "0.25", "0.50", "0.75", "0.90", "0.99"];
@@ -137,6 +137,41 @@ struct Counter {
 	}
 }
 
+string ftrSetToString(string ftrSet) {
+	string ret;
+	while(!ftrSet.empty) {
+		if(ftrSet.startsWith("Dgr")) {
+			ret ~= "Degree";
+			ftrSet = ftrSet[3 .. $];
+		} else if(ftrSet.startsWith("Btwnns")) {
+			ret ~= "Betweennees";
+			ftrSet = ftrSet[6 .. $];
+		} else if(ftrSet.startsWith("Dmtr")) {
+			ret ~= "Diameter";
+			ftrSet = ftrSet[4 .. $];
+		} else if(ftrSet.startsWith("Cnnctvty")) {
+			ret ~= "Connectivity, ";
+			ftrSet = ftrSet[8 .. $];
+		} else if(ftrSet.startsWith("Avrg")) {
+			ret ~= "Average, ";
+			ftrSet = ftrSet[4 .. $];
+		} else if(ftrSet.startsWith("Mdn")) {
+			ret ~= "Median, ";
+			ftrSet = ftrSet[3 .. $];
+		} else if(ftrSet.startsWith("Md")) {
+			ret ~= "Mode, ";
+			ftrSet = ftrSet[2 .. $];
+		} else if(ftrSet.startsWith("Mx")) {
+			ret ~= "Max, ";
+			ftrSet = ftrSet[2 .. $];
+		} else if(ftrSet.startsWith("Mn")) {
+			ret ~= "Mix, ";
+			ftrSet = ftrSet[2 .. $];
+		}
+	}
+	return ret;
+}
+
 void printCounterTable(ref Counter[string] counters, size_t knn, 
 		size_t numNodes)
 {
@@ -154,8 +189,8 @@ void printCounterTable(ref Counter[string] counters, size_t knn,
 \begin{longtable}{r l r}
 Id & Estimators & Occurrences \\ \hline`);
 		foreach(cnt; sortedCnt) {
-			f.writefln("%s & $\\{$ %s $\\}$ & %s \\\\", cnt.id, cnt.ftrSet,
-					cnt.cnt
+			f.writefln("%s & $\\{$ %s $\\}$ & %s \\\\", cnt.id, 
+					ftrSetToString(cnt.ftrSet), cnt.cnt
 				);
 		}
 		f.writeln(`\end{longtable}}`);
