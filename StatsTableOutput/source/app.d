@@ -82,16 +82,16 @@ void main() {
 				Pair("Lattice", "3:3", nn),
 			]
 		];
-		Counter.resetGlobalId();
-		Counter[string] counter;
 		foreach(idx, numNodes; [8, 9]) {
+			Counter.resetGlobalId();
+			Counter[string] counter;
 			foreach(pair; pairs[idx]) {
 				RoWLine[string][string][ReadOrWriteARW] rslts;
 				foreach(aggre; aggregater) {
 					string fn = format("../graphs%dnodes3.json_%s_%s_%u_ai2.tex",
 							numNodes, pair.proto, aggre, pair.knn
 						);
-					//writeln(fn);
+					writeln(fn);
 					auto lines = readText(fn)
 						.splitter("\n")
 						.find!(a => startsWith(a, "\\chapter{Result}"))
@@ -101,6 +101,7 @@ void main() {
 									pair.dim)
 								)
 							);
+					assert(!lines.empty);
 					foreach(rowc; [ReadOrWriteARW.yes]) {
 						RoWLine[string] rslt = splitOutRoWLines(lines, rowc);
 						rslts[rowc][aggre] = rslt;
@@ -180,20 +181,19 @@ void printCounterTable(ref Counter[string] counters, size_t knn,
 			sortedCnt ~= value;
 		}
 		sort!((a,b) => a.id < b.id)(sortedCnt);
-		writeln(sortedCnt);
+		//writeln(sortedCnt);
 		string fn = format("counter_%s_%s.tex", knn, numNodes);
-		writeln(fn);
+		//writeln(fn);
 		auto f = File(fn, "w");
 		f.writeln(`\begin{table}
-\resizebox{\columnwidth}{!}{
 \begin{longtable}{r l r}
-Id & Estimators & Occurrences \\ \hline`);
+ID & Estimators & Occurrences \\ \hline`);
 		foreach(cnt; sortedCnt) {
-			f.writefln("%s & $\\{$ %s $\\}$ & %s \\\\", cnt.id, 
+			f.writefln("(%s) & $\\{$ %s $\\}$ & %s \\\\", cnt.id, 
 					ftrSetToString(cnt.ftrSet), cnt.cnt
 				);
 		}
-		f.writeln(`\end{longtable}}`);
+		f.writeln(`\end{longtable}`);
 		f.writefln(`\caption{"The graph properties and graph properties combinations used in the
 \g{knn} where $k = %s$ predictions that lead to the best predictions in at least one
 instance with $%s$ replicas.}`, knn, numNodes);
@@ -210,7 +210,7 @@ void printResultTable(const RoWLine[string][string][ReadOrWriteARW] rslts,
 				"%s_%s_%s_%u_%s_%s.tex", protocol, dimension.replace(":", "x"), 
 				numNodes, knn, rowc, operation.replace(" ", "_")
 			);
-		writeln(fn);
+		//writeln(fn);
 		auto f = File(fn, "w");
 		f.writeln(`\begin{table}
 \resizebox{\columnwidth}{!}{
@@ -236,7 +236,7 @@ $wor$ & MSE & ID & MSE & ID & MSE & ID & MSE & ID & MSE & ID \\ \hline`);
 				size_t id = counter[ftrSet].id;
 				counter[ftrSet].cnt++;
 
-				writeln(rslts[rowc][aggre][row].results[operation].value, id);
+				//writeln(rslts[rowc][aggre][row].results[operation].value, id);
 				f.writefln("%0.2f & (%s) %% ",
 						rslts[rowc][aggre][row].results[operation].value, 
 						//ftrSet
