@@ -101,7 +101,7 @@ void main() {
 									pair.dim)
 								)
 							);
-					foreach(rowc; [ReadOrWriteARW.no, ReadOrWriteARW.yes]) {
+					foreach(rowc; [ReadOrWriteARW.yes]) {
 						RoWLine[string] rslt = splitOutRoWLines(lines, rowc);
 						rslts[rowc][aggre] = rslt;
 					}
@@ -196,7 +196,7 @@ Id & Estimators & Occurrences \\ \hline`);
 		f.writeln(`\end{longtable}}`);
 		f.writefln(`\caption{"The graph properties and graph properties combinations used in the
 \g{knn} where $k = %s$ predictions that lead to the best predictions in at least one
-instance with %s replicas.}`, knn, numNodes);
+instance with $%s$ replicas.}`, knn, numNodes);
 		f.writefln(`\label{labtabknnestimators%s%s}`, knn, numNodes);
 		f.writeln(`\end{table}`);
 }
@@ -205,7 +205,7 @@ void printResultTable(const RoWLine[string][string][ReadOrWriteARW] rslts,
 		string protocol, size_t knn, string dimension, string operation,
 		size_t numNodes, ref Counter[string] counter) 
 {
-	foreach(rowc; [ReadOrWriteARW.no, ReadOrWriteARW.yes]) {
+	foreach(rowc; [ReadOrWriteARW.yes]) {
 		string fn = format(
 				"%s_%s_%s_%u_%s_%s.tex", protocol, dimension.replace(":", "x"), 
 				numNodes, knn, rowc, operation.replace(" ", "_")
@@ -215,13 +215,13 @@ void printResultTable(const RoWLine[string][string][ReadOrWriteARW] rslts,
 		f.writeln(`\begin{table}
 \resizebox{\columnwidth}{!}{
 \begin{tabular}{c | r l | r l | r l | r l | r l} \hline
-\multicolumn{1}{c}{} & %
+\g{agf} & %
 \multicolumn{2}{c|}{Min} & %
 	\multicolumn{2}{c|}{Average} & %
 	\multicolumn{2}{c|}{Median} & %
 	\multicolumn{2}{c|}{Mode} & %
 	\multicolumn{2}{c}{Max} \\ \hline
-$wor$ MSE & ID & MSE & ID & MSE & ID & MSE & ID & MSE & ID \\ \hline`);
+$wor$ & MSE & ID & MSE & ID & MSE & ID & MSE & ID & MSE & ID \\ \hline`);
 		foreach(row; rows) {
 			f.writef(`%s &`, row);
 			foreach(idx, aggre; aggregater) {
@@ -247,7 +247,7 @@ $wor$ MSE & ID & MSE & ID & MSE & ID & MSE & ID & MSE & ID \\ \hline`);
 		}
 		f.writeln(`\end{tabular}}`);
 		f.writefln(
-`\caption{The \g{mse} of the %s of the %s predictions of the \g{knn} approach
+`\caption{The \g{mse} of the %s predictions by the \g{knn} approach for the %s
 %s where $k = %u$.}`, 
 		opToCaption(operation), nameToCaptionName(protocol), 
 		dimNameToLNTDesc(dimension, protocol, numNodes), knn);
