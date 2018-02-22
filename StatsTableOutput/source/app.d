@@ -85,6 +85,7 @@ void main() {
 		foreach(idx, numNodes; [8, 9]) {
 			Counter.resetGlobalId();
 			Counter[string] counter;
+			RoWLine[string][string][ReadOrWriteARW][string] rsltsQP;
 			foreach(pair; pairs[idx]) {
 				RoWLine[string][string][ReadOrWriteARW] rslts;
 				foreach(aggre; aggregater) {
@@ -107,16 +108,75 @@ void main() {
 						rslts[rowc][aggre] = rslt;
 					}
 				}
-				foreach(rsltType; resultTypes) {
-					printResultTable(rslts, pair.proto, pair.knn, pair.dim, rsltType,
-							numNodes, counter
-						);
-				}
+			//	foreach(rsltType; resultTypes) {
+			//		printResultTable(rslts, pair.proto, pair.knn, pair.dim, rsltType,
+			//				numNodes, counter
+			//			);
+			//	}
+				rsltsQP[pair.proto ~ pair.dim] = rslts;
 			}
-			//writeln(counter);
+			foreach(rsltType; resultTypes) {
+				printResultTable5(rsltsQP, pairs[idx], rsltType, nn, numNodes, counter);
+			}
+			writeln(counter);
 			printCounterTable(counter, nn, numNodes);
 		}
 	}
+}
+
+void printResultTable5(const RoWLine[string][string][ReadOrWriteARW][string] rslts,
+		Pair[] pairs, string operation, size_t knn, size_t numNodes, ref Counter[string] counter) 
+{
+	string fn = format(
+			"Multi_nn_%s_knn_%u_%s.tex",
+			numNodes, knn, operation.replace(" ", "_")
+		);
+	//writeln(fn);
+	auto f = File(fn, "w");
+	f.writeln(`\begin{table}
+\resizebox{\columnwidth}{!}{
+\begin{tabular}{c || r r || r r || r r || r r || r r} \hline
+\multirow{2}{*}{\diagbox{\gp{qp}}{\gp{agf}}} & %
+\multicolumn{2}{c||}{Min} & %
+	\multicolumn{2}{c||}{Average} & %
+	\multicolumn{2}{c||}{Median} & %
+	\multicolumn{2}{c||}{Mode} & %
+	\multicolumn{2}{c}{Max} \\ \cline{2-11}
+& MSE & ID & MSE & ID & MSE & ID & MSE & ID & MSE & ID \\ \hline`);
+	foreach(pair; pairs) {
+		string pd = pair.proto ~ pair.dim;
+		f.writef(`%s%s &`, nameToCaptionName(pair.proto),
+				dimToString(pair.dim));
+		foreach(idx, aggre; aggregater) {
+			if(idx != 0) {
+				f.write("&");
+			}
+			string ftrSet = rslts[pd][ReadOrWriteARW.yes][aggre]["0.50"].results[operation].ftrSet;
+			if(ftrSet !in counter) {
+				counter[ftrSet] = Counter();
+				counter[ftrSet].ftrSet = ftrSet;
+			}
+			size_t id = counter[ftrSet].id;
+			counter[ftrSet].cnt++;
+
+			//writeln(rslts[rowc][aggre][row].results[operation].value, id);
+			f.writefln(" $%0.2f$ & (%s) %% ",
+					rslts[pd][ReadOrWriteARW.yes][aggre]["0.50"].results[operation].value, 
+					//ftrSet
+					id
+				);
+		}
+		f.writeln("\\\\ \\hline");
+	}
+	f.writeln(`\end{tabular}}`);
+	f.writefln(
+`\caption{The \g{mse} of the %s predictions by the \g{knn} approach with $%s$
+replicas and $k = %u$.}`, 
+	opToCaption(operation), 
+	numNodes, knn);
+	f.writefln("\\label{labtabknn%snn%sknn%s}", operation.replace(" ", ""),
+			numNodes, knn);
+	f.writeln(`\end{table}`);
 }
 
 struct Counter {
@@ -142,31 +202,43 @@ string ftrSetToString(string ftrSet) {
 	string ret;
 	while(!ftrSet.empty) {
 		if(ftrSet.startsWith("Dgr")) {
+			if(!ret.empty) {
+				ret ~= ", ";
+			}
 			ret ~= "Degree";
 			ftrSet = ftrSet[3 .. $];
 		} else if(ftrSet.startsWith("Btwnns")) {
+			if(!ret.empty) {
+				ret ~= ", ";
+			}
 			ret ~= "Betweennees";
 			ftrSet = ftrSet[6 .. $];
 		} else if(ftrSet.startsWith("Dmtr")) {
+			if(!ret.empty) {
+				ret ~= ", ";
+			}
 			ret ~= "Diameter";
 			ftrSet = ftrSet[4 .. $];
 		} else if(ftrSet.startsWith("Cnnctvty")) {
+			if(!ret.empty) {
+				ret ~= ", ";
+			}
 			ret ~= "Connectivity, ";
 			ftrSet = ftrSet[8 .. $];
 		} else if(ftrSet.startsWith("Avrg")) {
-			ret ~= "Average, ";
+			ret ~= "Average";
 			ftrSet = ftrSet[4 .. $];
 		} else if(ftrSet.startsWith("Mdn")) {
-			ret ~= "Median, ";
+			ret ~= "Median";
 			ftrSet = ftrSet[3 .. $];
 		} else if(ftrSet.startsWith("Md")) {
-			ret ~= "Mode, ";
+			ret ~= "Mode";
 			ftrSet = ftrSet[2 .. $];
 		} else if(ftrSet.startsWith("Mx")) {
-			ret ~= "Max, ";
+			ret ~= "Max";
 			ftrSet = ftrSet[2 .. $];
 		} else if(ftrSet.startsWith("Mn")) {
-			ret ~= "Mix, ";
+			ret ~= "Mix";
 			ftrSet = ftrSet[2 .. $];
 		}
 	}
@@ -182,19 +254,19 @@ void printCounterTable(ref Counter[string] counters, size_t knn,
 		}
 		sort!((a,b) => a.id < b.id)(sortedCnt);
 		//writeln(sortedCnt);
-		string fn = format("counter_%s_%s.tex", knn, numNodes);
+		string fn = format("counter_knn_%s_nn_%s.tex", knn, numNodes);
 		//writeln(fn);
 		auto f = File(fn, "w");
 		f.writeln(`\begin{table}
 \begin{longtable}{r l r}
-ID & Estimators & Occurrences \\ \hline`);
+ID & Set of \gp{ftr} & Occurrences \\ \hline`);
 		foreach(cnt; sortedCnt) {
 			f.writefln("(%s) & $\\{$ %s $\\}$ & %s \\\\", cnt.id, 
 					ftrSetToString(cnt.ftrSet), cnt.cnt
 				);
 		}
 		f.writeln(`\end{longtable}`);
-		f.writefln(`\caption{"The graph properties and graph properties combinations used in the
+		f.writefln(`\caption{The graph properties and graph properties combinations used in the
 \g{knn} where $k = %s$ predictions that lead to the best predictions in at least one
 instance with $%s$ replicas.}`, knn, numNodes);
 		f.writefln(`\label{labtabknnestimators%s%s}`, knn, numNodes);
@@ -283,6 +355,17 @@ string genLabelName(string protocol, string operation, string dimension,
 	ret ~= to!string(numNodes);
 
 	return ret;
+}
+
+string dimToString(string op) {
+	switch(op) {
+		case "2:4": return " $2 \\times 4$";
+		case "3:3": return " $3 \\times 3$";
+		case "4:2": return " $4 \\times 2$";
+		case "0:0": return "";
+		default: 
+			assert(false, op);
+	}	
 }
 
 string opToCaption(string op) {
