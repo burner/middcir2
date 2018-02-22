@@ -223,7 +223,7 @@ string ftrSetToString(string ftrSet) {
 			if(!ret.empty) {
 				ret ~= ", ";
 			}
-			ret ~= "Connectivity, ";
+			ret ~= "Connectivity";
 			ftrSet = ftrSet[8 .. $];
 		} else if(ftrSet.startsWith("Avrg")) {
 			ret ~= "Average";
