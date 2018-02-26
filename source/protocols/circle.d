@@ -6,13 +6,19 @@ import std.typecons : Flag;
 import std.math : approxEqual;
 import std.container.array : Array;
 import std.algorithm.searching : canFind;
+import std.algorithm.iteration: sum;
+import std.algorithm.sorting : sort;
 import std.typecons : isIntegral, Nullable;
 import std.format;
 import std.conv : to;
+import std.file : readText;
+import std.algorithm.iteration : splitter;
+import std.array : split, front, back;
 
 import gfm.math.vector;
 import fixedsizearray;
 
+import graphmeasures : computeMode;
 import plot.gnuplot;
 import graphgen;
 import graphisomorph;
@@ -26,6 +32,115 @@ import permutation;
 import config;
 import floydmodule;
 
+struct MinMaxMode {
+	double min;
+	double average;
+	double median;
+	double mode;
+	double max;
+}
+
+struct ManyResults {
+	double[][101] readAvail;
+	double[][101] writeAvail;
+	double[][101] readCosts;
+	double[][101] writeCosts;
+
+	MinMaxMode[101] readAvailMode;
+	MinMaxMode[101] writeAvailMode;
+	MinMaxMode[101] readCostsMode;
+	MinMaxMode[101] writeCostsMode;
+}
+
+void loadResults(string folderName, ref ManyResults mr) {
+	auto availLines = readText(folderName ~ "/Circledatafileavail.rslt")
+		.splitter("\n");
+	auto costLines = readText(folderName ~ "/Circledatafilecost.rslt")
+		.splitter("\n");
+
+	for(size_t i = 0; i < 101; ++i) {
+		auto availLine = availLines.front.split();
+		double ra = to!double(availLine[1]);
+		double wa = to!double(availLine[2]);
+
+		auto costLine = costLines.front.split();
+		double rc = to!double(costLine[1]);
+		double wc = to!double(costLine[2]);
+
+		logf("avail %s %s cost %s %s", ra, wa, rc, wc);
+		availLines.popFront();
+		costLines.popFront();
+
+		mr.readAvail[i] ~= ra;
+		mr.writeAvail[i] ~= wa;
+		mr.readCosts[i] ~= rc;
+		mr.writeCosts[i] ~= wc;
+	}
+
+	for(size_t i = 0; i < 101; ++i) {
+		sort(mr.readAvail[i]);
+		sort(mr.writeAvail[i]);
+		sort(mr.readCosts[i]);
+		sort(mr.writeCosts[i]);
+
+		mr.readAvailMode[i].min = mr.readAvail[i].front;
+		mr.readAvailMode[i].average = sum(mr.readAvail[i]) / mr.readAvail[i].length;
+		mr.readAvailMode[i].mode = computeMode!(double[])(mr.readAvail[i]).max;
+		mr.readAvailMode[i].max = mr.readAvail[i].back;
+		if(mr.readAvail[i].length % 2 == 1) {
+			mr.readAvailMode[i].median = mr.readAvail[i][$ / 2];
+		} else {
+			mr.readAvailMode[i].median = mr.readAvail[i][$ / 2];
+			if(mr.readAvail[i].length > 1) {
+				mr.readAvailMode[i].median += mr.readAvail[i][($ / 2) + 1];
+				mr.readAvailMode[i].median /= 2.0;
+			}
+		}
+
+		mr.writeAvailMode[i].min = mr.writeAvail[i].front;
+		mr.writeAvailMode[i].average = sum(mr.writeAvail[i]) / mr.writeAvail[i].length;
+		mr.writeAvailMode[i].mode = computeMode!(double[])(mr.writeAvail[i]).max;
+		mr.writeAvailMode[i].max = mr.writeAvail[i].back;
+		if(mr.writeAvail[i].length % 2 == 1) {
+			mr.writeAvailMode[i].median = mr.writeAvail[i][$ / 2];
+		} else {
+			mr.writeAvailMode[i].median = mr.writeAvail[i][$ / 2];
+			if(mr.writeAvail[i].length > 1) {
+				mr.writeAvailMode[i].median += mr.writeAvail[i][($ / 2) + 1];
+				mr.writeAvailMode[i].median /= 2.0;
+			}
+		}
+
+		mr.readCostsMode[i].min = mr.readCosts[i].front;
+		mr.readCostsMode[i].average = sum(mr.readCosts[i]) / mr.readCosts[i].length;
+		mr.readCostsMode[i].mode = computeMode!(double[])(mr.readCosts[i]).max;
+		mr.readCostsMode[i].max = mr.readCosts[i].back;
+		if(mr.readCosts[i].length % 2 == 1) {
+			mr.readCostsMode[i].median = mr.readCosts[i][$ / 2];
+		} else {
+			mr.readCostsMode[i].median = mr.readCosts[i][$ / 2];
+			if(mr.readCosts[i].length > 1) {
+				mr.readCostsMode[i].median += mr.readCosts[i][($ / 2) + 1];
+				mr.readCostsMode[i].median /= 2.0;
+			}
+		}
+
+		mr.writeCostsMode[i].min = mr.writeCosts[i].front;
+		mr.writeCostsMode[i].average = sum(mr.writeCosts[i]) / mr.writeCosts[i].length;
+		mr.writeCostsMode[i].mode = computeMode!(double[])(mr.writeCosts[i]).max;
+		mr.writeCostsMode[i].max = mr.writeCosts[i].back;
+		if(mr.writeCosts[i].length % 2 == 1) {
+			mr.writeCostsMode[i].median = mr.writeCosts[i][$ / 2];
+		} else {
+			mr.writeCostsMode[i].median = mr.writeCosts[i][$ / 2];
+			if(mr.writeCosts[i].length > 1) {
+				mr.writeCostsMode[i].median += mr.writeCosts[i][($ / 2) + 1];
+				mr.writeCostsMode[i].median /= 2.0;
+			}
+		}
+	}
+}
+
 void manyCircles(string filename, string resultFolderName) {
 	import std.file : mkdirRecurse;
 	mkdirRecurse(resultFolderName);
@@ -33,6 +148,9 @@ void manyCircles(string filename, string resultFolderName) {
 	auto f = File(resultFolderName ~ "/result.tex", "w");
 	auto fLtw = f.lockingTextWriter();
 	prepareLatexDoc(fLtw);
+	size_t ok = 0;
+
+	ManyResults mr;
 
 	auto graphs = loadGraphsFromJSON!(32)(filename);
 	for(size_t i = 0; i < graphs.length; ++i) {
@@ -59,13 +177,18 @@ void manyCircles(string filename, string resultFolderName) {
 			formattedWrite(fLtw, "\\includegraphics{graph%d/1resultcost}\n", i);
 			formattedWrite(fLtw, "\\caption{graph %d cost}\n", i);
 			formattedWrite(fLtw, "\\end{figure}\n");
+			++ok;
+			loadResults(fnG, mr);
 		} catch(Exception e) {
 			logf("Unable to find border for graph %d %s", i, e.toString());
 			formattedWrite(fLtw, "Unable to process graph with Circle Protocol\n");
 		}
 	}
 
+	formattedWrite(fLtw, "\\section{Results}\n");
+	formattedWrite(fLtw, "%d out of %d worked", ok, graphs.length);
 	formattedWrite(fLtw, "\\end{document}");
+	logf("%s", mr);
 }
 
 void prepareLatexDoc(LTW)(ref LTW ltw) {

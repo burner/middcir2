@@ -528,10 +528,10 @@ void circle() {
 }
 
 void manyCirclesRun() {
-	//manyCircles("graphs6nodes3.json", "Results/graph6nodes3");
+	manyCircles("graphs6nodes3.json", "Results/graph6nodes3");
 	//manyCircles("graphs8nodes3.json", "Results/graph8nodes3");
 	//manyCircles("graphs9nodes3.json", "Results/graph9nodes3");
-	manyCircles("graphs12nodes3.json", "Results/graph12nodes3");
+	//manyCircles("graphs12nodes3.json", "Results/graph12nodes3");
 }
 
 void crossing12() {
