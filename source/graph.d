@@ -204,6 +204,9 @@ struct Graph(int Size) {
 		int lastNode = int.min;
 		int curNode = startNode;
 		do {
+			if(ret.length > this.length * 4) {
+				throw new Exception("Unable to find border overflow");
+			}
 			int nextNode;
 			ret.insertBack(curNode);
 			this.nextNode(lastNode, curNode, curEdgeDir, nextNode);

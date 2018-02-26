@@ -200,7 +200,7 @@ struct Bitset(Store) if(isIntegral!Store && isUnsigned!Store) {
 	}
 	
 	Bitset!Store flip() {
-		this.store = ~this.store;
+		this.store = cast(StoreType)(~this.store);
 
 		return this;
 	}

@@ -15,6 +15,7 @@ import protocols.mcs;
 import protocols.grid;
 import protocols.lattice;
 import protocols.crossing;
+import protocols.circle;
 //import learning;
 import learning2;
 import plot;
@@ -513,6 +514,26 @@ void gridMapped() {
 	);
 }
 
+void circle() {
+	//auto pnt = genTestGraph12!32();
+	auto pnt = genTestGraph!32();
+
+	auto crs = Circles(pnt);
+	auto crsRslt = crs.calcAC();
+	gnuPlot("Results/Circle_12", "", ResultPlot("Circle", crsRslt));
+
+	auto f = File("Results/Circle_12/graph.tex", "w");
+	auto ltw = f.lockingTextWriter();
+	pnt.toTikz(ltw);
+}
+
+void manyCirclesRun() {
+	//manyCircles("graphs6nodes3.json", "Results/graph6nodes3");
+	//manyCircles("graphs8nodes3.json", "Results/graph8nodes3");
+	//manyCircles("graphs9nodes3.json", "Results/graph9nodes3");
+	manyCircles("graphs12nodes3.json", "Results/graph12nodes3");
+}
+
 void crossing12() {
 	auto pnt = genTestGraph12!32();
 
@@ -742,7 +763,9 @@ void main(string[] args) {
 		return;
 	}
 
-	boxplot();
+	//circle();
+	manyCirclesRun();
+	//boxplot();
 	//checkGraphUnique("graphs6nodes3.json");
 	//checkGraphUnique("graphs8nodes3.json");
 	//checkGraphUnique("graphs9nodes3.json");
