@@ -90,9 +90,11 @@ void loadResults(string folderName, ref ManyResults mr) {
 		if(mr.readAvail[i].length % 2 == 1) {
 			mr.readAvailMode[i].median = mr.readAvail[i][$ / 2];
 		} else {
-			mr.readAvailMode[i].median = mr.readAvail[i][$ / 2];
+			size_t l = mr.readAvail[i].length;
+			size_t l2 = (l-1) / 2;
+			mr.readAvailMode[i].median = mr.readAvail[i][l2];
 			if(mr.readAvail[i].length > 1) {
-				mr.readAvailMode[i].median += mr.readAvail[i][($ / 2) + 1];
+				mr.readAvailMode[i].median += mr.readAvail[i][l2 + 1];
 				mr.readAvailMode[i].median /= 2.0;
 			}
 		}
@@ -104,9 +106,11 @@ void loadResults(string folderName, ref ManyResults mr) {
 		if(mr.writeAvail[i].length % 2 == 1) {
 			mr.writeAvailMode[i].median = mr.writeAvail[i][$ / 2];
 		} else {
-			mr.writeAvailMode[i].median = mr.writeAvail[i][$ / 2];
+			size_t l = mr.writeAvail[i].length;
+			size_t l2 = (l-1) / 2;
+			mr.writeAvailMode[i].median = mr.writeAvail[i][l2];
 			if(mr.writeAvail[i].length > 1) {
-				mr.writeAvailMode[i].median += mr.writeAvail[i][($ / 2) + 1];
+				mr.writeAvailMode[i].median += mr.writeAvail[i][l2 + 1];
 				mr.writeAvailMode[i].median /= 2.0;
 			}
 		}
@@ -118,9 +122,11 @@ void loadResults(string folderName, ref ManyResults mr) {
 		if(mr.readCosts[i].length % 2 == 1) {
 			mr.readCostsMode[i].median = mr.readCosts[i][$ / 2];
 		} else {
-			mr.readCostsMode[i].median = mr.readCosts[i][$ / 2];
+			size_t l = mr.readCosts[i].length;
+			size_t l2 = (l-1) / 2;
+			mr.readCostsMode[i].median = mr.readCosts[i][l2];
 			if(mr.readCosts[i].length > 1) {
-				mr.readCostsMode[i].median += mr.readCosts[i][($ / 2) + 1];
+				mr.readCostsMode[i].median += mr.readCosts[i][l2 + 1];
 				mr.readCostsMode[i].median /= 2.0;
 			}
 		}
@@ -132,9 +138,11 @@ void loadResults(string folderName, ref ManyResults mr) {
 		if(mr.writeCosts[i].length % 2 == 1) {
 			mr.writeCostsMode[i].median = mr.writeCosts[i][$ / 2];
 		} else {
-			mr.writeCostsMode[i].median = mr.writeCosts[i][$ / 2];
+			size_t l = mr.writeCosts[i].length;
+			size_t l2 = (l-1) / 2;
+			mr.writeCostsMode[i].median = mr.writeCosts[i][l2];
 			if(mr.writeCosts[i].length > 1) {
-				mr.writeCostsMode[i].median += mr.writeCosts[i][($ / 2) + 1];
+				mr.writeCostsMode[i].median += mr.writeCosts[i][l2 + 1];
 				mr.writeCostsMode[i].median /= 2.0;
 			}
 		}
