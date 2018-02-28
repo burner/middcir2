@@ -3,7 +3,7 @@ module protocols.circle;
 import std.experimental.logger;
 import std.stdio;
 import std.typecons : Flag;
-import std.math : approxEqual;
+import std.math : approxEqual, isNaN;
 import std.container.array : Array;
 import std.algorithm.searching : canFind;
 import std.algorithm.iteration: sum;
@@ -19,6 +19,7 @@ import gfm.math.vector;
 import fixedsizearray;
 
 import graphmeasures : computeMode;
+import plot : ResultPlot;
 import plot.gnuplot;
 import graphgen;
 import graphisomorph;
@@ -32,6 +33,10 @@ import permutation;
 import config;
 import floydmodule;
 import utils : percentile;
+
+double nanToNull(double v) {
+	return isNaN(v) ? 0.0 : v;
+}
 
 struct MinMaxMode {
 	double min;
@@ -169,72 +174,166 @@ void manyCircles(string filename, string resultFolderName) {
 void manyResultsToFile(string foldername, ref ManyResults mr) {
 	auto fnG = format("%s/", foldername);
 	{
-		auto fnGg = fnG ~ "manydatareadavail.rslt";
+		auto fnGg = fnG ~ "readavail.rslt";
 		auto f = File(fnGg, "w");
 		auto ltw = f.lockingTextWriter();
 		for(size_t i = 0; i < 101; ++i) {
 			formattedWrite(ltw,
-				"%15.13f %15.13f %15.13f %15.13f %15.13f %15.13f %15.13f\n",
+				"%15.13f %15.13f %15.13f %15.13f %15.13f %15.13f %15.13f %15.13f\n",
 				i / 100.0, 
-				mr.readAvailMode[i].min,
-				mr.readAvailMode[i].q25,
-				mr.readAvailMode[i].average,
-				mr.readAvailMode[i].median,
-				mr.readAvailMode[i].q75,
-				mr.readAvailMode[i].max
+				nanToNull(mr.readAvailMode[i].min),
+				nanToNull(mr.readAvailMode[i].q25),
+				nanToNull(mr.readAvailMode[i].average),
+				nanToNull(mr.readAvailMode[i].median),
+				nanToNull(mr.readAvailMode[i].q75),
+				nanToNull(mr.readAvailMode[i].max),
+				i / 100.0, 
 			);
 		}
+		immutable(string) gpAvail = `set size ratio 0.71
+print GPVAL_TERMINALS
+set terminal epslatex color standalone
+set xrange [0.000000:1.0]
+set yrange [:1.0]
+set output 'readavail.tex'
+set border linewidth 1.5
+# Grid
+set grid back lc rgb "black"
+set border 3 back lc rgb "black"
+set key left top
+set style data boxplot
+#set key at 50,112
+set xlabel 'Replica Availability (p)'
+set ylabel 'Read Availability' offset 1,0
+set tics scale 0.75
+plot 'readavail.rslt' using 1:3:2:7:6 with candlesticks notitle whiskerbars, \
+'' using 1:4:4:4:4 with candlesticks lt -1 notitle, \
+'' using 1:5:5:5:5 with candlesticks lt -1 lc 'red' notitle, \
+'' using 1:8 with lines lc '#00BFFF' linewidth 4 notitle
+`;
+		auto f2 = File(fnG ~ "readavail.gp", "w");
+		auto ltw2 = f2.lockingTextWriter();
+		formattedWrite(ltw2, gpAvail);
 	}
 	{
-		auto fnGg = fnG ~ "manydatawriteavail.rslt";
+		auto fnGg = fnG ~ "writeavail.rslt";
 		auto f = File(fnGg, "w");
 		auto ltw = f.lockingTextWriter();
 		for(size_t i = 0; i < 101; ++i) {
 			formattedWrite(ltw,
-				"%15.13f %15.13f %15.13f %15.13f %15.13f %15.13f %15.13f\n",
+				"%15.13f %15.13f %15.13f %15.13f %15.13f %15.13f %15.13f %15.13f\n",
 				i / 100.0, 
-				mr.writeAvailMode[i].min,
-				mr.writeAvailMode[i].q25,
-				mr.writeAvailMode[i].average,
-				mr.writeAvailMode[i].median,
-				mr.writeAvailMode[i].q75,
-				mr.writeAvailMode[i].max
+				nanToNull(mr.writeAvailMode[i].min),
+				nanToNull(mr.writeAvailMode[i].q25),
+				nanToNull(mr.writeAvailMode[i].average),
+				nanToNull(mr.writeAvailMode[i].median),
+				nanToNull(mr.writeAvailMode[i].q75),
+				nanToNull(mr.writeAvailMode[i].max),
+				i / 100.0
 			);
 		}
+		immutable(string) gpAvail = `set size ratio 0.71
+print GPVAL_TERMINALS
+set terminal epslatex color standalone
+set xrange [0.000000:1.0]
+set yrange [:1.0]
+set output 'writeavail.tex'
+set border linewidth 1.5
+# Grid
+set grid back lc rgb "black"
+set border 3 back lc rgb "black"
+set key left top
+set style data boxplot
+#set key at 50,112
+set xlabel 'Replica Availability (p)'
+set ylabel 'Write Availability' offset 1,0
+set tics scale 0.75
+plot 'writeavail.rslt' using 1:3:2:7:6 with candlesticks notitle whiskerbars, \
+'' using 1:4:4:4:4 with candlesticks lt -1 notitle, \
+'' using 1:5:5:5:5 with candlesticks lt -1 lc 'red' notitle, \
+'' using 1:8 with lines lc '#00BFFF' linewidth 4 notitle
+`;
+		auto f2 = File(fnG ~ "writeavail.gp", "w");
+		auto ltw2 = f2.lockingTextWriter();
+		formattedWrite(ltw2, gpAvail);
 	}
 	{
-		auto fnGg = fnG ~ "manydatareadcosts.rslt";
+		auto fnGg = fnG ~ "readcosts.rslt";
 		auto f = File(fnGg, "w");
 		auto ltw = f.lockingTextWriter();
 		for(size_t i = 0; i < 101; ++i) {
 			formattedWrite(ltw,
 				"%15.13f %15.13f %15.13f %15.13f %15.13f %15.13f %15.13f\n",
 				i / 100.0, 
-				mr.readCostsMode[i].min,
-				mr.readCostsMode[i].q25,
-				mr.readCostsMode[i].average,
-				mr.readCostsMode[i].median,
-				mr.readCostsMode[i].q75,
-				mr.readCostsMode[i].max
+				nanToNull(mr.readCostsMode[i].min),
+				nanToNull(mr.readCostsMode[i].q25),
+				nanToNull(mr.readCostsMode[i].average),
+				nanToNull(mr.readCostsMode[i].median),
+				nanToNull(mr.readCostsMode[i].q75),
+				nanToNull(mr.readCostsMode[i].max)
 			);
 		}
+		immutable(string) gpAvail = `set size ratio 0.71
+print GPVAL_TERMINALS
+set terminal epslatex color standalone
+set xrange [0.000000:1.0]
+set output 'readcosts.tex'
+set border linewidth 1.5
+# Grid
+set grid back lc rgb "black"
+set border 3 back lc rgb "black"
+set key left top
+set style data boxplot
+#set key at 50,112
+set xlabel 'Replica Availability (p)'
+set ylabel 'Read Costs' offset 1,0
+set tics scale 0.75
+plot 'readcosts.rslt' using 1:3:2:7:6 with candlesticks notitle whiskerbars, \
+'' using 1:4:4:4:4 with candlesticks lt -1 notitle, \
+'' using 1:5:5:5:5 with candlesticks lt -1 lc 'red' notitle
+`;
+		auto f2 = File(fnG ~ "readcosts.gp", "w");
+		auto ltw2 = f2.lockingTextWriter();
+		formattedWrite(ltw2, gpAvail);
 	}
 	{
-		auto fnGg = fnG ~ "manydatawritecosts.rslt";
+		auto fnGg = fnG ~ "writecosts.rslt";
 		auto f = File(fnGg, "w");
 		auto ltw = f.lockingTextWriter();
 		for(size_t i = 0; i < 101; ++i) {
 			formattedWrite(ltw,
 				"%15.13f %15.13f %15.13f %15.13f %15.13f %15.13f %15.13f\n",
 				i / 100.0, 
-				mr.writeCostsMode[i].min,
-				mr.writeCostsMode[i].q25,
-				mr.writeCostsMode[i].average,
-				mr.writeCostsMode[i].median,
-				mr.writeCostsMode[i].q75,
-				mr.writeCostsMode[i].max
+				nanToNull(mr.writeCostsMode[i].min),
+				nanToNull(mr.writeCostsMode[i].q25),
+				nanToNull(mr.writeCostsMode[i].average),
+				nanToNull(mr.writeCostsMode[i].median),
+				nanToNull(mr.writeCostsMode[i].q75),
+				nanToNull(mr.writeCostsMode[i].max)
 			);
 		}
+		immutable(string) gpAvail = `set size ratio 0.71
+print GPVAL_TERMINALS
+set terminal epslatex color standalone
+set xrange [0.000000:1.0]
+set output 'readcosts.tex'
+set border linewidth 1.5
+# Grid
+set grid back lc rgb "black"
+set border 3 back lc rgb "black"
+set key left top
+set style data boxplot
+#set key at 50,112
+set xlabel 'Replica Availability (p)'
+set ylabel 'Write Costs' offset 1,0
+set tics scale 0.75
+plot 'writecosts.rslt' using 1:3:2:7:6 with candlesticks notitle whiskerbars, \
+'' using 1:4:4:4:4 with candlesticks lt -1 notitle, \
+'' using 1:5:5:5:5 with candlesticks lt -1 lc 'red' notitle
+`;
+		auto f2 = File(fnG ~ "writecosts.gp", "w");
+		auto ltw2 = f2.lockingTextWriter();
+		formattedWrite(ltw2, gpAvail);
 	}
 }
 
