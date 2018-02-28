@@ -31,12 +31,14 @@ import protocols;
 import permutation;
 import config;
 import floydmodule;
+import utils : percentile;
 
 struct MinMaxMode {
 	double min;
+	double q25;
 	double average;
 	double median;
-	double mode;
+	double q75;
 	double max;
 }
 
@@ -84,68 +86,32 @@ void loadResults(string folderName, ref ManyResults mr) {
 		sort(mr.writeCosts[i]);
 
 		mr.readAvailMode[i].min = mr.readAvail[i].front;
-		mr.readAvailMode[i].average = sum(mr.readAvail[i]) / mr.readAvail[i].length;
-		mr.readAvailMode[i].mode = computeMode!(double[])(mr.readAvail[i]).max;
+		mr.readAvailMode[i].q25 = percentile(mr.readAvail[i], 0.25);
+		mr.readAvailMode[i].median = percentile(mr.readAvail[i], 0.50);
+		mr.readAvailMode[i].average = sum(mr.readAvail[i], 0.0) / mr.readAvail[i].length;
+		mr.readAvailMode[i].q75 = percentile(mr.readAvail[i], 0.75);
 		mr.readAvailMode[i].max = mr.readAvail[i].back;
-		if(mr.readAvail[i].length % 2 == 1) {
-			mr.readAvailMode[i].median = mr.readAvail[i][$ / 2];
-		} else {
-			size_t l = mr.readAvail[i].length;
-			size_t l2 = (l-1) / 2;
-			mr.readAvailMode[i].median = mr.readAvail[i][l2];
-			if(mr.readAvail[i].length > 1) {
-				mr.readAvailMode[i].median += mr.readAvail[i][l2 + 1];
-				mr.readAvailMode[i].median /= 2.0;
-			}
-		}
 
 		mr.writeAvailMode[i].min = mr.writeAvail[i].front;
-		mr.writeAvailMode[i].average = sum(mr.writeAvail[i]) / mr.writeAvail[i].length;
-		mr.writeAvailMode[i].mode = computeMode!(double[])(mr.writeAvail[i]).max;
+		mr.writeAvailMode[i].q25 = percentile(mr.writeAvail[i], 0.25);
+		mr.writeAvailMode[i].median = percentile(mr.writeAvail[i], 0.50);
+		mr.writeAvailMode[i].average = sum(mr.writeAvail[i], 0.0) / mr.writeAvail[i].length;
+		mr.writeAvailMode[i].q75 = percentile(mr.writeAvail[i], 0.75);
 		mr.writeAvailMode[i].max = mr.writeAvail[i].back;
-		if(mr.writeAvail[i].length % 2 == 1) {
-			mr.writeAvailMode[i].median = mr.writeAvail[i][$ / 2];
-		} else {
-			size_t l = mr.writeAvail[i].length;
-			size_t l2 = (l-1) / 2;
-			mr.writeAvailMode[i].median = mr.writeAvail[i][l2];
-			if(mr.writeAvail[i].length > 1) {
-				mr.writeAvailMode[i].median += mr.writeAvail[i][l2 + 1];
-				mr.writeAvailMode[i].median /= 2.0;
-			}
-		}
 
 		mr.readCostsMode[i].min = mr.readCosts[i].front;
-		mr.readCostsMode[i].average = sum(mr.readCosts[i]) / mr.readCosts[i].length;
-		mr.readCostsMode[i].mode = computeMode!(double[])(mr.readCosts[i]).max;
+		mr.readCostsMode[i].q25 = percentile(mr.readCosts[i], 0.25);
+		mr.readCostsMode[i].median = percentile(mr.readCosts[i], 0.50);
+		mr.readCostsMode[i].average = sum(mr.readCosts[i], 0.0) / mr.readCosts[i].length;
+		mr.readCostsMode[i].q75 = percentile(mr.readCosts[i], 0.75);
 		mr.readCostsMode[i].max = mr.readCosts[i].back;
-		if(mr.readCosts[i].length % 2 == 1) {
-			mr.readCostsMode[i].median = mr.readCosts[i][$ / 2];
-		} else {
-			size_t l = mr.readCosts[i].length;
-			size_t l2 = (l-1) / 2;
-			mr.readCostsMode[i].median = mr.readCosts[i][l2];
-			if(mr.readCosts[i].length > 1) {
-				mr.readCostsMode[i].median += mr.readCosts[i][l2 + 1];
-				mr.readCostsMode[i].median /= 2.0;
-			}
-		}
 
 		mr.writeCostsMode[i].min = mr.writeCosts[i].front;
-		mr.writeCostsMode[i].average = sum(mr.writeCosts[i]) / mr.writeCosts[i].length;
-		mr.writeCostsMode[i].mode = computeMode!(double[])(mr.writeCosts[i]).max;
+		mr.writeCostsMode[i].q25 = percentile(mr.writeCosts[i], 0.25);
+		mr.writeCostsMode[i].median = percentile(mr.writeCosts[i], 0.50);
+		mr.writeCostsMode[i].average = sum(mr.writeCosts[i], 0.0) / mr.writeCosts[i].length;
+		mr.writeCostsMode[i].q75 = percentile(mr.writeCosts[i], 0.75);
 		mr.writeCostsMode[i].max = mr.writeCosts[i].back;
-		if(mr.writeCosts[i].length % 2 == 1) {
-			mr.writeCostsMode[i].median = mr.writeCosts[i][$ / 2];
-		} else {
-			size_t l = mr.writeCosts[i].length;
-			size_t l2 = (l-1) / 2;
-			mr.writeCostsMode[i].median = mr.writeCosts[i][l2];
-			if(mr.writeCosts[i].length > 1) {
-				mr.writeCostsMode[i].median += mr.writeCosts[i][l2 + 1];
-				mr.writeCostsMode[i].median /= 2.0;
-			}
-		}
 	}
 }
 
@@ -195,8 +161,81 @@ void manyCircles(string filename, string resultFolderName) {
 
 	formattedWrite(fLtw, "\\section{Results}\n");
 	formattedWrite(fLtw, "%d out of %d worked", ok, graphs.length);
-	formattedWrite(fLtw, "\\end{document}");
 	logf("%s", mr);
+	manyResultsToFile(resultFolderName, mr);
+	formattedWrite(fLtw, "\\end{document}");
+}
+
+void manyResultsToFile(string foldername, ref ManyResults mr) {
+	auto fnG = format("%s/", foldername);
+	{
+		auto fnGg = fnG ~ "manydatareadavail.rslt";
+		auto f = File(fnGg, "w");
+		auto ltw = f.lockingTextWriter();
+		for(size_t i = 0; i < 101; ++i) {
+			formattedWrite(ltw,
+				"%15.13f %15.13f %15.13f %15.13f %15.13f %15.13f %15.13f\n",
+				i / 100.0, 
+				mr.readAvailMode[i].min,
+				mr.readAvailMode[i].q25,
+				mr.readAvailMode[i].average,
+				mr.readAvailMode[i].median,
+				mr.readAvailMode[i].q75,
+				mr.readAvailMode[i].max
+			);
+		}
+	}
+	{
+		auto fnGg = fnG ~ "manydatawriteavail.rslt";
+		auto f = File(fnGg, "w");
+		auto ltw = f.lockingTextWriter();
+		for(size_t i = 0; i < 101; ++i) {
+			formattedWrite(ltw,
+				"%15.13f %15.13f %15.13f %15.13f %15.13f %15.13f %15.13f\n",
+				i / 100.0, 
+				mr.writeAvailMode[i].min,
+				mr.writeAvailMode[i].q25,
+				mr.writeAvailMode[i].average,
+				mr.writeAvailMode[i].median,
+				mr.writeAvailMode[i].q75,
+				mr.writeAvailMode[i].max
+			);
+		}
+	}
+	{
+		auto fnGg = fnG ~ "manydatareadcosts.rslt";
+		auto f = File(fnGg, "w");
+		auto ltw = f.lockingTextWriter();
+		for(size_t i = 0; i < 101; ++i) {
+			formattedWrite(ltw,
+				"%15.13f %15.13f %15.13f %15.13f %15.13f %15.13f %15.13f\n",
+				i / 100.0, 
+				mr.readCostsMode[i].min,
+				mr.readCostsMode[i].q25,
+				mr.readCostsMode[i].average,
+				mr.readCostsMode[i].median,
+				mr.readCostsMode[i].q75,
+				mr.readCostsMode[i].max
+			);
+		}
+	}
+	{
+		auto fnGg = fnG ~ "manydatawritecosts.rslt";
+		auto f = File(fnGg, "w");
+		auto ltw = f.lockingTextWriter();
+		for(size_t i = 0; i < 101; ++i) {
+			formattedWrite(ltw,
+				"%15.13f %15.13f %15.13f %15.13f %15.13f %15.13f %15.13f\n",
+				i / 100.0, 
+				mr.writeCostsMode[i].min,
+				mr.writeCostsMode[i].q25,
+				mr.writeCostsMode[i].average,
+				mr.writeCostsMode[i].median,
+				mr.writeCostsMode[i].q75,
+				mr.writeCostsMode[i].max
+			);
+		}
+	}
 }
 
 void prepareLatexDoc(LTW)(ref LTW ltw) {
