@@ -174,6 +174,38 @@ void manyCircles(string filename, string resultFolderName) {
 void manyResultsToFile(string foldername, ref ManyResults mr) {
 	auto fnG = format("%s/", foldername);
 	{
+		auto fnGg = fnG ~ "Makefile";
+		auto f = File(fnGg, "w");
+		auto ltw = f.lockingTextWriter();
+		string make = `all: readavail.pdf writeavail.pdf readcosts.pdf writecosts.pdf 
+
+readavail.pdf: readavail.tex
+	xelatex readavail.tex
+
+writeavail.pdf: writeavail.tex
+	xelatex writeavail.tex
+
+readcosts.pdf: readcosts.tex
+	xelatex readcosts.tex
+
+writecosts.pdf: writecosts.tex
+	xelatex writecosts.tex
+
+readavail.tex: readavail.gp readavail.rslt
+	gnuplot readavail.gp
+
+writeavail.tex: writeavail.gp writeavail.rslt
+	gnuplot writeavail.gp
+
+readcosts.tex: readcosts.gp readcosts.rslt
+	gnuplot readcosts.gp
+
+writecosts.tex: writecosts.gp writecosts.rslt
+	gnuplot writecosts.gp
+`;
+		formattedWrite(ltw, make);
+	}
+	{
 		auto fnGg = fnG ~ "readavail.rslt";
 		auto f = File(fnGg, "w");
 		auto ltw = f.lockingTextWriter();
@@ -316,7 +348,7 @@ plot 'readcosts.rslt' using 1:3:2:7:6 with candlesticks notitle whiskerbars, \
 print GPVAL_TERMINALS
 set terminal epslatex color standalone
 set xrange [0.000000:1.0]
-set output 'readcosts.tex'
+set output 'writecosts.tex'
 set border linewidth 1.5
 # Grid
 set grid back lc rgb "black"
