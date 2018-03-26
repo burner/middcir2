@@ -39,7 +39,7 @@ struct BitsetArray(T) {
 		this.bitset = value;
 	}
 
-	void toString(scope void delegate(const(char)[]) sink) const @trusted {
+	void toString(scope void delegate(const(char)[]) @trusted sink) const @trusted {
 		import std.format : formattedWrite;
 		this.bitset.toString2(sink);
 		//formattedWrite(sink, "%b len(%s) [", this.bitset.store,
@@ -97,7 +97,7 @@ struct BitsetRBTree(T) {
 		}
 	}
 
-	Nullable!(BitsetArray!(T)*) search(Bitset!T bs) {
+	Nullable!(BitsetArray!(T)*) search(Bitset!T bs) @trusted {
 		auto a = bitsetArray(bs);
 		auto tmp = this.tree.search(a);
 		if(tmp !is null) {
@@ -280,7 +280,7 @@ struct BitsetArrayArray(T) {
 		}
 	}
 
-	Nullable!(BitsetArray!(T)*) search(Bitset!T bs) {
+	Nullable!(BitsetArray!(T)*) search(Bitset!T bs) @trusted {
 		auto a = bitsetArray(bs);
 		foreach(ref it; this.array) {
 			if(bs.hasSubSet(it.bitset)) {
@@ -395,7 +395,7 @@ struct BitsetArrayRC(T) {
 		this.bitset = value;
 	}
 
-	void toString(scope void delegate(const(char)[]) sink) const @trusted {
+	void toString(scope void delegate(const(char)[]) @trusted sink) const @trusted {
 		import std.format : formattedWrite;
 		this.bitset.toString2(sink);
 		//formattedWrite(sink, "%b len(%s) [", this.bitset.store,
@@ -416,7 +416,7 @@ struct BitsetArrayRC(T) {
 		return ret;
 	}
 
-	void toFile(string prefix) {
+	void toFile(string prefix) @trusted {
 		import std.format : formattedWrite;
 		string fn = format("%s%d.subsets", prefix, this.bitset.store);
 		auto f = File(fn, "a");
@@ -535,7 +535,7 @@ struct BitsetArrayArrayRC(T) {
 		}
 	}
 
-	Nullable!(BitsetArrayRC!(T)*) search(Bitset!T bs) {
+	Nullable!(BitsetArrayRC!(T)*) search(Bitset!T bs) @trusted {
 		auto a = bitsetArray(bs);
 		foreach(ref it; this.array) {
 			if(bs.hasSubSet(it.bitset)) {

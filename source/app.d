@@ -10,6 +10,8 @@ import std.experimental.logger;
 import std.datetime.stopwatch : StopWatch;
 import std.array : empty;
 
+import exceptionhandling;
+
 import protocols;
 import protocols.mcs;
 import protocols.grid;
@@ -138,33 +140,6 @@ void crossingVLattice() {
 		auto crossingsTL = ResultPlot(format("Crossing%dx%d", i, i), crossingsRslt);
 		gnuPlot(format("Results/LatticeCrossing%d", i), "", rsltTL,
 				crossingsTL);
-	}
-}
-
-void latticeBoxplot() {
-	foreach(it; [[3,3], [2,4], [4,2]]) {
-		auto l = Lattice(it[0],it[1]);
-		auto r = l.calcAC();
-		auto rp = ResultPlot(format("Lattice%dx%d", it[0], it[1]), r);
-		gnuPlot(format("Results/Lattice%dx%d", it[0], it[1]), "", rp);
-	}
-}
-
-void mcsBoxplot() {
-	foreach(it; [8, 9]) {
-		auto l = MCS(it);
-		auto r = l.calcAC();
-		auto rp = ResultPlot(format("MCS%d", it), r);
-		gnuPlot(format("Results/MCS%d", it), "", rp);
-	}
-}
-
-void gridBoxplot() {
-	foreach(it; [[3,3], [2,4], [4,2]]) {
-		auto l = Grid(it[0],it[1]);
-		auto r = l.calcAC();
-		auto rp = ResultPlot(format("Grid%dx%d", it[0], it[1]), r);
-		gnuPlot(format("Results/Grid%dx%d", it[0], it[1]), "", rp);
 	}
 }
 
@@ -530,8 +505,8 @@ void circle() {
 void manyCirclesRun() {
 	//manyCircles("graphs6nodes3.json", "Results/graph6nodes3");
 	manyCircles("graphs8nodes3.json", "Results/graph8nodes3");
-	manyCircles("graphs9nodes3.json", "Results/graph9nodes3");
-	manyCircles("graphs12nodes3.json", "Results/graph12nodes3");
+	//manyCircles("graphs9nodes3.json", "Results/graph9nodes3");
+	//manyCircles("graphs12nodes3.json", "Results/graph12nodes3");
 }
 
 void crossing12() {

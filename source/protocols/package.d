@@ -28,6 +28,7 @@ struct Result {
 
 	double[101] readCosts;
 	double[101] writeCosts;
+	double awrValue;
 	}
 
 	this(string avail, string costs) {
@@ -78,6 +79,21 @@ struct Result {
 	void scale() {
 		this.readAvail[] *= 100.0;
 		this.writeAvail[] *= 100.0;
+	}
+
+	double awr() nothrow {
+		if(!isNaN(this.awrValue)) {
+			return this.awrValue;
+		}
+		double ret = 0.0;
+		foreach(it; this.readAvail) {
+			ret += isNaN(it) ? 0.0 : it;
+		}
+		foreach(it; this.writeAvail) {
+			ret += isNaN(it) ? 0.0 : it;
+		}
+		this.awrValue = ret;
+		return ret;
 	}
 
 	Result dup() const {

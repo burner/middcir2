@@ -927,6 +927,31 @@ unittest {
 	}
 }
 
+bool isConnected(int Size)(auto ref Graph!Size g) {
+	import floydmodule;
+	auto fr = floyd(g);
+	for(uint i = 0; i < g.length; ++i) {
+		for(uint j = i+1; j < g.length; ++j) {
+			if(!fr.pathExists(i,j)) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+unittest {
+	auto g = Graph!16(4);
+	g.setEdge(0,2);
+	g.setEdge(0,3);
+	g.setEdge(2,3);
+
+	assert(!isConnected(g));
+	ensure(!isConnected(g));
+	g.setEdge(2,1);
+	assert(isConnected(g));
+}
+
 bool compare(int Size)(ref const(FixedSizeArray!(FixedSizeArray!(byte,32))) a,
 		ref const(FixedSizeArray!(FixedSizeArray!(byte,32))) b) 
 {

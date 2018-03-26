@@ -22,6 +22,7 @@ import graphmeasures : computeMode;
 import plot : ResultPlot;
 import plot.gnuplot;
 import graphgen;
+import planar;
 import graphisomorph;
 import graphisomorph2;
 import protocols.crossing;
@@ -144,9 +145,37 @@ void manyCircles(string filename, string resultFolderName) {
 		auto f2 = File(fnGg, "w");
 		auto f2Ltw = f2.lockingTextWriter();
 		graphs[i].toTikz(f2Ltw);
+
+		Array!(Graph!32) planarGraphs;
+		makePlanar(graphs[i], planarGraphs);
+
+		Array!(Result) results;
+		foreach(it; planarGraphs[]) {
+			if(!isConnected(it)) {
+				logf("Planar graph is no longer connected");
+				continue;
+			}
+			try {
+				auto cur = CirclesImpl!32(graphs[i]);
+				Result curRslt = cur.calcAC();
+				results.insertBack(curRslt);
+			} catch(Exception e) {
+				logf("Unable to find border for graph %d %s", i, e.toString());
+			}
+		}
+
+		if(results.empty) {
+			continue;
+		} else {
+			logf("turned one graph into %s graphs %s", planarGraphs.length, results.length);
+		}
+
+		sort!((a,b) => a.awr() > b.awr())(results[]);
+
 		try {
-			auto cur = CirclesImpl!32(graphs[i]);
-			Result curRslt = cur.calcAC();
+			//auto cur = CirclesImpl!32(graphs[i]);
+			//Result curRslt = cur.calcAC();
+			Result curRslt = results.front;
 			gnuPlot(fnG, "", ResultPlot("Circle", curRslt));
 			formattedWrite(fLtw, "\\begin{figure}\n");
 			formattedWrite(fLtw, "\\includegraphics{graph%d/1resultavail}\n", i);

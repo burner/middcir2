@@ -1,14 +1,50 @@
 module boxplotmapping;
 
-import std.stdio;
+import std.stdio : File, writeln;
 import std.array : front, back, empty;
 import std.experimental.logger;
 import std.conv : to;
 import exceptionhandling;
-import std.format : formattedWrite;
+import std.format : format, formattedWrite;
+import plot.gnuplot : ResultPlot;
+
+void latticeBoxplot() {
+	import protocols.lattice;
+	import protocols;
+	import plot.gnuplot;
+	foreach(it; [[3,3], [2,4], [4,2]]) {
+		auto l = Lattice(it[0],it[1]);
+		auto r = l.calcAC();
+		auto rp = ResultPlot(format("Lattice%dx%d", it[0], it[1]), r);
+		gnuPlot(format("Results/Lattice%dx%d", it[0], it[1]), "", rp);
+	}
+}
+
+void mcsBoxplot() {
+	import protocols.mcs;
+	import protocols;
+	import plot.gnuplot;
+	foreach(it; [8, 9]) {
+		auto l = MCS(it);
+		auto r = l.calcAC();
+		auto rp = ResultPlot(format("MCS%d", it), r);
+		gnuPlot(format("Results/MCS%d", it), "", rp);
+	}
+}
+
+void gridBoxplot() {
+	import protocols.grid;
+	import protocols;
+	import plot.gnuplot;
+	foreach(it; [[3,3], [2,4], [4,2]]) {
+		auto l = Grid(it[0],it[1]);
+		auto r = l.calcAC();
+		auto rp = ResultPlot(format("Grid%dx%d", it[0], it[1]), r);
+		gnuPlot(format("Results/Grid%dx%d", it[0], it[1]), "", rp);
+	}
+}
 
 void boxplot() {
-	import app : latticeBoxplot, gridBoxplot, mcsBoxplot; 
 	latticeBoxplot();
 	gridBoxplot();
 	mcsBoxplot();

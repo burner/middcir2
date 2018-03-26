@@ -161,7 +161,7 @@ Result calcACforPathBasedFast(BitsetStoreType,BitsetType,F,G)(ref F paths,
 		ref const(G) graph, const(Array!int) bottom, const(Array!int) top,
 		const(Array!int) left, const(Array!int) right,
 	   	const(Array!(int[2])) diagonalPairs, ref BitsetStoreType read, 
-		ref BitsetStoreType write, const uint numNodes)
+		ref BitsetStoreType write, const uint numNodes) @trusted
 {
 	import std.conv : to;
 	import std.traits : Unqual;
