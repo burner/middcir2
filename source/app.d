@@ -39,7 +39,7 @@ class ShortLogger : Logger {
         super(lv);
     }
 
-    override void writeLogMsg(ref LogEntry payload) {
+    override void writeLogMsg(ref LogEntry payload) @trusted {
 		import std.string : lastIndexOf;
 		import std.datetime : DateTime;
 		auto i = payload.file.lastIndexOf("/");
@@ -60,6 +60,25 @@ class ShortLogger : Logger {
 //version(release) {
 	//version = exceptionhandling_release_asserts;
 //}
+
+void numberOfConnectedNonIsomorphicGraphs(size_t gs) {
+	import numbergraphs;
+	auto n = new GTNode();
+	immutable size_t p = ((gs - 1) * (gs - 1)) / 2;
+	immutable size_t upto = 2^^p;
+	logf("graph size %s length of triangle side %s number of graphs to test %s", gs, p, upto);
+	for(ulong i = 0; i <= upto; ++i) {
+		auto g = numberToGraph(i, gs);
+		insertGraph(n, g);
+	}
+	logf("num of possible graphs with %s vertices %s", gs, countGraphsInTree(n));
+}
+
+void numberOfConnectedNonIsomorphicGraphs() {
+	for(size_t i = 2; i < 9; ++i) {
+		numberOfConnectedNonIsomorphicGraphs(i);
+	}
+}
 
 void fiveMapping() {
 	auto mcs = MCS(5);
@@ -737,9 +756,9 @@ void main(string[] args) {
 		testFastSupset();
 		return;
 	}
-
+	numberOfConnectedNonIsomorphicGraphs();
 	//circle();
-	manyCirclesRun();
+	//manyCirclesRun();
 	//boxplot();
 	//checkGraphUnique("graphs6nodes3.json");
 	//checkGraphUnique("graphs8nodes3.json");

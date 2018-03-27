@@ -6,6 +6,8 @@ import std.format : format;
 import std.math : approxEqual, abs, isNaN;
 import std.experimental.logger;
 
+import exceptionhandling;
+
 import protocols;
 import bitsetrbtree;
 
@@ -43,7 +45,7 @@ void compare(A,B,CMP)(const ref A a, const ref B b, CMP cmp) {
 		/*if(!cmp(a[i], b[i])) {
 			writefln("i(%s) a(%s) b(%s)", i, a[i], b[i]);
 		}*/
-		assert(cmp(a[i], b[i]), format("i(%s) a(%s) b(%s)", i, a[i], b[i]));
+		ensure(cmp(a[i], b[i]), format("i(%s) a(%s) b(%s)", i, a[i], b[i]));
 		//enforce(cmp(a[i], b[i]), format("i(%s) a(%s) b(%s)", i, a[i], b[i]));
 	}
 }

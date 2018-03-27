@@ -225,8 +225,9 @@ class StatsRunner(int Size) {
 		   	string folderPath, ulong width, ulong height) const
 	{
 		import utils : format;
+		static import std.format;
 		import std.stdio : File;
-		auto pathStr = format("%s/%s_%dx%d.json", folderPath, type, width,
+		auto pathStr = std.format.format("%s/%s_%dx%d.json", folderPath, type, width,
 				height);
 		auto af = File(pathStr, "w");
 		auto app = af.lockingTextWriter();

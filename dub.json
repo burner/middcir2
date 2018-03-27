@@ -15,7 +15,6 @@
 		"argsd": ">=0.0.1",
 		"fixedsizearray": ">=1.1.0",
 		"std_data_json": "~>0.18.2",
-		"rc": "~>0.0.2",
 		"std_benchmark": ">=0.3.1"
 	}
 }

@@ -20,7 +20,7 @@ test:
 	dub test -debug --compiler=dmd
 
 testldc:
-	dub test -debug --compiler=ldc
+	dub test --compiler=ldc
 
 testcoverage:
 	dub test -debug --coverage --compiler=dmd 

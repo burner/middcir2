@@ -106,11 +106,12 @@ DiameterResult computeDiameter(int Size)(ref Graph!Size graph) {
 
 	auto mo = computeMode(s);
 
+	size_t idx = (store.length-1) / 2;
+	size_t idx2 = ((store.length-1) / 2) + 1;
 	return DiameterResult(
 		cast(double)(sum(store[])) / store.length,
 		cast(double)(store.length % 2 == 1 ? store[store.length / 2] :
-			cast(double)(store[store.length / 2] + 
-			store[(store.length / 2) + 1]) / 2.0),
+			cast(double)(store[idx] + store[idx2]) / 2.0),
 		cast(double)store.front,
 		cast(double)store.back,
 		mo.max
@@ -232,8 +233,10 @@ DegreeResult computeDegree(int Size)(ref Graph!Size graph) {
 	ret.max = tmp.back;
 	ret.average = sum(tmp[]) / tmp.length;
 	if(graph.length % 2 == 0) {
-		ret.median = (tmp[graph.length / 2] + tmp[(graph.length / 2) + 1]) 
-			/ 2.0;
+		size_t idx = (graph.length-1) / 2;
+		size_t idx2 = ((graph.length-1) / 2) + 1;
+		//logf("%s %s %s", idx, idx2, tmp.length);
+		ret.median = (tmp[idx] + tmp[idx2]) / 2.0;
 	} else {
 		ret.median = tmp[graph.length / 2];
 	}
@@ -311,8 +314,11 @@ BetweennessCentralityOld betweennessCentralityOld(int Size)(ref Graph!Size graph
 	ret.min = cast(double)store.front;
 	ret.max = cast(double)store.back;
 	if(graph.length % 2 == 0) {
-		ret.median = (store[graph.length / 2] + store[(graph.length / 2) + 1]) 
-			/ 2.0;
+		size_t idx = (graph.length-1) / 2;
+		size_t idx2 = ((graph.length-1) / 2) + 1;
+		//ret.median = (store[graph.length / 2] + store[(graph.length / 2) + 1]) 
+		//	/ 2.0;
+		ret.median = (store[idx] + store[idx2]) / 2.0;
 	} else {
 		ret.median = store[graph.length / 2];
 	}
@@ -419,8 +425,11 @@ BetweennessCentrality betweennessCentrality(int Size)(ref const(Graph!Size) grap
 	ret.min = cast(double)result.front;
 	ret.max = cast(double)result.back;
 	if(graph.length % 2 == 0) {
-		ret.median = (result[graph.length / 2] + result[(graph.length / 2) + 1]) 
-			/ 2.0;
+		size_t idx = (graph.length-1) / 2;
+		size_t idx2 = ((graph.length-1) / 2) + 1;
+		//ret.median = (result[graph.length / 2] + result[(graph.length / 2) + 1]) 
+		//	/ 2.0;
+		ret.median = (result[idx] + result[idx2]) / 2.0;
 	} else {
 		ret.median = result[graph.length / 2];
 	}
