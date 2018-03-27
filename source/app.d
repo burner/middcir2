@@ -64,7 +64,11 @@ class ShortLogger : Logger {
 void numberOfConnectedNonIsomorphicGraphs(size_t gs) {
 	import numbergraphs;
 	auto n = new GTNode();
-	immutable size_t p = ((gs - 1) * (gs - 1)) / 2;
+	size_t p = 0;
+	for(size_t i = 1; i < gs; ++i) {
+		p += i;
+	}
+	//immutable size_t p = ((gs - 1) * (gs - 1)) / 2;
 	immutable size_t upto = 2^^p;
 	logf("graph size %s length of triangle side %s number of graphs to test %s", gs, p, upto);
 	for(ulong i = 0; i <= upto; ++i) {
