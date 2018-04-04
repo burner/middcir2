@@ -14,8 +14,8 @@ private immutable dataFilenameAvail = "datafileavail.rslt";
 private immutable dataFilenameCost = "datafilecost.rslt";
 private immutable gnuplotFilenameAvail = "gnuplotavail.gp";
 private immutable gnuplotFilenameCost = "gnuplotcost.gp";
-private immutable resultFilenameAvail = "resultavail.eps";
-private immutable resultFilenameCost = "resultcost.eps";
+private immutable resultFilenameAvail = "resultavail.tex";
+private immutable resultFilenameCost = "resultcost.tex";
 
 void gnuPlot(ResultPlot[] results ...) {
 	gnuPlot(".", "", results);
@@ -44,13 +44,13 @@ void gnuPlot(string path, string prefix, ResultPlot[] results ...) {
 	gnuplot = execute(["gnuplot", "-c", prefix ~ to!string(1) ~gnuplotFilenameCost]);
 	ensure(gnuplot.status == 0, prefix ~ to!string(1) ~gnuplotFilenameCost);
 
-	auto epstopdf = execute(["epstopdf", prefix ~ to!string(1) ~ resultFilenameAvail]);
+	auto epstopdf = execute(["pdflatex", prefix ~ to!string(1) ~ resultFilenameAvail]);
 	ensure(epstopdf.status == 0, prefix ~ to!string(1) ~ resultFilenameAvail);
 
-	epstopdf = execute(["epstopdf", prefix ~ to!string(80) ~ resultFilenameAvail]);
+	epstopdf = execute(["pdflatex", prefix ~ to!string(80) ~ resultFilenameAvail]);
 	ensure(epstopdf.status == 0, prefix ~ to!string(80) ~ resultFilenameAvail);
 
-	epstopdf = execute(["epstopdf", prefix ~ to!string(1) ~resultFilenameCost]);
+	epstopdf = execute(["pdflatex", prefix ~ to!string(1) ~resultFilenameCost]);
 	ensure(epstopdf.status == 0, prefix ~ to!string(1) ~resultFilenameCost);
 }
 
@@ -93,7 +93,7 @@ void createGnuplotFiles(string prefix, ResultPlot[] results ...) {
 
 immutable(string) gpAvail = `set size ratio 0.71
 print GPVAL_TERMINALS
-set terminal eps color
+set terminal epslatex standalone color
 set xrange [%f:1.0]
 set yrange [:1.0]
 set output '%s'
@@ -111,7 +111,7 @@ plot `;
 
 immutable(string) gpAvail80 = `set size ratio 0.71
 print GPVAL_TERMINALS
-set terminal eps color
+set terminal epslatex standalone color
 set xrange [%f:1.0]
 set yrange [:1.0]
 set output '%s'
@@ -129,7 +129,7 @@ plot `;
 
 immutable(string) gpCosts = `set size ratio 0.71
 print GPVAL_TERMINALS
-set terminal eps color
+set terminal epslatex standalone color
 set xrange [%f:1.0]
 set output '%s'
 set border linewidth 1.5

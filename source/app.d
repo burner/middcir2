@@ -79,7 +79,7 @@ void numberOfConnectedNonIsomorphicGraphs(size_t gs) {
 }
 
 void numberOfConnectedNonIsomorphicGraphs() {
-	for(size_t i = 2; i < 9; ++i) {
+	for(size_t i = 5; i < 10; ++i) {
 		numberOfConnectedNonIsomorphicGraphs(i);
 	}
 }
@@ -149,6 +149,20 @@ void crossingVCrossing() {
 			crossings1.bestCrossing.left[],
 			crossings1.bestCrossing.right[]);
 	}
+}
+
+void circleVLattice() {
+	int x = 5;
+	int y = 5;
+	auto tl = LatticeImpl!32(x, y);
+	auto tlRslt = tl.calcAC();
+	auto rsltTL = ResultPlot(tl.name(), tlRslt);
+
+	auto crs = Circles(tl.getGraph());
+	auto crsRslt = crs.calcAC();
+	auto rsltCrs = ResultPlot("Circle", crsRslt);
+
+	gnuPlot(format("Results/LatticeVCircle%sx%s", x, y), "", rsltTL, rsltCrs);
 }
 
 void crossingVLattice() {
@@ -528,7 +542,7 @@ void circle() {
 void manyCirclesRun() {
 	//manyCircles("graphs6nodes3.json", "Results/graph6nodes3");
 	manyCircles("graphs8nodes3.json", "Results/graph8nodes3");
-	//manyCircles("graphs9nodes3.json", "Results/graph9nodes3");
+	manyCircles("graphs9nodes3.json", "Results/graph9nodes3");
 	//manyCircles("graphs12nodes3.json", "Results/graph12nodes3");
 }
 
@@ -760,9 +774,10 @@ void main(string[] args) {
 		testFastSupset();
 		return;
 	}
-	numberOfConnectedNonIsomorphicGraphs();
+	//numberOfConnectedNonIsomorphicGraphs();
 	//circle();
-	//manyCirclesRun();
+	//circleVLattice();
+	manyCirclesRun();
 	//boxplot();
 	//checkGraphUnique("graphs6nodes3.json");
 	//checkGraphUnique("graphs8nodes3.json");

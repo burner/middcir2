@@ -134,6 +134,7 @@ void manyCircles(string filename, string resultFolderName) {
 
 	auto graphs = loadGraphsFromJSON!(32)(filename);
 	for(size_t i = 0; i < graphs.length; ++i) {
+		logf("graph %s of %s", i, graphs.length);
 		formattedWrite(fLtw, "\\section{Graph %s}\n", i);
 		formattedWrite(fLtw, "\\begin{figure}\n");
 		formattedWrite(fLtw, "\\includestandalone{graph%d/graph}\n", i);
@@ -494,6 +495,7 @@ struct CirclesImpl(int Size) {
 }
 
 struct CircleImpl(int Size) {
+	import exceptionhandling;
 	alias BSType = TypeFromSize!Size;
 	Array!int border;
 	int center;
@@ -512,21 +514,85 @@ struct CircleImpl(int Size) {
 			getConfig().permutationStop(cast(int)graph.length)
 		);
 		auto last = 0;
-		foreach(perm; permu) {
+		outer: foreach(perm; permu) {
 			auto cur = popcnt(perm.store);
 			//logf("%s, %s", cur, perm.toString());
 			auto f = this.store.search(perm);
 			if(!f.isNull()) {
-				//logf("found superset %s", (*f).bitset.toString());
+				//logf("found superset %s %s", (*f).bitset.toString(),
+				//		perm.toString());
 				(*f).subsets ~= perm;
 				continue;
 			}
 
+			// test if there is a way out from the border
 			bool cir = pathOutExists!Size(graph, perm, this.border, this.center);
+			bool isBorderQuorum = false;
+			if(cir) {
+				// true means that the middle could break out
+				//logf("mid could break out");
+				continue;
+			} else {
+				// the middle could not break out
+				// if perm has a element in border we have a circle
+				foreach(it; this.border[]) {
+					if(perm.test(it)) {
+						//logf("perm enclosed mid and touched outer");
+						isBorderQuorum = true;
+						break;
+					}
+				}
+			}
+
+			//if(isBorderQuorum) {
+			//	this.store.insert(perm);
+			//}
+
 			auto fr = floyd(graph);
 			fr.execute(graph, perm);
 
-			FixedSizeArray!(FixedSizeArray!(BSType)) paths;
+			Bitset!(TypeFromSize!(Size)) fin;
+			auto spm = buildShortestPath!(Size)(fr, graph, this.border, this.center);
+
+			if(spm.empty && isBorderQuorum) {
+				//this.store.insert(perm);
+				fin = perm;
+			} else if(!spm.empty && isBorderQuorum 
+					&& spm.length <= perm.count()) 
+			{
+				Bitset!BSType tmp;
+				foreach(it; spm[]) {
+					tmp.set(it);
+				}
+				fin = tmp;
+			} else if(!spm.empty && isBorderQuorum 
+					&& spm.length > perm.count()) 
+			{
+				//this.store.insert(perm);
+				fin = perm;
+			} else if(!spm.empty && !isBorderQuorum) {
+				Bitset!BSType tmp;
+				foreach(it; spm[]) {
+					tmp.set(it);
+				}
+				//this.store.insert(tmp);
+				fin = tmp;
+			} else {
+				continue outer;
+				//throw new Exception("something strange happened");
+			}
+
+			/*for(size_t i = 0; i < graph.length; ++i) {
+				if(fin.test(i)) {
+					writef("%s, ", i);
+				}
+			}
+			writeln();
+			*/
+
+			this.store.insert(fin);
+
+			/*FixedSizeArray!(FixedSizeArray!(BSType)) paths;
 			buildPaths!(Size)(fr, graph, this.border, this.center,
 					paths);
 
@@ -539,26 +605,22 @@ struct CircleImpl(int Size) {
 				}
 			}
 
-			if(cir && maxLen != size_t.max) {
-				if(cur < maxLen) {
-					//logf("cir around mid %s", perm.toString());
-					this.store.insert(perm);
-				} else {
-					//logf("path to center better %s", paths[idx]);
-					Bitset!BSType tmp;
-					foreach(it; paths[idx]) {
-						tmp.set(it);
-					}
-					this.store.insert(tmp);
-				}
-			} else if(!cir && maxLen != size_t.max) {
-				//logf("path to center %s", paths[idx]);
-				Bitset!BSType tmp;
+			Bitset!BSType tmp;
+			if(maxLen != size_t.max) {
+				//logf("path to center better %s", paths[idx]);
 				foreach(it; paths[idx]) {
 					tmp.set(it);
 				}
-				this.store.insert(tmp);
 			}
+			if(isBorderQuorum) {
+				if(perm.count() < maxLen) {
+					this.store.insert(perm);
+					continue outer;
+				} 
+			}
+			if(maxLen != size_t.max) {
+				this.store.insert(tmp);
+			}*/
 		}
 
 		return calcAvailForTree(to!int(graph.length),
@@ -579,21 +641,71 @@ void buildPaths(int Size,FLY)(ref FLY fr,
 	}
 }
 
-bool pathOutExists(int Size)(ref Graph!Size graph, 
-		Bitset!(TypeFromSize!(Size)) innerBorder, ref Array!int border, const int center)
+FixedSizeArray!(TypeFromSize!Size) buildShortestPath(int Size,FLY)(ref FLY fr, 
+		ref Graph!Size graph, ref Array!int border, const int center)
 {
-	auto innerBorderFlip = innerBorder;
+	FixedSizeArray!(TypeFromSize!Size) cur;
+	FixedSizeArray!(TypeFromSize!Size) best;
+	foreach(it; border[]) {
+		if(fr.pathExists(it, center)) {
+			fr.path(it, center, cur);
+			if(best.empty) {
+				best = cur;
+			} else if(cur.length < best.length) {
+				best = cur;
+			}
+		}
+	}
+	return best;
+}
+
+bool pathOutExists(int Size)(ref Graph!Size graph, 
+		const Bitset!(TypeFromSize!(Size)) innerBorder, ref Array!int border, const int center)
+{
+	Bitset!(TypeFromSize!Size) a = innerBorder;
+	a.flip();
+
+	if(a.test(center)) {
+		auto fr = floyd(graph);
+		fr.execute(graph, a);	
+
+		foreach(it; border[]) {
+			if(a.test(it)) {
+				if(fr.pathExists(it, center)) {
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+
+/*bool pathOutExists(int Size)(ref Graph!Size graph, 
+		const Bitset!(TypeFromSize!(Size)) innerBorder, ref Array!int border, const int center)
+{
+	//Bitset!(TypeFromSize!Size) innerBorderFlip = innerBorder;
+	Bitset!(TypeFromSize!Size) innerBorderFlip; 
 	innerBorderFlip.flip();
+	//logf("a %s %s", innerBorderFlip.toString(), innerBorder.toString());
+	innerBorderFlip.store ^= innerBorder.store;
+	//logf("b %s", innerBorderFlip.toString());
+	//innerBorderFlip.flip();
 	foreach(it; border[]) {
 		innerBorderFlip.set(it);
 	}
+	//logf("c %s", innerBorderFlip.toString());
+	innerBorderFlip.set(center);
+	//logf("d %s", innerBorderFlip.toString());
+	//logf("%s", innerBorderFlip.toString());
 	auto fr = floyd(graph);
 	fr.execute(graph, innerBorderFlip);	
 
 	foreach(it; border[]) {
 		if(fr.pathExists(it, center)) {
+			logf("aa %s", innerBorderFlip.toString2());
 			return true;
 		}
 	}
+	logf("bb %s", innerBorderFlip.toString2());
 	return false;
-}
+}*/

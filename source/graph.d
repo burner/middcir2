@@ -447,6 +447,19 @@ struct Graph(int Size) {
 	}
 }
 
+bool simpleGraphCompare(G)(auto ref G g1, auto ref G g2) {
+	if(g1.numNodes != g2.numNodes) {
+		return false;
+	}
+
+	for(size_t i = 0; i < g1.numNodes; ++i) {
+		if(g1.nodes[i] != g2.nodes[i]) {
+			return false;
+		}
+	}
+	return true;
+}
+
 unittest {
 	Graph!7 g1;
 	Graph!8 g2;
@@ -1027,13 +1040,17 @@ bool areHomomorph(int Size)(
 unittest {
 	auto six = makeSix!16();
 	assert(areHomomorph(six, six));	
+	assert(simpleGraphCompare(six, six));
 
 	auto nine = makeNine!16();
 	assert(!areHomomorph(six, nine));	
+	assert(!simpleGraphCompare(six, nine));
 	assert(areHomomorph(nine, nine));	
+	assert(simpleGraphCompare(nine, nine));
 }
 
 unittest {
+	import std.format : format;
 	auto six = makeSix!16();
 	auto sixD = six.dup();
 	assert(areHomomorph(six, sixD));	
@@ -1047,6 +1064,7 @@ unittest {
 	}
 
 	assert(!areHomomorph!16(six, sixD));
+	assert(!simpleGraphCompare(six, sixD));
 
 	for(int i = 0; i < six.length; ++i) {
 		if(i != 0 && f.test(i)) {
