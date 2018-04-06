@@ -569,6 +569,11 @@ void crossingSixteen() {
 	auto crs = Crossings(pnt);
 	auto crsRslt = crs.calcAC();
 	gnuPlot("Results/Crossing16", "", ResultPlot(crs.name, crsRslt));
+
+	auto f = File("Results/Crossing16/graph.tex", "w");
+	auto ltw = f.lockingTextWriter();
+
+	pnt.toTikz(ltw);
 }
 
 void crossingMCSSixteen() {
@@ -777,7 +782,7 @@ void main(string[] args) {
 	//numberOfConnectedNonIsomorphicGraphs();
 	//circle();
 	//circleVLattice();
-	manyCirclesRun();
+	//manyCirclesRun();
 	//boxplot();
 	//checkGraphUnique("graphs6nodes3.json");
 	//checkGraphUnique("graphs8nodes3.json");
@@ -799,7 +804,7 @@ void main(string[] args) {
 	//printProperties();
 	//gridMapped();
 	//crossings9();
-	//crossingSixteen();
+	crossingSixteen();
 	//crossingMCSSixteen();
 	//mcsCrossing16();
 	//latticeMapped9quantil();

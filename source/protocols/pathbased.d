@@ -108,6 +108,30 @@ PathResult!BitsetType testDiagonal(BitsetType,F)(ref const(F) paths, const int b
 	return ret;
 }
 
+bool testEmptyIntersection2(Arr)(auto ref const(Arr) a, auto ref const(Arr) b) {
+	import std.format : format;
+	foreach(it; a[]) {
+		foreach(jt; b[]) {
+			if(it == jt) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+bool testNonEmptyIntersection2(Arr)(auto ref const(Arr) a, auto ref const(Arr) b) {
+	import std.format : format;
+	foreach(it; a[]) {
+		foreach(jt; b[]) {
+			if(it == jt) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 void testEmptyIntersection(ref const(Array!int) a, ref const(Array!int) b) {
 	import std.format : format;
 	foreach(it; a[]) {

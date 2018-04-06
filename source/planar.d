@@ -20,8 +20,11 @@ void makePlanar(Graph)(Graph orignal, ref Array!Graph result) {
 	size_t planarCount = 0;
 	outer: while(!stack.empty()) {
 		iterations++;
-		if(iterations % 1000 == 0) {
-			logf("stack size %10s iterations %10s", stack.length, iterations);
+		//if(iterations % 1000 == 0) {
+		//	logf("stack size %10s iterations %10s", stack.length, iterations);
+		//}
+		if(iterations > 5_000_000) {
+			break outer;
 		}
 		if(iterations > 1_000_000 && planarCount > 0) {
 			logf("broke after 1_000_000 iterations");
@@ -42,9 +45,9 @@ void makePlanar(Graph)(Graph orignal, ref Array!Graph result) {
 			if(!found) {
 				planarCount++;
 				result.insertBack(cur);
-				logf("\n%s\n result size %s\niterations %s\nplanar count %s", 
-						cur, result.length, iterations, planarCount
-					);
+				//logf("\n%s\n result size %s\niterations %s\nplanar count %s", 
+				//		cur, result.length, iterations, planarCount
+				//	);
 			}
 			if(planarCount > 100) {
 				break outer;

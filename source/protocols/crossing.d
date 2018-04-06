@@ -8,6 +8,9 @@ import std.container.array : Array;
 
 import gfm.math.vector;
 
+import fixedsizearray;
+import exceptionhandling;
+
 import bitsetrbtree;
 import bitsetmodule;
 import graph;
@@ -265,6 +268,59 @@ void makeArrayUnique(BSType)(ref Array!int notUnique, ref Array!int unique) {
 			set.set(it);
 		}
 	}
+}
+
+void splitOutN(S,D)(ref S src, ref D dest, int offset, int count) {
+	for(int i = 0; i < count; ++i) {
+		dest.insertBack(src[(i + offset) % $]);
+	}
+}
+
+Array!(Array!(int)) possibleBorders(G)(auto ref G graph) {
+	import std.conv : to;
+	Array!(Array!(int)) ret;
+	Array!int border = graph.computeBorder();
+	Array!int uniqueBorder;
+	makeArrayUnique!uint(border, uniqueBorder);
+
+	const size_t len = uniqueBorder.length;
+	const size_t lenT = len - 2;
+	for(int t = 1; t < lenT; ++t) {
+		const size_t lenL = len - t - 1;
+		for(int l = 1; l < lenL; ++l) {
+			const size_t lenB = len - t - l - 0;
+			for(int b = 1; b < lenB; ++b) {
+				const int r = to!int(len - t - l - b);
+				logf("len %2s, lenT %2s, lenL %2s, lenB %2s, sum"
+						~ " %2s, t %2s, l %2s, b %2s, r %2s", 
+						len, lenT, lenL, lenB, t + l + b + r,
+						t, l, b, r
+					);
+
+				FixedSizeArray!(int) top;
+				FixedSizeArray!(int) left;
+				FixedSizeArray!(int) bottom;
+				FixedSizeArray!(int) right;
+
+				splitOutN(uniqueBorder, top, 0, t);
+				splitOutN(uniqueBorder, left, t - 1, l + 1);
+				splitOutN(uniqueBorder, bottom, t + l - 1, b + 1);
+				splitOutN(uniqueBorder, right, t + l + b - 1, r + 1);
+				//ensure(top.length + left.length + bottom.length + right.length
+				//		== len + 4);
+
+				logf("t [%(%s %)], l [%(%s %)], b [%(%s %)], r [%(%s %)]",
+						top[], left[], bottom[], right[]
+					);
+			}
+		}
+	}
+	return ret;
+}
+
+unittest {
+	auto g = genTestGraph!32();
+	possibleBorders(g);
 }
 
 unittest {

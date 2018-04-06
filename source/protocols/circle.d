@@ -474,6 +474,10 @@ struct CirclesImpl(int Size) {
 			cirImpls.back.result = cirImpls.back.cirImpl.calcAC(this.graph);
 		}
 
+		if(cirImpls.empty) {
+			throw new Exception("no valid middle found");
+		}
+
 		for(size_t i = 0; i < cirImpls.length; ++i) {
 			double s = sumResult(cirImpls[i].result, 0.5);
 			logf("%15.13f > %15.13f mid %s", bestResult, s, cirImpls[i].mid);
