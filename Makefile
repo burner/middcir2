@@ -1,5 +1,5 @@
 all:
-	dub --compiler=ldc
+	dub --compiler=ldc --build=debug
 
 build:
 	dub build --compiler=ldc

@@ -564,16 +564,21 @@ void crossing12() {
 }
 
 void crossingSixteen() {
-	auto pnt = genTestGraph!32();
+	auto tl = Lattice(4, 4);
+	auto tlRslt = tl.calcAC();
+	//auto pnt = genTestGraph!32();
+	//auto pnt = tl.getGraph();
 
-	auto crs = Crossings(pnt);
-	auto crsRslt = crs.calcAC();
-	gnuPlot("Results/Crossing16", "", ResultPlot(crs.name, crsRslt));
+	auto crs = Crossings(tl.getGraph());
+	auto crsRslt = crs.calcAC2();
+
+	gnuPlot("Results/Crossing16", "", ResultPlot(crs.name, crsRslt),
+			ResultPlot("TLP4x4", tlRslt));
 
 	auto f = File("Results/Crossing16/graph.tex", "w");
 	auto ltw = f.lockingTextWriter();
 
-	pnt.toTikz(ltw);
+	tl.getGraph().toTikz(ltw);
 }
 
 void crossingMCSSixteen() {
@@ -782,7 +787,7 @@ void main(string[] args) {
 	//numberOfConnectedNonIsomorphicGraphs();
 	//circle();
 	//circleVLattice();
-	manyCirclesRun();
+	//manyCirclesRun();
 	//boxplot();
 	//checkGraphUnique("graphs6nodes3.json");
 	//checkGraphUnique("graphs8nodes3.json");
@@ -804,7 +809,7 @@ void main(string[] args) {
 	//printProperties();
 	//gridMapped();
 	//crossings9();
-	//crossingSixteen();
+	crossingSixteen();
 	//crossingMCSSixteen();
 	//mcsCrossing16();
 	//latticeMapped9quantil();

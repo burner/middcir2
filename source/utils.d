@@ -82,8 +82,8 @@ void testQuorumIntersectionImpl(BSS)(ref BSS read,
 			auto wss = getSubsets(wit, write);
 
 			ulong inter = rit.bitset.store & wit.bitset.store;
-			enforce(inter != 0, format("%s %s", rit.bitset, wit.bitset));
-			assert(inter != 0, format("%s %s", rit.bitset, wit.bitset));
+			ensure(inter != 0, format("%s %s", rit.bitset.toString2(), wit.bitset.toString2()));
+			assert(inter != 0, format("%s %s", rit.bitset.toString2(), wit.bitset.toString2()));
 
 			foreach(ref ritsub; rss) {
 				inter = ritsub.store & wit.bitset.store;

@@ -132,7 +132,8 @@ bool testNonEmptyIntersection2(Arr)(auto ref const(Arr) a, auto ref const(Arr) b
 	return false;
 }
 
-void testEmptyIntersection(ref const(Array!int) a, ref const(Array!int) b) {
+//void testEmptyIntersection(ref const(Array!int) a, ref const(Array!int) b) {
+void testEmptyIntersection(A)(auto ref const(A) a, auto ref const(A) b) {
 	import std.format : format;
 	foreach(it; a[]) {
 		foreach(jt; b[]) {
@@ -145,7 +146,7 @@ void testEmptyIntersection(ref const(Array!int) a, ref const(Array!int) b) {
 	}
 }
 
-void testEmptyIntersection(ref const(Array!(int[2])) a) {
+void testEmptyIntersection(A)(auto ref const(A) a) {
 	import std.format : format;
 	foreach(it; a[]) {
 		if(it[0] == it[1]) {
@@ -293,7 +294,7 @@ Result calcACforPathBasedFast(BitsetStoreType,BitsetType,F,G)(ref F paths,
 		//if(isNullTest!BitsetStoreType(subsetRead)) {
 			PathResult!BitsetType readQuorum = selectReadQuorum!BitsetType(
 					verticalPaths, horizontalPaths, diagonalPaths
-			);
+				);
 
 			if(readQuorum.validPath == ValidPath.yes) {
 				read.insert(readQuorum.minPath, perm);
@@ -307,7 +308,7 @@ Result calcACforPathBasedFast(BitsetStoreType,BitsetType,F,G)(ref F paths,
 		//if(isNullTest!BitsetStoreType(subsetWrite) && vPossible && hPossible) {
 			PathResult!BitsetType writeQuorum = selectWriteQuorum!BitsetType(
 					verticalPaths, horizontalPaths, diagonalPaths
-			);
+				);
 
 			if(writeQuorum.validPath == ValidPath.yes) {
 				write.insert(writeQuorum.minPath, perm);

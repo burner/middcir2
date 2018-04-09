@@ -65,6 +65,46 @@ struct CrossingsImpl(int Size) {
 		return this.bestCrossing.write;
 	}
 
+
+	Result calcAC2() {
+		import planar;
+		bool atLeastOne = false;
+		Array!(Graph!Size) planarGraphs;
+		makePlanar(this.graph, planarGraphs);
+		logf("%s planar graphs", planarGraphs.length);
+		foreach(it; planarGraphs[]) {
+			Array!(TBLR) tblrSets = possibleBorders(it);
+			logf("%s possible borders", tblrSets.length);
+			for(int i = 0; i < tblrSets.length; ++i) {
+				if(i == 0) {
+					atLeastOne = true;
+					this.bestCrossing = CrossingImpl!Size(this.graph);
+					this.bestResult = this.bestCrossing.calcAC2(tblrSets[i]);
+					this.bestSum = sumResult(this.bestResult, 0.99999);
+					logf("%f", this.bestSum);
+				} else {
+					auto tmp = CrossingImpl!Size(this.graph);
+					auto tmpRslt = tmp.calcAC2(tblrSets[i]);
+					double tmpSum = sumResult(tmpRslt);
+
+					logf("%f %f", this.bestSum, tmpSum);
+
+					if(tmpSum > this.bestSum) {
+						this.bestCrossing = tmp;
+						this.bestResult = tmpRslt;
+						this.bestSum = tmpSum;
+					}
+				}
+			}
+		}
+		ensure(atLeastOne);
+		logf("lft [%(%s %)] tp [%(%s %)] rght[%(%s %)] btm [%(%s %)] dia [%(%s, %)]",
+			this.bestCrossing.left[], this.bestCrossing.top[], this.bestCrossing.right[],
+			this.bestCrossing.bottom[], this.bestCrossing.diagonalPairs[]
+		);
+		return this.bestResult;
+	}
+
 	Result calcAC() {
 		import std.algorithm.mutation : bringToFront;
 		Array!int border = this.graph.computeBorder();
@@ -207,6 +247,54 @@ struct CrossingImpl(int Size) {
 		calcDiagonalPairs(bottom, top, left, right, diagonalPairs);
 	}
 
+	Result calcAC2(ref TBLR tblr) {
+		import std.conv : to;
+		import protocols.pathbased;
+
+		this.top = tblr.top;
+		this.bottom = tblr.bottom;
+		this.left = tblr.left;
+		this.right = tblr.right;
+		this.diagonalPairs = tblr.diagonalPairs;
+
+		//this.splitBorderIntoTBLR(uniqueBorder, this.bottom, this.top, this.left, 
+		//		this.right, this.diagonalPairs);
+		logf("lft [%(%s %)] tp [%(%s %)] rght[%(%s %)] btm [%(%s %)] dia [%(%s, %)]",
+			tblr.left[], tblr.top[], tblr.right[], tblr.bottom[], tblr.diagonalPairs[]
+		);
+		//logf("top bottom");
+		testEmptyIntersection(tblr.top, tblr.bottom);
+		//logf("left right");
+		testEmptyIntersection(tblr.left, tblr.right);
+		//logf("diagonal");
+		testEmptyIntersection(tblr.diagonalPairs);
+		//logf("done");
+
+		auto paths = floyd(this.graph);
+
+		const uint numNodes = to!uint(this.graph.length);
+		auto ret = calcACforPathBased!(typeof(this.read),BSType)(paths, 
+			this.graph, tblr.bottom, tblr.top, tblr.left, tblr.right,
+			tblr.diagonalPairs, this.read, this.write, numNodes
+		);
+
+		bool test;
+		debug {
+			test = true;
+		}
+		version(unittest) {
+			test = true;
+		}
+		if(test) {
+			//logf("quorum intersection");
+			testQuorumIntersection(this.read, this.write);
+			//logf("all subsets smaller");
+			testAllSubsetsSmaller(this.read, this.write);
+		}
+
+		return ret;
+	}
+
 	Result calcAC(ref Array!int uniqueBorder) {
 		import std.conv : to;
 		import protocols.pathbased;
@@ -271,22 +359,66 @@ void makeArrayUnique(BSType)(ref Array!int notUnique, ref Array!int unique) {
 }
 
 void splitOutN(S,D)(ref S src, ref D dest, int offset, int count) {
+	int mod(int a, int b) {
+	    int r = a % b;
+	    return r < 0 ? r + b : r;
+	}
+	const int srcL = cast(int)src.length;
+	//logf("offset %s, count %s, src.length %s", offset, count, src.length);
 	for(int i = 0; i < count; ++i) {
-		dest.insertBack(src[(i + offset) % $]);
+		int m = mod((i + offset), srcL);
+		//logf("%s %s", i, m);
+		dest.insertBack(src[m]);
 	}
 }
 
 struct TBLR {
-	FixedSizeArray!(int) top;
-	FixedSizeArray!(int) left;
-	FixedSizeArray!(int) bottom;
-	FixedSizeArray!(int) right;
+	Array!(int) top;
+	Array!(int) left;
+	Array!(int) bottom;
+	Array!(int) right;
+	Array!(int[2]) diagonalPairs;
 
 	bool opEquals(const ref typeof(this) other) const {
 		return cmpFSA(this.top, other.top)
 			&& cmpFSA(this.left, other.left)
 			&& cmpFSA(this.bottom, other.bottom)
 			&& cmpFSA(this.right, other.right);
+	}
+}
+
+void computeDiagonalPairs(ref TBLR tblr) {
+	for(int t = 0; t < tblr.top.length; ++t) {
+		for(int l = 0; l < tblr.left.length; ++l) {
+			if(tblr.top[t] == tblr.left[l]) {
+				for(int b = 0; b < tblr.bottom.length; ++b) {
+					for(int r = 0; r < tblr.right.length; ++r) {
+						if(tblr.bottom[b] == tblr.right[r]) {
+							tblr.diagonalPairs.insertBack(cast(int[2])(
+										[tblr.top[t], tblr.bottom[b]]
+									)
+								);
+						}
+					}
+				}
+			}
+		}
+	}
+	for(int t = 0; t < tblr.top.length; ++t) {
+		for(int r = 0; r < tblr.right.length; ++r) {
+			if(tblr.top[t] == tblr.right[r]) {
+				for(int b = 0; b < tblr.bottom.length; ++b) {
+					for(int l = 0; l < tblr.left.length; ++l) {
+						if(tblr.bottom[b] == tblr.left[l]) {
+							tblr.diagonalPairs.insertBack(cast(int[2])(
+										[tblr.top[t], tblr.bottom[b]]
+									)
+								);
+						}
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -313,34 +445,39 @@ Array!(TBLR) possibleBorders(G)(auto ref G graph) {
 	makeArrayUnique!uint(border, uniqueBorder);
 
 	const size_t len = uniqueBorder.length;
-	const size_t lenT = len - 2;
+	const int lenT = cast(int)(len) - 2;
 	for(int t = 1; t < lenT; ++t) {
-		const size_t lenL = len - t - 1;
+		const int lenL = cast(int)(len) - t - 1;
 		for(int l = 1; l < lenL; ++l) {
-			const size_t lenB = len - t - l - 0;
+			const int lenB = cast(int)(len) - t - l - 0;
 			for(int b = 1; b < lenB; ++b) {
-				const int r = to!int(len - t - l - b);
+				const int r = to!int(len - t - l - b) + 1;
+				logf("%(%s %)", uniqueBorder[]);
 				/*logf("len %2s, lenT %2s, lenL %2s, lenB %2s, sum"
 						~ " %2s, t %2s, l %2s, b %2s, r %2s", 
 						len, lenT, lenL, lenB, t + l + b + r,
 						t, l, b, r
 					);*/
 
-				const int l2 = cast(int)(uniqueBorder.length) / 2;
-				for(int tl = 1; tl < l2; ++tl) {
-					for(int bl = 1; bl < l2; ++bl) {
-						for(int ll = 1; ll < l2; ++ll) {
-							for(int rl = 1; rl < l2; ++rl) {
+				//const int l2 = cast(int)(uniqueBorder.length) / 2;
+				//for(int tl = 1; tl < l2; ++tl) {
+				//	for(int bl = 1; bl < l2; ++bl) {
+				//		for(int ll = 1; ll < l2; ++ll) {
+				//			for(int rl = 1; rl < l2; ++rl) {
 								TBLR tblr;
 
-								splitOutN(uniqueBorder, tblr.top, 0 - 1, t + tl);
-								splitOutN(uniqueBorder, tblr.left, t - 1, l + ll);
-								splitOutN(uniqueBorder, tblr.bottom, t + l - 1, b + bl);
-								splitOutN(uniqueBorder, tblr.right, t + l + b - 1, r + rl);
+								//splitOutN(uniqueBorder, tblr.top, 0 - 1, t + tl);
+								//splitOutN(uniqueBorder, tblr.left, t - 1, l + ll);
+								//splitOutN(uniqueBorder, tblr.bottom, t + l - 1, b + bl);
+								//splitOutN(uniqueBorder, tblr.right, t + l + b - 1, r + rl);
+								splitOutN(uniqueBorder, tblr.top, 0 - 1, t);
+								splitOutN(uniqueBorder, tblr.left, t - 2, l + 1);
+								splitOutN(uniqueBorder, tblr.bottom, t + l - 2, b + 1);
+								splitOutN(uniqueBorder, tblr.right, t + l + b - 2, r + 1);
 
-							//	logf("t [%20(%s %)], l [%20(%s %)], b [%20(%s %)], r [%20(%s %)]",
-							//			tblr.top[], tblr.left[], tblr.bottom[], tblr.right[]
-							//		);
+								logf("t [%20(%s %)], l [%20(%s %)], b [%20(%s %)], r [%20(%s %)]",
+										tblr.top[], tblr.left[], tblr.bottom[], tblr.right[]
+									);
 								
 								bool tbE = testEmptyIntersection2(tblr.top, tblr.bottom);
 								bool lrE = testEmptyIntersection2(tblr.left, tblr.right);
@@ -349,22 +486,23 @@ Array!(TBLR) possibleBorders(G)(auto ref G graph) {
 								bool blNE = testNonEmptyIntersection2(tblr.bottom, tblr.left);
 								bool brNE = testNonEmptyIntersection2(tblr.bottom, tblr.right);
 
-								//logf("tbE %s lrE %s tlNE %s trNE %s blNE %s brNE %s",
-								//		tbE, lrE, tlNE, trNE, blNE, brNE
-								//	);
+								logf("tbE %s lrE %s tlNE %s trNE %s blNE %s brNE %s",
+										tbE, lrE, tlNE, trNE, blNE, brNE
+									);
 								if(tbE && lrE && tlNE && trNE && blNE && brNE) {
 									//logf("ok");
 									if(canFind(ret[], tblr)) {
 										//logf("already present");
 									} else {
 										//logf("new");
+										computeDiagonalPairs(tblr);
 										ret.insert(tblr);
 									}
 								}
-							}
-						}
-					}
-				}
+				//			}
+				//		}
+				//	}
+				//}
 			}
 		}
 	}
