@@ -782,7 +782,7 @@ void main(string[] args) {
 	//numberOfConnectedNonIsomorphicGraphs();
 	//circle();
 	//circleVLattice();
-	//manyCirclesRun();
+	manyCirclesRun();
 	//boxplot();
 	//checkGraphUnique("graphs6nodes3.json");
 	//checkGraphUnique("graphs8nodes3.json");
@@ -804,7 +804,7 @@ void main(string[] args) {
 	//printProperties();
 	//gridMapped();
 	//crossings9();
-	crossingSixteen();
+	//crossingSixteen();
 	//crossingMCSSixteen();
 	//mcsCrossing16();
 	//latticeMapped9quantil();

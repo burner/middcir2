@@ -276,9 +276,38 @@ void splitOutN(S,D)(ref S src, ref D dest, int offset, int count) {
 	}
 }
 
-Array!(Array!(int)) possibleBorders(G)(auto ref G graph) {
+struct TBLR {
+	FixedSizeArray!(int) top;
+	FixedSizeArray!(int) left;
+	FixedSizeArray!(int) bottom;
+	FixedSizeArray!(int) right;
+
+	bool opEquals(const ref typeof(this) other) const {
+		return cmpFSA(this.top, other.top)
+			&& cmpFSA(this.left, other.left)
+			&& cmpFSA(this.bottom, other.bottom)
+			&& cmpFSA(this.right, other.right);
+	}
+}
+
+private bool cmpFSA(F)(auto ref F a, auto ref F b) {
+	if(a.length != b.length) {
+		return false;
+	}
+
+	for(size_t i = 0; i < a.length; ++i) {
+		if(a[i] != b[i]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+Array!(TBLR) possibleBorders(G)(auto ref G graph) {
 	import std.conv : to;
-	Array!(Array!(int)) ret;
+	import std.algorithm.searching : canFind;
+	import protocols.pathbased;
+	Array!(TBLR) ret;
 	Array!int border = graph.computeBorder();
 	Array!int uniqueBorder;
 	makeArrayUnique!uint(border, uniqueBorder);
@@ -291,36 +320,62 @@ Array!(Array!(int)) possibleBorders(G)(auto ref G graph) {
 			const size_t lenB = len - t - l - 0;
 			for(int b = 1; b < lenB; ++b) {
 				const int r = to!int(len - t - l - b);
-				logf("len %2s, lenT %2s, lenL %2s, lenB %2s, sum"
+				/*logf("len %2s, lenT %2s, lenL %2s, lenB %2s, sum"
 						~ " %2s, t %2s, l %2s, b %2s, r %2s", 
 						len, lenT, lenL, lenB, t + l + b + r,
 						t, l, b, r
-					);
+					);*/
 
-				FixedSizeArray!(int) top;
-				FixedSizeArray!(int) left;
-				FixedSizeArray!(int) bottom;
-				FixedSizeArray!(int) right;
+				const int l2 = cast(int)(uniqueBorder.length) / 2;
+				for(int tl = 1; tl < l2; ++tl) {
+					for(int bl = 1; bl < l2; ++bl) {
+						for(int ll = 1; ll < l2; ++ll) {
+							for(int rl = 1; rl < l2; ++rl) {
+								TBLR tblr;
 
-				splitOutN(uniqueBorder, top, 0, t);
-				splitOutN(uniqueBorder, left, t - 1, l + 1);
-				splitOutN(uniqueBorder, bottom, t + l - 1, b + 1);
-				splitOutN(uniqueBorder, right, t + l + b - 1, r + 1);
-				//ensure(top.length + left.length + bottom.length + right.length
-				//		== len + 4);
+								splitOutN(uniqueBorder, tblr.top, 0 - 1, t + tl);
+								splitOutN(uniqueBorder, tblr.left, t - 1, l + ll);
+								splitOutN(uniqueBorder, tblr.bottom, t + l - 1, b + bl);
+								splitOutN(uniqueBorder, tblr.right, t + l + b - 1, r + rl);
 
-				logf("t [%(%s %)], l [%(%s %)], b [%(%s %)], r [%(%s %)]",
-						top[], left[], bottom[], right[]
-					);
+							//	logf("t [%20(%s %)], l [%20(%s %)], b [%20(%s %)], r [%20(%s %)]",
+							//			tblr.top[], tblr.left[], tblr.bottom[], tblr.right[]
+							//		);
+								
+								bool tbE = testEmptyIntersection2(tblr.top, tblr.bottom);
+								bool lrE = testEmptyIntersection2(tblr.left, tblr.right);
+								bool tlNE = testNonEmptyIntersection2(tblr.top, tblr.left);
+								bool trNE = testNonEmptyIntersection2(tblr.top, tblr.right);
+								bool blNE = testNonEmptyIntersection2(tblr.bottom, tblr.left);
+								bool brNE = testNonEmptyIntersection2(tblr.bottom, tblr.right);
+
+								//logf("tbE %s lrE %s tlNE %s trNE %s blNE %s brNE %s",
+								//		tbE, lrE, tlNE, trNE, blNE, brNE
+								//	);
+								if(tbE && lrE && tlNE && trNE && blNE && brNE) {
+									//logf("ok");
+									if(canFind(ret[], tblr)) {
+										//logf("already present");
+									} else {
+										//logf("new");
+										ret.insert(tblr);
+									}
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	}
+	//logf("ret.size %s", ret.length);
 	return ret;
 }
 
 unittest {
 	auto g = genTestGraph!32();
-	possibleBorders(g);
+	auto borders = possibleBorders(g);
+	logf("%s", borders.length);
 }
 
 unittest {

@@ -12,6 +12,7 @@ void makePlanar(Graph)(Graph orignal, ref Array!Graph result) {
 	import std.algorithm.searching : canFind;
 	import std.random : randomShuffle;
 	Array!Graph stack;
+	Array!Graph dump;
 	stack.insertBack(orignal);
 	assertNotEqual(orignal.nodePositions.length, 0UL);
 	const numNodes = orignal.nodePositions.length;
@@ -20,21 +21,27 @@ void makePlanar(Graph)(Graph orignal, ref Array!Graph result) {
 	size_t planarCount = 0;
 	outer: while(!stack.empty()) {
 		iterations++;
-		//if(iterations % 1000 == 0) {
-		//	logf("stack size %10s iterations %10s", stack.length, iterations);
-		//}
+		if(iterations % 1000 == 0) {
+			//logf("stack size %10s iterations %10s dump size %10s",
+			//		stack.length, iterations, dump.length);
+		}
 		if(iterations > 5_000_000) {
 			break outer;
 		}
 		if(iterations > 1_000_000 && planarCount > 0) {
-			logf("broke after 1_000_000 iterations");
+			//logf("broke after 1_000_000 iterations");
 			break;
 		}
 		//logf("stack size %s", stack.length);
 		Graph cur = stack.back();
 		stack.removeBack();
 
+		if(canFind(dump[], cur)) {
+			continue;
+		}
+
 		if(!isConnected(cur)) {
+			dump.insert(cur);
 			continue;
 		}
 
@@ -74,35 +81,20 @@ void makePlanar(Graph)(Graph orignal, ref Array!Graph result) {
 				bool foundB = canFind(stack[], b);
 
 				if(!foundA && isConnected(a)) {
-					stack.insertBack(a);
+					if(!canFind(dump[], a)) {
+						stack.insertBack(a);
+					}
+				} else {
+					dump.insert(a);
 				}
 
 				if(!foundB && isConnected(b)) {
-					stack.insertBack(b);
-				}
-
-				/*bool foundA = false;
-				foreach(ref jt; stack[]) {
-					if(simpleGraphCompare(jt, a)) {
-						foundA = true;
-						break;
+					if(!canFind(dump[], b)) {
+						stack.insertBack(b);
 					}
+				} else {
+					dump.insert(b);
 				}
-				if(!foundA) {
-					logf("insert a");
-					stack.insertBack(a);
-				}
-				bool foundB = false;
-				foreach(ref jt; stack[]) {
-					if(simpleGraphCompare(jt, b)) {
-						foundB = true;
-						break;
-					}
-				}
-				if(!foundB) {
-					logf("insert b");
-					stack.insertBack(b);
-				}*/
 			}
 		}
 	}
