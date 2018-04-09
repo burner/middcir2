@@ -388,16 +388,17 @@ struct TBLR {
 }
 
 void computeDiagonalPairs(ref TBLR tblr) {
+	import std.algorithm.searching : canFind;
 	for(int t = 0; t < tblr.top.length; ++t) {
 		for(int l = 0; l < tblr.left.length; ++l) {
 			if(tblr.top[t] == tblr.left[l]) {
 				for(int b = 0; b < tblr.bottom.length; ++b) {
 					for(int r = 0; r < tblr.right.length; ++r) {
 						if(tblr.bottom[b] == tblr.right[r]) {
-							tblr.diagonalPairs.insertBack(cast(int[2])(
-										[tblr.top[t], tblr.bottom[b]]
-									)
-								);
+							int[2] tmp = cast(int[2])([tblr.top[t], tblr.bottom[b]]);
+							if(!canFind(tblr.diagonalPairs[], tmp)) {
+								tblr.diagonalPairs.insertBack(tmp);
+							}
 						}
 					}
 				}
@@ -410,10 +411,10 @@ void computeDiagonalPairs(ref TBLR tblr) {
 				for(int b = 0; b < tblr.bottom.length; ++b) {
 					for(int l = 0; l < tblr.left.length; ++l) {
 						if(tblr.bottom[b] == tblr.left[l]) {
-							tblr.diagonalPairs.insertBack(cast(int[2])(
-										[tblr.top[t], tblr.bottom[b]]
-									)
-								);
+							int[2] tmp = cast(int[2])([tblr.top[t], tblr.bottom[b]]);
+							if(!canFind(tblr.diagonalPairs[], tmp)) {
+								tblr.diagonalPairs.insertBack(tmp);
+							}
 						}
 					}
 				}
@@ -436,6 +437,124 @@ private bool cmpFSA(F)(auto ref F a, auto ref F b) {
 }
 
 Array!(TBLR) possibleBorders(G)(auto ref G graph) {
+	import std.conv : to;
+	import std.algorithm.searching : canFind;
+	import protocols.pathbased;
+	Array!(TBLR) ret;
+	Array!int border = graph.computeBorder();
+	Array!int uniqueBorder;
+	makeArrayUnique!uint(border, uniqueBorder);
+
+	const size_t len = uniqueBorder.length;
+	const int lenT = cast(int)(len);
+	logf("len %s, lenT %s", len, lenT);
+	for(int t = 0; t < lenT; ++t) {
+		TBLR tblr;
+		logf("t %s", t);
+		for(int tl = 1; tl < lenT; ++tl) {
+			logf("tl %s", tl);
+			tblr.top.clear();
+			splitOutN(uniqueBorder, tblr.top, t, tl);
+			ensure(tblr.top.length > 0);
+			for(int l = 0; l < lenT; ++l) {
+				//logf("l %s", l);
+				for(int ll = 1; ll < lenT; ++ll) {
+					//logf("ll %s", ll);
+					tblr.left.clear();
+					splitOutN(uniqueBorder, tblr.left, l, ll);
+					ensure(tblr.top.length > 0);
+					ensure(tblr.left.length > 0);
+					bool tlNE = testNonEmptyIntersection2(tblr.top, tblr.left);
+					if(!tlNE) {
+						//logf("t [%20(%s %)], l [%20(%s %)], b [%20(%s %)], r [%20(%s %)]",
+						//		tblr.top[], tblr.left[], tblr.bottom[], tblr.right[]
+						//	);
+						continue;
+					}
+					for(int b = 0; b < lenT; ++b) {
+						//logf("b %s", b);
+						for(int bl = 1; bl < lenT; ++bl) {
+							//logf("bl %s", bl);
+							tblr.bottom.clear();
+							splitOutN(uniqueBorder, tblr.bottom, b, bl);
+							ensure(tblr.top.length > 0);
+							ensure(tblr.left.length > 0);
+							ensure(tblr.bottom.length > 0);
+							bool tbE = testEmptyIntersection2(tblr.top, tblr.bottom);
+							if(!tbE) {
+								//logf("t [%20(%s %)], l [%20(%s %)], b [%20(%s %)], r [%20(%s %)]",
+								//		tblr.top[], tblr.left[], tblr.bottom[], tblr.right[]
+								//	);
+								continue;
+							}
+
+							bool blNE = testNonEmptyIntersection2(tblr.bottom, tblr.left);
+							if(!blNE) {
+								//logf("t [%20(%s %)], l [%20(%s %)], b [%20(%s %)], r [%20(%s %)]",
+								//		tblr.top[], tblr.left[], tblr.bottom[], tblr.right[]
+								//	);
+								continue;
+							}
+							for(int r = 0; r < lenT; ++r) {
+								//logf("r %s", r);
+								for(int rl = 1; rl < lenT; ++rl) {
+									//logf("rl %s", rl);
+									tblr.right.clear();
+									splitOutN(uniqueBorder, tblr.right, r, rl);
+									ensure(tblr.top.length > 0);
+									ensure(tblr.left.length > 0);
+									ensure(tblr.bottom.length > 0);
+									ensure(tblr.right.length > 0);
+									//log();
+									bool lrE = testEmptyIntersection2(tblr.left, tblr.right);
+									if(!lrE) {
+									//	logf("t [%20(%s %)], l [%20(%s %)], b [%20(%s %)], r [%20(%s %)]",
+									//			tblr.top[], tblr.left[], tblr.bottom[], tblr.right[]
+									//		);
+										continue;
+									}
+									bool trNE = testNonEmptyIntersection2(tblr.top, tblr.right);
+									if(!trNE) {
+									//	logf("t [%20(%s %)], l [%20(%s %)], b [%20(%s %)], r [%20(%s %)]",
+									//			tblr.top[], tblr.left[], tblr.bottom[], tblr.right[]
+									//		);
+										continue;
+									}
+									bool brNE = testNonEmptyIntersection2(tblr.bottom, tblr.right);
+									if(!brNE) {
+									//	logf("t [%20(%s %)], l [%20(%s %)], b [%20(%s %)], r [%20(%s %)]",
+									//			tblr.top[], tblr.left[], tblr.bottom[], tblr.right[]
+									//		);
+										continue;
+									}
+
+									if(canFind(ret[], tblr)) {
+										//logf("already present");
+									} else {
+										logf("new");
+										logf("t [%20(%s %)], l [%20(%s %)], b [%20(%s %)], r [%20(%s %)]",
+												tblr.top[], tblr.left[], tblr.bottom[], tblr.right[]
+											);
+								
+										logf("tbE %s lrE %s tlNE %s trNE %s blNE %s brNE %s",
+												tbE, lrE, tlNE, trNE, blNE, brNE
+											);
+										computeDiagonalPairs(tblr);
+										ret.insert(tblr);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	logf("ret.size %s", ret.length);
+	return ret;
+}
+
+/+Array!(TBLR) possibleBorders(G)(auto ref G graph) {
 	import std.conv : to;
 	import std.algorithm.searching : canFind;
 	import protocols.pathbased;
@@ -508,7 +627,7 @@ Array!(TBLR) possibleBorders(G)(auto ref G graph) {
 	}
 	//logf("ret.size %s", ret.length);
 	return ret;
-}
+}+/
 
 unittest {
 	auto g = genTestGraph!32();
