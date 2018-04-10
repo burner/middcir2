@@ -66,12 +66,13 @@ struct CrossingsImpl(int Size) {
 	}
 
 
-	Result calcAC2() {
+	Result calcAC() {
 		import planar;
 		bool atLeastOne = false;
 		Array!(Graph!Size) planarGraphs;
 		makePlanar(this.graph, planarGraphs);
 		logf("%s planar graphs", planarGraphs.length);
+		size_t itCnt = 0;
 		foreach(it; planarGraphs[]) {
 			Array!(TBLR) tblrSets = possibleBorders(it);
 			logf("%s possible borders", tblrSets.length);
@@ -79,15 +80,17 @@ struct CrossingsImpl(int Size) {
 				if(i == 0) {
 					atLeastOne = true;
 					this.bestCrossing = CrossingImpl!Size(this.graph);
-					this.bestResult = this.bestCrossing.calcAC2(tblrSets[i]);
+					this.bestResult = this.bestCrossing.calcAC(tblrSets[i]);
 					this.bestSum = sumResult(this.bestResult, 0.99999);
 					logf("%f", this.bestSum);
 				} else {
 					auto tmp = CrossingImpl!Size(this.graph);
-					auto tmpRslt = tmp.calcAC2(tblrSets[i]);
+					auto tmpRslt = tmp.calcAC(tblrSets[i]);
 					double tmpSum = sumResult(tmpRslt);
 
-					logf("%f %f", this.bestSum, tmpSum);
+					logf("%f %f tblrSet %s of %s planarGraph %s of %s", this.bestSum, tmpSum, i,
+							tblrSets.length, itCnt, planarGraphs.length
+						);
 
 					if(tmpSum > this.bestSum) {
 						this.bestCrossing = tmp;
@@ -96,6 +99,7 @@ struct CrossingsImpl(int Size) {
 					}
 				}
 			}
+			++itCnt;
 		}
 		ensure(atLeastOne);
 		logf("lft [%(%s %)] tp [%(%s %)] rght[%(%s %)] btm [%(%s %)] dia [%(%s, %)]",
@@ -105,7 +109,7 @@ struct CrossingsImpl(int Size) {
 		return this.bestResult;
 	}
 
-	Result calcAC() {
+	Result calcACOld() {
 		import std.algorithm.mutation : bringToFront;
 		Array!int border = this.graph.computeBorder();
 		Array!int uniqueBorder;
@@ -117,12 +121,12 @@ struct CrossingsImpl(int Size) {
 			//logf("[%(%s, %)]", uniqueBorder[]);
 			if(i == 0) {
 				this.bestCrossing = CrossingImpl!Size(this.graph);
-				this.bestResult = this.bestCrossing.calcAC(uniqueBorder);
+				this.bestResult = this.bestCrossing.calcACOld(uniqueBorder);
 				this.bestSum = sumResult(this.bestResult);
 				logf("%f", this.bestSum);
 			} else {
 				auto tmp = CrossingImpl!Size(this.graph);
-				auto tmpRslt = tmp.calcAC(uniqueBorder);
+				auto tmpRslt = tmp.calcACOld(uniqueBorder);
 				double tmpSum = sumResult(tmpRslt);
 
 				logf("%f %f", this.bestSum, tmpSum);
@@ -247,7 +251,7 @@ struct CrossingImpl(int Size) {
 		calcDiagonalPairs(bottom, top, left, right, diagonalPairs);
 	}
 
-	Result calcAC2(ref TBLR tblr) {
+	Result calcAC(ref TBLR tblr) {
 		import std.conv : to;
 		import protocols.pathbased;
 
@@ -286,8 +290,10 @@ struct CrossingImpl(int Size) {
 			test = true;
 		}
 		if(test) {
-			//logf("quorum intersection");
+			logf("quorum intersection read write");
 			testQuorumIntersection(this.read, this.write);
+			logf("quorum intersection write write");
+			testQuorumIntersection(this.write, this.write);
 			//logf("all subsets smaller");
 			testAllSubsetsSmaller(this.read, this.write);
 		}
@@ -295,7 +301,7 @@ struct CrossingImpl(int Size) {
 		return ret;
 	}
 
-	Result calcAC(ref Array!int uniqueBorder) {
+	Result calcACOld(ref Array!int uniqueBorder) {
 		import std.conv : to;
 		import protocols.pathbased;
 
@@ -316,7 +322,7 @@ struct CrossingImpl(int Size) {
 			diagonalPairs, this.read, this.write, numNodes
 		);
 
-		bool test;
+		bool test = true;
 		debug {
 			test = true;
 		}
@@ -331,12 +337,12 @@ struct CrossingImpl(int Size) {
 		return ret;
 	}
 
-	Result calcAC() {
+	/*Result calcAC() {
 		Array!int border = this.graph.computeBorder();
 		Array!int uniqueBorder;
 		makeArrayUnique!BSType(border, uniqueBorder);
 		return this.calcAC(uniqueBorder);
-	}
+	}*/
 
 	string name() const pure {
 		import std.format : format;
@@ -387,7 +393,7 @@ struct TBLR {
 	}
 }
 
-void computeDiagonalPairs(ref TBLR tblr) {
+/*void computeDiagonalPairs(ref TBLR tblr) {
 	import std.algorithm.searching : canFind;
 	for(int t = 0; t < tblr.top.length; ++t) {
 		for(int l = 0; l < tblr.left.length; ++l) {
@@ -421,6 +427,62 @@ void computeDiagonalPairs(ref TBLR tblr) {
 			}
 		}
 	}
+}*/
+
+void computeDiagonalPairs(ref TBLR tblr) {
+	import std.algorithm.searching : canFind;
+	foreach(t; tblr.top[]) {
+		foreach(l; tblr.left[]) {
+			if(t == l) {
+				foreach(b; tblr.bottom[]) {
+					foreach(r; tblr.right[]) {
+						if(b == r) {
+							ensure(t == l);
+							ensure(b == r);
+							int[2] tmp = cast(int[2])([t, b]);
+							ensure(tmp[0] == t);
+							ensure(tmp[1] == b);
+							if(!canFind(tblr.diagonalPairs[], tmp)) {
+								tblr.diagonalPairs.insertBack(tmp);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	foreach(t; tblr.top[]) {
+		foreach(r; tblr.right[]) {
+			if(t == r) {
+				foreach(b; tblr.bottom[]) {
+					foreach(l; tblr.left[]) {
+						if(b == l) {
+							ensure(t == r);
+							ensure(b == l);
+							int[2] tmp = cast(int[2])([t, b]);
+							ensure(tmp[0] == t);
+							ensure(tmp[1] == b);
+							if(!canFind(tblr.diagonalPairs[], tmp)) {
+								tblr.diagonalPairs.insertBack(tmp);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+Array!int intersection(A)(auto ref A a, auto ref A b) {
+	Array!int ret;
+	foreach(it; a[]) {
+		foreach(jt; b[]) {
+			if(it == jt) {
+				ret.insertBack(it);
+			}
+		}
+	}
+	return ret;
 }
 
 private bool cmpFSA(F)(auto ref F a, auto ref F b) {
@@ -434,6 +496,26 @@ private bool cmpFSA(F)(auto ref F a, auto ref F b) {
 		}
 	}
 	return true;
+}
+
+void computeDiagonalPairs2(ref TBLR tblr, ref Array!int tl, ref Array!int br,
+		ref Array!int tr, ref Array!int bl)
+{
+	//ensure(tl.length == 1);
+	//ensure(tr.length == 1);
+	//ensure(bl.length == 1);
+	//ensure(br.length == 1);
+
+	foreach(tlIt; tl[]) {
+		foreach(brIt; br[]) {
+			tblr.diagonalPairs.insertBack(cast(int[2])([tlIt, brIt]));
+		}
+	}
+	foreach(trIt; tr[]) {
+		foreach(blIt; bl[]) {
+			tblr.diagonalPairs.insertBack(cast(int[2])([trIt, blIt]));
+		}
+	}
 }
 
 Array!(TBLR) possibleBorders(G)(auto ref G graph) {
@@ -528,6 +610,34 @@ Array!(TBLR) possibleBorders(G)(auto ref G graph) {
 										continue;
 									}
 
+									Array!int tlI = intersection(tblr.top, 
+											tblr.left
+										);
+									if(tlI.length > 1) {
+										continue;
+									}
+
+									Array!int trI = intersection(tblr.top, 
+											tblr.right
+										);
+									if(trI.length > 1) {
+										continue;
+									}
+
+									Array!int blI = intersection(tblr.bottom, 
+											tblr.left
+										);
+									if(blI.length > 1) {
+										continue;
+									}
+
+									Array!int brI = intersection(tblr.bottom, 
+											tblr.right
+										);
+									if(brI.length > 1) {
+										continue;
+									}
+
 									if(canFind(ret[], tblr)) {
 										//logf("already present");
 									} else {
@@ -539,7 +649,10 @@ Array!(TBLR) possibleBorders(G)(auto ref G graph) {
 										logf("tbE %s lrE %s tlNE %s trNE %s blNE %s brNE %s",
 												tbE, lrE, tlNE, trNE, blNE, brNE
 											);
-										computeDiagonalPairs(tblr);
+										tblr.diagonalPairs.clear();
+										computeDiagonalPairs2(tblr, tlI, brI,
+												trI, blI
+											);
 										ret.insert(tblr);
 									}
 								}

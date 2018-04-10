@@ -452,6 +452,7 @@ struct CirclesImpl(int Size) {
 	}
 
 	Result calcAC() {
+		import utils;
 		Result ret;
 
 		Array!(CircleImplResult!Size) cirImpls;
@@ -472,6 +473,11 @@ struct CirclesImpl(int Size) {
 				);
 			cirImpls.back.mid = mid;
 			cirImpls.back.result = cirImpls.back.cirImpl.calcAC(this.graph);
+			logf("quorum intersection");
+			testQuorumIntersection(cirImpls.back.cirImpl.store,
+					cirImpls.back.cirImpl.store);
+			//logf("all subsets smaller");
+			//testAllSubsetsSmaller(cirImpls.back.store, cirImpls.back.store);
 		}
 
 		if(cirImpls.empty) {
@@ -511,6 +517,53 @@ struct CircleImpl(int Size) {
 	}
 
 	Result calcAC(ref Graph!Size graph) {
+		Result ret;
+		auto permu = PermutationsImpl!BSType(
+			cast(int)graph.length,
+			1,
+			getConfig().permutationStop(cast(int)graph.length)
+		);
+		auto last = 0;
+		outer: foreach(perm; permu) {
+			auto curCount = popcnt(perm.store);
+			//logf("%s, %s", cur, perm.toString());
+			auto f = this.store.search(perm);
+			if(!f.isNull()) {
+				//logf("found superset %s %s", (*f).bitset.toString(),
+				//		perm.toString());
+				(*f).subsets ~= perm;
+				continue;
+			}
+
+			auto dir = shortestPathOutside!Size(graph, this.border,
+					this.center, perm
+				);
+			auto dirBS = bitset!(TypeFromSize!Size,int)(dir.path);
+
+			bool sm = surroundsMiddle!Size(graph, this.border, this.center,
+					perm
+				);
+
+			if(dir.pathExists == PathOutsideExists.yes && sm) {
+				if(dir.path.length < curCount) {
+					this.store.insert(dirBS);
+				} else {
+					this.store.insert(perm);
+				}
+			} else if(dir.pathExists == PathOutsideExists.yes && !sm) {
+				this.store.insert(dirBS);
+			} else if(dir.pathExists != PathOutsideExists.yes && sm) {
+				this.store.insert(perm);
+			}
+
+		}
+
+		return calcAvailForTree(to!int(graph.length),
+				this.store, this.store
+			);
+	}
+
+	/+Result calcAC(ref Graph!Size graph) {
 		Result ret;
 		auto permu = PermutationsImpl!BSType(
 			cast(int)graph.length,
@@ -630,7 +683,7 @@ struct CircleImpl(int Size) {
 		return calcAvailForTree(to!int(graph.length),
 				this.store, this.store
 			);
-	}
+	}+/
 }
 
 void buildPaths(int Size,FLY)(ref FLY fr, 
@@ -663,11 +716,79 @@ FixedSizeArray!(TypeFromSize!Size) buildShortestPath(int Size,FLY)(ref FLY fr,
 	return best;
 }
 
+alias PathOutsideExists = Flag!"PathOutsideExists";
+
+struct ShortestPathOutside {
+	PathOutsideExists pathExists;
+	Array!int path;
+}
+
+ShortestPathOutside shortestPathOutside(int Size)(ref Graph!Size graph, 
+		ref Array!int border, const int center, 
+		const Bitset!(TypeFromSize!(Size)) perm
+) {
+	ShortestPathOutside ret;
+	if(perm.test(center)) {
+		auto fr = floyd(graph);
+		fr.execute(graph, perm);
+
+		foreach(on; border[]) {
+			if(perm.test(on)) {
+				Array!int tmp;
+				if(fr.path(center, on, tmp)) {
+					if(ret.pathExists == PathOutsideExists.yes) {
+						if(tmp.length < ret.path.length) {
+							ret.path = tmp;
+						}
+					} else {
+						ret.path = tmp;
+						ret.pathExists = PathOutsideExists.yes;
+					}
+				}
+			}
+		}
+	}
+	return ret;
+}
+
+bool surroundsMiddle(int Size)(ref Graph!Size graph, ref Array!int border,
+		const int center, const Bitset!(TypeFromSize!(Size)) perm
+) {
+	Bitset!(TypeFromSize!Size) permC;
+	permC.flip();
+	for(size_t i = 0; i < perm.size(); ++i) {
+		if(perm.test(i)) {
+			permC.reset(i);
+		}
+	}
+	permC.set(center);
+	auto fr = floyd(graph);
+	fr.execute(graph, permC);	
+
+	foreach(ov; border[]) {
+		if(fr.pathExists(center, ov)) {
+			return false;
+		}
+	}
+
+	auto fr2 = floyd(graph);
+	fr2.execute(graph, perm);	
+	outer: foreach(ov; border[]) {
+		for(int i = 0; i < perm.size(); ++i) {
+			if(perm.test(i) && !fr2.pathExists(ov, i)) {
+				continue outer;
+			}
+		}
+		return true;
+	}	
+	return false;
+}
+
 bool pathOutExists(int Size)(ref Graph!Size graph, 
 		const Bitset!(TypeFromSize!(Size)) innerBorder, ref Array!int border, const int center)
 {
 	Bitset!(TypeFromSize!Size) a = innerBorder;
-	a.flip();
+	//a.set();
 
 	if(a.test(center)) {
 		auto fr = floyd(graph);

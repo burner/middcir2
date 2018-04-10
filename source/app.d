@@ -361,7 +361,7 @@ void latticeMapped() {
 	logf("LatticeRslt done");
 	auto pnt = makeNine!32();
 
-	auto crossing = Crossing(pnt);
+	auto crossing = Crossings(pnt);
 	auto crossingRslt = crossing.calcAC();
 	
 	auto map = Mappings!(32,32)(lattice.graph, pnt, QTF(1.0), ROW(0.5));
@@ -394,7 +394,7 @@ void crossings6() {
 
 	auto crs = Crossings(pnt);
 	auto crsRslt = crs.calcAC();
-	auto cr = Crossing(pnt);
+	auto cr = Crossings(pnt);
 	auto crRslt = cr.calcAC();
 
 	gnuPlot("Results/Crossings6", "", ResultPlot(crs.name(), crsRslt),
@@ -404,15 +404,16 @@ void crossings6() {
 
 void crossings9() {
 	auto pnt = makeNine!32();
+	{
+		auto f = File("Results/Crossings9/graph.tex", "w");
+		auto ltw = f.lockingTextWriter();
+		pnt.toTikz(ltw);
+	}
 
 	auto crs = Crossings(pnt);
 	auto crsRslt = crs.calcAC();
-	auto cr = Crossing(pnt);
-	auto crRslt = cr.calcAC();
 
-	gnuPlot("Results/Crossings9", "", ResultPlot(crs.name(), crsRslt),
-			ResultPlot(cr.name(), crRslt)
-	);
+	gnuPlot("Results/Crossings9", "", ResultPlot(crs.name(), crsRslt));
 }
 
 void latticeMCSMapped6() {
@@ -428,7 +429,7 @@ void latticeMCSMappedCrossing6() {
 
 	auto lattice = Lattice(2,3);
 	auto mcs = MCS(6);
-	auto crossing = Crossing(pnt);
+	auto crossing = Crossings(pnt);
 
 	mappingPlot2("Results/LatticeMCSCrossing6_2", pnt, lattice, mcs, crossing);
 }
@@ -447,7 +448,7 @@ void latticeMCSMappedCrossing9() {
 
 	auto lattice = Lattice(3,3);
 	auto mcs = MCS(9);
-	auto crossing = Crossing(pnt);
+	auto crossing = Crossings(pnt);
 
 	mappingPlot2("Results/LatticeMCSCrossing9", pnt, lattice, mcs, crossing);
 }
@@ -528,15 +529,19 @@ void gridMapped() {
 
 void circle() {
 	//auto pnt = genTestGraph12!32();
+	import std.file : mkdirRecurse;
+	mkdirRecurse("Results/Circle_16");
 	auto pnt = genTestGraph!32();
+	{
+		auto f = File("Results/Circle_16/graph.tex", "w");
+		auto ltw = f.lockingTextWriter();
+		pnt.toTikz(ltw);
+	}
 
 	auto crs = Circles(pnt);
 	auto crsRslt = crs.calcAC();
-	gnuPlot("Results/Circle_12", "", ResultPlot("Circle", crsRslt));
+	gnuPlot("Results/Circle_16", "", ResultPlot("Circle", crsRslt));
 
-	auto f = File("Results/Circle_12/graph.tex", "w");
-	auto ltw = f.lockingTextWriter();
-	pnt.toTikz(ltw);
 }
 
 void manyCirclesRun() {
@@ -563,14 +568,14 @@ void crossing12() {
 	writefln("\n%(%s\n %)", crs.bestCrossing.read[]);
 }
 
-void crossingSixteen() {
+void crossingSixteenTL() {
 	auto tl = Lattice(4, 4);
 	auto tlRslt = tl.calcAC();
 	//auto pnt = genTestGraph!32();
 	//auto pnt = tl.getGraph();
 
 	auto crs = Crossings(tl.getGraph());
-	auto crsRslt = crs.calcAC2();
+	auto crsRslt = crs.calcAC();
 
 	gnuPlot("Results/Crossing16", "", ResultPlot(crs.name, crsRslt),
 			ResultPlot("TLP4x4", tlRslt));
@@ -579,6 +584,21 @@ void crossingSixteen() {
 	auto ltw = f.lockingTextWriter();
 
 	tl.getGraph().toTikz(ltw);
+}
+
+void crossingSixteen() {
+	Graph!32 pnt = genTestGraph!32();
+	pnt.unsetEdge(2, 13);
+	{
+		auto f = File("Results/Crossing16/graph.tex", "w");
+		auto ltw = f.lockingTextWriter();
+		pnt.toTikz(ltw);
+	}
+
+	auto crs = Crossings(pnt);
+	auto crsRslt = crs.calcAC();
+
+	gnuPlot("Results/Crossing16", "", ResultPlot(crs.name, crsRslt));
 }
 
 void crossingMCSSixteen() {
@@ -785,7 +805,7 @@ void main(string[] args) {
 		return;
 	}
 	//numberOfConnectedNonIsomorphicGraphs();
-	//circle();
+	circle();
 	//circleVLattice();
 	//manyCirclesRun();
 	//boxplot();
@@ -809,7 +829,7 @@ void main(string[] args) {
 	//printProperties();
 	//gridMapped();
 	//crossings9();
-	crossingSixteen();
+	//crossingSixteen();
 	//crossingMCSSixteen();
 	//mcsCrossing16();
 	//latticeMapped9quantil();
