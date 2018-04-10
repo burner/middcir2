@@ -499,6 +499,7 @@ struct CirclesImpl(int Size) {
 				);
 			return cirImpls[bestIdx].result;
 		}
+		//testSemetry(cirImpls[bestIdx].result);
 		logf("default one found");
 		return ret;
 	}

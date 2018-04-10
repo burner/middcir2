@@ -297,6 +297,14 @@ struct CrossingImpl(int Size) {
 			//logf("all subsets smaller");
 			testAllSubsetsSmaller(this.read, this.write);
 		}
+		//bool seme = true;
+		//try {
+		//	import utils;
+		//	testSemetry(ret);
+		//} catch(Exception e) {
+		//	seme = false;
+		//}
+		//logf("%s", seme ? "semetric" : "non-semetric");
 
 		return ret;
 	}

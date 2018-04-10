@@ -805,7 +805,7 @@ void main(string[] args) {
 		return;
 	}
 	//numberOfConnectedNonIsomorphicGraphs();
-	circle();
+	//circle();
 	//circleVLattice();
 	//manyCirclesRun();
 	//boxplot();
@@ -829,7 +829,7 @@ void main(string[] args) {
 	//printProperties();
 	//gridMapped();
 	//crossings9();
-	//crossingSixteen();
+	crossingSixteen();
 	//crossingMCSSixteen();
 	//mcsCrossing16();
 	//latticeMapped9quantil();
