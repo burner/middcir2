@@ -60,6 +60,11 @@ struct ManyResults {
 	MinMaxMode[101] writeCostsMode;
 }
 
+struct CirResult {
+	Result result;
+	CirclesImpl!32 cir;
+}
+
 void loadResults(string folderName, ref ManyResults mr) {
 	auto availLines = readText(folderName ~ "/Circledatafileavail.rslt")
 		.splitter("\n");
@@ -135,31 +140,24 @@ void manyCircles(string filename, string resultFolderName) {
 	auto graphs = loadGraphsFromJSON!(32)(filename);
 	for(size_t i = 0; i < graphs.length; ++i) {
 		logf("graph %s of %s", i, graphs.length);
-		formattedWrite(fLtw, "\\section{Graph %s}\n", i);
-		formattedWrite(fLtw, "\\begin{figure}\n");
-		formattedWrite(fLtw, "\\includestandalone{graph%d/graph}\n", i);
-		formattedWrite(fLtw, "\\end{figure}\n");
-
-		auto fnG = format("%s/graph%d/", resultFolderName, i);
-		auto fnGg = fnG ~ "graph.tex";
-		mkdirRecurse(fnG);
-		auto f2 = File(fnGg, "w");
-		auto f2Ltw = f2.lockingTextWriter();
-		graphs[i].toTikz(f2Ltw);
 
 		Array!(Graph!32) planarGraphs;
 		makePlanar(graphs[i], planarGraphs);
+		logf("%s planar graphs", planarGraphs.length);
 
-		Array!(Result) results;
+		Array!(CirResult) results;
 		foreach(it; planarGraphs[]) {
 			if(!isConnected(it)) {
 				logf("Planar graph is no longer connected");
 				continue;
 			}
 			try {
-				auto cur = CirclesImpl!32(graphs[i]);
+				auto cur = CirclesImpl!32(it);
 				Result curRslt = cur.calcAC();
-				results.insertBack(curRslt);
+				CirResult tmp;
+				tmp.result = curRslt;
+				tmp.cir = cur;
+				results.insertBack(tmp);
 			} catch(Exception e) {
 				logf("Unable to find border for graph %d %s", i, e.toString());
 			}
@@ -171,12 +169,26 @@ void manyCircles(string filename, string resultFolderName) {
 			logf("turned one graph into %s graphs %s", planarGraphs.length, results.length);
 		}
 
-		sort!((a,b) => a.awr() > b.awr())(results[]);
+		sort!((a,b) => a.result.awr() > b.result.awr())(results[]);
 
 		try {
-			//auto cur = CirclesImpl!32(graphs[i]);
-			//Result curRslt = cur.calcAC();
-			Result curRslt = results.front;
+			formattedWrite(fLtw, "\\section{Graph %s}\n", i);
+			formattedWrite(fLtw, "center %s\\\n", results.front.cir.center);
+			formattedWrite(fLtw, "outside %(%s, %)\n",
+					results.front.cir.best.border[]);
+			formattedWrite(fLtw, "graph %s\n",
+					results.front.cir.best.graphSave.toString());
+			formattedWrite(fLtw, "\\begin{figure}\n");
+			formattedWrite(fLtw, "\\includestandalone{graph%d/graph}\n", i);
+			formattedWrite(fLtw, "\\end{figure}\n");
+
+			auto fnG = format("%s/graph%d/", resultFolderName, i);
+			auto fnGg = fnG ~ "graph.tex";
+			mkdirRecurse(fnG);
+			auto f2 = File(fnGg, "w");
+			auto f2Ltw = f2.lockingTextWriter();
+			results.front.cir.graph.toTikz(f2Ltw);
+			Result curRslt = results.front.result;
 			gnuPlot(fnG, "", ResultPlot("Circle", curRslt));
 			formattedWrite(fLtw, "\\begin{figure}\n");
 			formattedWrite(fLtw, "\\includegraphics{graph%d/1resultavail}\n", i);
@@ -445,6 +457,8 @@ struct CirclesImpl(int Size) {
 	double bestResult = 0.0;
 	size_t bestIdx = size_t.max;
 	Array!int border;
+	int center;
+	CircleImpl!(Size) best;
 
 	Graph!Size graph;
 	this(ref Graph!Size graph) {
@@ -490,6 +504,8 @@ struct CirclesImpl(int Size) {
 			if(s > bestResult) {
 				bestIdx = i;
 				bestResult = s;
+				this.center = cirImpls[i].mid;
+				this.best = cirImpls[i].cirImpl;
 			}
 		}
 
@@ -511,6 +527,7 @@ struct CircleImpl(int Size) {
 	Array!int border;
 	int center;
 	BitsetStore!(BSType) store;
+	Graph!Size graphSave;
 
 	this(ref Array!int border, const int center) {
 		this.border = border;
@@ -518,6 +535,7 @@ struct CircleImpl(int Size) {
 	}
 
 	Result calcAC(ref Graph!Size graph) {
+		this.graphSave = graph;
 		Result ret;
 		auto permu = PermutationsImpl!BSType(
 			cast(int)graph.length,

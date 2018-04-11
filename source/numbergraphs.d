@@ -101,13 +101,30 @@ unittest {
 	auto n2 = new GTNode();
 }
 
-void insertGraph(GTNodeA cur, Graph!64 graph) {
-	if(isConnected(graph)) {
-		insertGraph(cur, graph, selectorArray);
+void GTNodeToArray(GTNodeA tmp, ref Array!(Graph!64) arr) {
+	GTLeaf leaf = cast(GTLeaf)(tmp);
+	GTNode node = cast(GTNode)(tmp);
+	if(leaf !is null) {
+		foreach(ref g; leaf.graphs[]) {
+			arr.insertBack(g);
+		}
+	} else if(node !is null) {
+		foreach(key, value; node.follow) {
+			GTNodeToArray(value, arr);
+		}
+	} else {
+		throw new Exception("Tree is fucked up");
 	}
 }
 
-void insertGraph(GTNodeA cur, Graph!64 graph, SelectorFuncType[] sels) {
+bool insertGraph(GTNodeA cur, Graph!64 graph) {
+	if(isConnected(graph)) {
+		return insertGraph(cur, graph, selectorArray);
+	}
+	return false;
+}
+
+bool insertGraph(GTNodeA cur, Graph!64 graph, SelectorFuncType[] sels) {
 	import graphisomorph2;
 	auto gm = new GraphMeasurements();
 	gm.build(graph);
@@ -128,10 +145,11 @@ void insertGraph(GTNodeA cur, Graph!64 graph, SelectorFuncType[] sels) {
 	GTLeaf leaf = cast(GTLeaf)cur;
 	foreach(it; leaf.graphs[]) {
 		if(areGraphsIso2(it, graph)) {
-			return;
+			return false;
 		}
 	}
 	leaf.graphs.insertBack(graph);
+	return true;
 }
 
 string graphTreeToString(GTNodeA cur) {

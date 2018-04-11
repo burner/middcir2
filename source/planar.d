@@ -19,16 +19,20 @@ void makePlanar(Graph)(Graph orignal, ref Array!Graph result) {
 
 	size_t iterations = 0;
 	size_t planarCount = 0;
+	size_t createdMultipleTimes = 0;
 	outer: while(!stack.empty()) {
 		iterations++;
-		if(iterations % 1000 == 0) {
+		//if(iterations % 1000 == 0) {
 			//logf("stack size %10s iterations %10s dump size %10s",
 			//		stack.length, iterations, dump.length);
-		}
-		if(iterations > 5_000_000) {
+		//}
+		if(iterations > 500_000) {
+			logf("broke out after X stack.length %s dump.length %s",
+					stack.length, dump.length
+				);
 			break outer;
 		}
-		if(iterations > 1_000_000 && planarCount > 0) {
+		if(iterations > 100_000 && planarCount > 0) {
 			//logf("broke after 1_000_000 iterations");
 			break;
 		}
@@ -40,10 +44,10 @@ void makePlanar(Graph)(Graph orignal, ref Array!Graph result) {
 			continue;
 		}
 
-		if(!isConnected(cur)) {
-			dump.insert(cur);
-			continue;
-		}
+		//if(!isConnected(cur)) {
+		//	dump.insert(cur);
+		//	continue;
+		//}
 
 		IsPlanar testRslt = isPlanar(cur);
 		if(testRslt.planar == Planar.yes) {
@@ -55,6 +59,8 @@ void makePlanar(Graph)(Graph orignal, ref Array!Graph result) {
 				//logf("\n%s\n result size %s\niterations %s\nplanar count %s", 
 				//		cur, result.length, iterations, planarCount
 				//	);
+			} else {
+				++createdMultipleTimes;
 			}
 			if(planarCount > 100) {
 				break outer;
@@ -63,42 +69,48 @@ void makePlanar(Graph)(Graph orignal, ref Array!Graph result) {
 			//logf("%s ", testRslt.edges.length);
 			foreach(idx, it; testRslt.edges) {
 				//logf("idx %s", idx);
-				Graph a = cur.dup;
-				Graph b = cur.dup;
-				ensure(simpleGraphCompare(a, cur));
-				ensure(simpleGraphCompare(b, cur));
+				{
+					Graph a = cur.dup;
+					ensure(simpleGraphCompare(a, cur));
+					ensure(a.testEdge(it.aBegin, it.aEnd));
+					a.unsetEdge(it.aBegin, it.aEnd);
+					ensure(!a.testEdge(it.aBegin, it.aEnd));
 
-				ensure(a.testEdge(it.aBegin, it.aEnd));
-				ensure(b.testEdge(it.bBegin, it.bEnd));
-
-				a.unsetEdge(it.aBegin, it.aEnd);
-				b.unsetEdge(it.bBegin, it.bEnd);
-
-				ensure(!a.testEdge(it.aBegin, it.aEnd));
-				ensure(!b.testEdge(it.bBegin, it.bEnd));
-
-				bool foundA = canFind(stack[], a);
-				bool foundB = canFind(stack[], b);
-
-				if(!foundA && isConnected(a)) {
-					if(!canFind(dump[], a)) {
-						stack.insertBack(a);
+					bool foundA = canFind(stack[], a);
+					if(!foundA && isConnected(a)) {
+						if(!canFind(dump[], a)) {
+							stack.insertBack(a);
+						}
+					} else {
+						dump.insert(a);
 					}
-				} else {
-					dump.insert(a);
 				}
 
-				if(!foundB && isConnected(b)) {
-					if(!canFind(dump[], b)) {
-						stack.insertBack(b);
+				{
+					Graph b = cur.dup;
+					ensure(simpleGraphCompare(b, cur));
+					ensure(b.testEdge(it.bBegin, it.bEnd));
+					b.unsetEdge(it.bBegin, it.bEnd);
+					ensure(!b.testEdge(it.bBegin, it.bEnd));
+
+					bool foundB = canFind(stack[], b);
+
+					if(!foundB && isConnected(b)) {
+						if(!canFind(dump[], b)) {
+							stack.insertBack(b);
+						}
+					} else {
+						dump.insert(b);
 					}
-				} else {
-					dump.insert(b);
 				}
 			}
 		}
 	}
-	logf("result size result size result size %s", result.length);
+	logf("result size %s in %,s iterations, created multiple times %s, " 
+			~ "dump %s, stack %s",
+			result.length, iterations, createdMultipleTimes, dump.length,
+			stack.length
+		);
 }
 
 alias Planar = Flag!"Planar";
@@ -112,6 +124,11 @@ struct Edge {
 
 	static Edge opCall(int aB, int aE, int bB, int bE) {
 		Edge ret;
+		//ret.aBegin = aB;
+		//ret.aEnd = aE;
+
+		//ret.bBegin = bB;
+		//ret.bEnd = bE;
 		if(aB < aE) {
 			ret.aBegin = aB;
 			ret.aEnd = aE;
@@ -126,6 +143,24 @@ struct Edge {
 		} else {
 			ret.bBegin = bE;
 			ret.bEnd = bB;
+		}
+
+		if(ret.bBegin < ret.aBegin) {
+			int tmp = ret.aBegin;
+			ret.aBegin = ret.bBegin;
+			ret.bBegin = tmp;
+
+			tmp = ret.aEnd;
+			ret.aEnd = ret.bEnd;
+			ret.bEnd = tmp;
+		} else if(ret.bBegin == ret.aBegin && ret.bEnd < ret.aEnd) {
+			int tmp = ret.aBegin;
+			ret.aBegin = ret.bBegin;
+			ret.bBegin = tmp;
+
+			tmp = ret.aEnd;
+			ret.aEnd = ret.bEnd;
+			ret.bEnd = tmp;
 		}
 
 		return ret;
@@ -150,17 +185,22 @@ IsPlanar isPlanar(Graph)(const ref Graph graph) {
 	ret.planar = Planar.yes;
 	const int nn = to!int(graph.length);
 	for(int ai = 0; ai < nn; ++ai) {
-		for(int aj = ai + 1; aj < nn; ++aj) {
+		for(int aj = 0; aj < nn; ++aj) {
 			if(ai == aj || !graph.testEdge(ai, aj)) {
 				continue;
 			}
 
-			for(int bi = ai + 1; bi < nn; ++bi) {
-				if(bi == ai || bi == aj) {
-					continue;
-				}
-				inner: for(int bj = bi + 1; bj < nn; ++bj) {
-					if(bj == ai || bj == aj || !graph.testEdge(bi, bj)) {
+			for(int bi = 0; bi < nn; ++bi) {
+				inner: for(int bj = 0; bj < nn; ++bj) {
+					if(bi == bj || !graph.testEdge(bi, bj)) {
+						continue;
+					}
+
+					if(ai == bi && aj == bj) {
+						continue;
+					}
+
+					if(ai == bj && aj == bi) {
 						continue;
 					}
 

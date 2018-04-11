@@ -4,11 +4,13 @@ static import std.array;
 import std.stdio;
 import std.container.array;
 import std.range : lockstep;
-import std.format : format;
+import std.format : format, formattedWrite;
 import std.algorithm : permutations, Permutations;
 import std.experimental.logger;
 import std.datetime.stopwatch : StopWatch;
 import std.array : empty;
+
+import gfm.math.vector;
 
 import exceptionhandling;
 
@@ -60,6 +62,76 @@ class ShortLogger : Logger {
 //version(release) {
 	//version = exceptionhandling_release_asserts;
 //}
+
+void genNumberOfConnectedNonIsomorphicGraphs() {
+	for(size_t i = 8; i < 9; ++i) {
+		string f = genNumberOfConnectedNonIsomorphicGraphs(i, 1000);
+		manyCircles(f ~ ".json", "Results/" ~ f);
+	}
+}
+
+string genNumberOfConnectedNonIsomorphicGraphs(const size_t gs, const size_t numGraphs) {
+	import numbergraphs;
+	import trigraph;
+	import std.random;
+	import std.file : mkdirRecurse;
+
+	auto rnd = Random(1337);
+	auto n = new GTNode();
+	size_t p = 0;
+	for(size_t i = 1; i < gs; ++i) {
+		p += i;
+	}
+	//immutable size_t p = ((gs - 1) * (gs - 1)) / 2;
+	immutable size_t upto = 2^^p;
+	logf("graph size %s length of triangle side %s number of graphs to tests,"
+			~ " upto %s", gs, p, numGraphs, upto);
+	size_t inserted = 0;
+	size_t i = 0;
+	while(inserted < numGraphs) {
+		if(i % 100 == 0) {
+			logf("%,s inserted %,s", i, inserted);
+		}
+		ulong r = uniform!("[)", ulong, ulong)(0, upto, rnd);
+		auto g = numberToGraph(r, gs);
+		if(insertGraph(n, g)) {
+			++inserted;
+		}
+		++i;
+	}
+	logf("num of possible graphs with %s vertices %s", gs, countGraphsInTree(n));
+	Array!(Graph!64) arr;
+	GTNodeToArray(n, arr);
+
+	string ret = format("graphs_size_%s_num_%s", gs, numGraphs);
+	auto f = File(ret ~ ".json", "w");
+	auto ltw = f.lockingTextWriter();
+	formattedWrite(ltw, "{\n \"graphs\" : [");
+	int id = 0;
+	bool first = true;
+	Array!vec3d posses = getTriPositions(gs);
+	string graphFolder = format("graphs_size_%s_num_%s_graphs", gs,
+			numGraphs);
+	mkdirRecurse(graphFolder);
+	foreach(ref g; arr) {
+		int idx = 0;
+		foreach(pos; posses[]) {
+			g.setNodePos(idx++, pos);
+		}
+		if(!first) {
+			formattedWrite(ltw, ",");
+		}
+		first = false;
+		g.id = id;
+		g.toJSON(ltw);
+		auto f2 = File(format(graphFolder ~ "/%s.tex", id), "w");
+		auto ltw2 = f2.lockingTextWriter();
+		g.toTikz(ltw2);
+		++id;
+	}
+	formattedWrite(ltw, "]}");
+	return ret;
+}
 
 void numberOfConnectedNonIsomorphicGraphs(size_t gs) {
 	import numbergraphs;
@@ -546,9 +618,10 @@ void circle() {
 
 void manyCirclesRun() {
 	//manyCircles("graphs6nodes3.json", "Results/graph6nodes3");
-	manyCircles("graphs8nodes3.json", "Results/graph8nodes3");
-	manyCircles("graphs9nodes3.json", "Results/graph9nodes3");
+	//manyCircles("graphs8nodes3.json", "Results/graph8nodes3");
+	//manyCircles("graphs9nodes3.json", "Results/graph9nodes3");
 	//manyCircles("graphs12nodes3.json", "Results/graph12nodes3");
+	manyCircles("graphs_size_9_num_2048.json", "Results/graphs_size_9_num_2048");
 }
 
 void crossing12() {
@@ -805,6 +878,8 @@ void main(string[] args) {
 		return;
 	}
 	//numberOfConnectedNonIsomorphicGraphs();
+	//genNumberOfConnectedNonIsomorphicGraphs(9, 2048);
+	genNumberOfConnectedNonIsomorphicGraphs();
 	//circle();
 	//circleVLattice();
 	//manyCirclesRun();
@@ -829,7 +904,7 @@ void main(string[] args) {
 	//printProperties();
 	//gridMapped();
 	//crossings9();
-	crossingSixteen();
+	//crossingSixteen();
 	//crossingMCSSixteen();
 	//mcsCrossing16();
 	//latticeMapped9quantil();

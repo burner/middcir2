@@ -540,9 +540,9 @@ Array!(TBLR) possibleBorders(G)(auto ref G graph) {
 	logf("len %s, lenT %s", len, lenT);
 	for(int t = 0; t < lenT; ++t) {
 		TBLR tblr;
-		logf("t %s", t);
+		//logf("t %s", t);
 		for(int tl = 1; tl < lenT; ++tl) {
-			logf("tl %s", tl);
+			//logf("tl %s", tl);
 			tblr.top.clear();
 			splitOutN(uniqueBorder, tblr.top, t, tl);
 			ensure(tblr.top.length > 0);
@@ -649,14 +649,14 @@ Array!(TBLR) possibleBorders(G)(auto ref G graph) {
 									if(canFind(ret[], tblr)) {
 										//logf("already present");
 									} else {
-										logf("new");
-										logf("t [%20(%s %)], l [%20(%s %)], b [%20(%s %)], r [%20(%s %)]",
-												tblr.top[], tblr.left[], tblr.bottom[], tblr.right[]
-											);
+										//logf("new");
+										//logf("t [%20(%s %)], l [%20(%s %)], b [%20(%s %)], r [%20(%s %)]",
+										//		tblr.top[], tblr.left[], tblr.bottom[], tblr.right[]
+										//	);
 								
-										logf("tbE %s lrE %s tlNE %s trNE %s blNE %s brNE %s",
-												tbE, lrE, tlNE, trNE, blNE, brNE
-											);
+										//logf("tbE %s lrE %s tlNE %s trNE %s blNE %s brNE %s",
+										//		tbE, lrE, tlNE, trNE, blNE, brNE
+										//	);
 										tblr.diagonalPairs.clear();
 										computeDiagonalPairs2(tblr, tlI, brI,
 												trI, blI

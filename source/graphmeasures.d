@@ -85,8 +85,8 @@ DiameterResult computeDiameter(int Size)(ref Graph!Size graph) {
 	floyd.execute(graph);
 
 	DiameterResult rslt;
-	FixedSizeArray!(size_t,64) store;
-	FixedSizeArray!(uint,64) tmpPathStore;
+	FixedSizeArray!(size_t,128) store;
+	FixedSizeArray!(uint,128) tmpPathStore;
 
 	for(uint i = 0; i < graph.length; ++i) {
 		for(uint j = i; j < graph.length; ++j) {

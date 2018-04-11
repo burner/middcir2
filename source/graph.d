@@ -304,28 +304,90 @@ struct Graph(int Size) {
 	}
 
 	bool testEdgeIntersection(int aFrom, int aTo, int bFrom, int bTo) const
-			pure 
 	{
-		auto tStart = this.nodePositions[aFrom];
-		auto tEnd = this.nodePositions[aTo];
+		double slope(vec3d a, vec3d b) {
+			return (b.y - a.y) / (b.x - a.x);
+		}
+		import lineintersect;
+		import std.math : approxEqual;
+		vec3d tStart = this.nodePositions[aFrom];
+		vec3d tEnd = this.nodePositions[aTo];
+		//logf("old t %s %s", tStart, tEnd);
+
+		auto tDir = tEnd - tStart;
+		tDir.normalize();
+		tDir *= 0.1;
+		tStart += tDir;
+		tEnd -= tDir;
 	
-		auto oStart = this.nodePositions[bFrom];
-		auto oEnd = this.nodePositions[bTo];
+		vec3d oStart = this.nodePositions[bFrom];
+		vec3d oEnd = this.nodePositions[bTo];
+		//logf("old o %s %s", oStart, oEnd);
+		auto oDir = oEnd - oStart;
+		oDir.normalize();
+		oDir *= 0.1;
+		oStart += oDir;
+		oEnd -= oDir;
+
+		//logf("new t %s %s", tStart, tEnd);
+		//logf("new o %s %s", oStart, oEnd);
+
+		return doIntersect(tStart, tEnd, oStart, oEnd);
+
+		/+
+		ensure(!isNaN(tStart.x));
+		ensure(!isNaN(tStart.y));
+		ensure(!isNaN(tEnd.x));
+		ensure(!isNaN(tEnd.y));
+		ensure(!isNaN(oStart.x));
+		ensure(!isNaN(oStart.y));
+		ensure(!isNaN(oEnd.x));
+		ensure(!isNaN(oEnd.y));
+
+		/*return doIntersect(tStart, tEnd, oStart, oEnd) 
+			//&& approxEqual(slope(tStart, tEnd), slope(oStart, oEnd))
+			;
+		*/
 	
 	    auto s1_x = tEnd.x - tStart.x; 
 		auto s1_y = tEnd.y - tStart.y; 
 		auto s2_x = oEnd.x - oStart.x;
 		auto s2_y = oEnd.y - oStart.y;
+
+		ensure(!isNaN(s1_x));
+		ensure(!isNaN(s1_y));
+		ensure(!isNaN(s2_x));
+		ensure(!isNaN(s2_y));
 	
 	    double s = (-s1_y * (tStart.x - oStart.x) + s1_x * (tStart.y - oStart.y)) / (-s2_x * s1_y + s1_x * s2_y);
+		//if(isNaN(s)) {
+		//	s = 0.0;
+		//}
+
 	    double t = ( s2_x * (tStart.y - oStart.y) - s2_y * (tStart.x - oStart.x)) / (-s2_x * s1_y + s1_x * s2_y);
-	
-	    if(s >= 0 && s <= 1 && t >= 0 && t <= 1) {
+		//if(isNaN(t)) {
+		//	t = 0.0;
+		//}
+
+		////logf("tStart (%s:%s), tEnd (%s:%s), oStart (%s:%s), oEnd (%s:%s)",
+		////		tStart.x, tStart.y, tEnd.x, tEnd.y, 
+		////		oStart.x, oStart.y, oEnd.x, oEnd.y
+		////	);
+		////logf("s1_x %s, s1_y %s, s2_x %s, s2_y %s", s1_x, s1_y, s2_x, s2_y);
+	    //////if(s >= 0 && s <= 1 && t >= 0 && t <= 1) {
+		////logf("s %s >= 0 && s %s <= 1 && t %s >= 0 && t %s <= 1",
+		////		s, s, t, t
+		////	);
+	    if(greaterEqual(s, 0) && lessEqual(s, 1) && greaterEqual(t, 0) &&
+				lessEqual(t, 1)) 
+		{
 	        // Collision detected
 	        return true;
 	    }
 	
-	    return false; // No collision
+		return doLinesIntersect(tStart, tEnd, oStart, oEnd);
+	    //return false; // No collision
+		+/
 	}
 
 	string toString() const {
@@ -385,7 +447,7 @@ struct Graph(int Size) {
 					formattedWrite(app, "%2s ", j);
 				}
 			}
-			formattedWrite(app, "\n");
+			formattedWrite(app, " |\n");
 		}
 	}
 
@@ -1078,4 +1140,55 @@ unittest {
 	}
 
 	assert(areHomomorph!16(six, sixD));
+}
+
+unittest {
+	import std.stdio;
+	import planar;
+	import std.container.array : Array;
+	auto g = Graph!64(8);
+	g.setEdge(0, 1);
+	g.setEdge(0, 2);
+	g.setEdge(0, 4);
+	g.setEdge(0, 7);
+	g.setNodePos(0, vec3d(0.0, 4.0, 0.0));
+
+	g.setEdge(1, 2);
+	g.setEdge(1, 5);
+	g.setNodePos(1, vec3d(1.0, 4.0, 0.0));
+
+	g.setEdge(2, 3);
+	g.setEdge(2, 5);
+	g.setNodePos(2, vec3d(2.0, 4.0, 0.0));
+
+	g.setEdge(3, 6);
+	g.setNodePos(3, vec3d(3.0, 4.0, 0.0));
+	
+	g.setEdge(4, 7);
+	g.setNodePos(4, vec3d(0.0, 3.0, 0.0));
+
+	g.setEdge(5, 7);
+	g.setNodePos(5, vec3d(1.0, 3.0, 0.0));
+	
+	g.setEdge(6, 7);
+	g.setNodePos(6, vec3d(2.0, 3.0, 0.0));
+
+	g.setNodePos(7, vec3d(0.0, 2.0, 0.0));
+
+	auto f = File("nonplanartestgraph.tex", "w");
+	auto ltw = f.lockingTextWriter();
+
+	g.toTikz(ltw);
+	logf("\n\nbefore last test");
+	assert(g.testEdgeIntersection(0, 4, 0, 7));
+	assert(g.testEdgeIntersection(0, 7, 0, 4));
+	logf("after last test\n\n");
+
+	auto p = isPlanar(g);
+	assert(p.planar == Planar.no);
+	logf("%s", p.edges);
+
+	Array!(Graph!64) planarGs;
+	makePlanar(g, planarGs);
+	assert(planarGs.length > 0);
 }

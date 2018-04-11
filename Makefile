@@ -1,6 +1,9 @@
 all:
 	dub --compiler=ldc --build=debug
 
+dmd:
+	dub --compiler=dmd
+
 build:
 	dub build --compiler=ldc
 
