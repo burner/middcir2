@@ -78,9 +78,9 @@ void makePlanar(Graph)(Graph orignal, ref Array!Graph result) {
 
 					bool foundA = canFind(stack[], a);
 					if(!foundA && isConnected(a)) {
-						if(!canFind(dump[], a)) {
+						//if(!canFind(dump[], a)) {
 							stack.insertBack(a);
-						}
+						//}
 					} else {
 						dump.insert(a);
 					}
@@ -96,9 +96,9 @@ void makePlanar(Graph)(Graph orignal, ref Array!Graph result) {
 					bool foundB = canFind(stack[], b);
 
 					if(!foundB && isConnected(b)) {
-						if(!canFind(dump[], b)) {
+						//if(!canFind(dump[], b)) {
 							stack.insertBack(b);
-						}
+						//}
 					} else {
 						dump.insert(b);
 					}

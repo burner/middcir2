@@ -1191,4 +1191,11 @@ unittest {
 	Array!(Graph!64) planarGs;
 	makePlanar(g, planarGs);
 	assert(planarGs.length > 0);
+
+	for(int i = 0; i < planarGs.length; ++i) {
+		import std.format : format;
+		auto f2 = File(format("nonplanartestgraph%s.tex", i), "w");
+		auto ltw2 = f2.lockingTextWriter();
+		planarGs[i].toTikz(ltw2);
+	}
 }
