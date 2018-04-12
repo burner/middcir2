@@ -193,16 +193,20 @@ struct Graph(int Size) {
 		);
 	}
 
-	Array!int computeBorder() const {
+	Array!int computeBorder() {
 		Array!int ret;
 
+		log();
 		// compute fake start edge
 		int startNode = this.getLeftMostNode();
-		vec3d startNodeVec = startEdgeStartNode(this.nodePositions[startNode]);
+		const vec3d startNodeVec = startEdgeStartNode(this.nodePositions[startNode]);
 		vec3d curEdgeDir = dirOfEdge(startNodeVec, this.nodePositions[startNode]);
+		vec3d curNodePos;
 
+		bool first = true;
 		int lastNode = int.min;
 		int curNode = startNode;
+		curNodePos = startNodeVec;
 		do {
 			if(ret.length > this.length * 4) {
 				throw new Exception("Unable to find border overflow");
@@ -210,11 +214,30 @@ struct Graph(int Size) {
 			int nextNode;
 			ret.insertBack(curNode);
 			this.nextNode(lastNode, curNode, curEdgeDir, nextNode);
+			if(first) {
+				this.numNodes++;
+				this.setEdge(this.numNodes-1, startNode);
+				this.setNodePos(this.numNodes-1, startNodeVec);
+				first = false;
+			}
 			lastNode = curNode;
 			curNode = nextNode;
-		} while(curNode != startNode);
+			curNodePos = this.nodePositions[curNode];
+			//logf("cur %s, start %s approx %s", curNodePos, startNodeVec,
+			//		vec3dSuperClose(startNodeVec, curNodePos));
+		} while(!vec3dSuperClose(startNodeVec, curNodePos));
+		//} while(curNode != startNode);
+
+		this.unsetEdge(this.numNodes-1, startNode);
+		this.numNodes--;
+		this.nodePositions.removeBack();
 
 		return ret;
+	}
+
+	static bool vec3dSuperClose(const vec3d a, const vec3d b) {
+		import std.math : approxEqual;
+		return approxEqual(a.x, b.x) && approxEqual(a.y, b.y);
 	}
 
 	string toTikz() const {
@@ -650,16 +673,17 @@ Graph!Size genTestGraph(int Size)() {
 }
 
 unittest {
+	import std.format : format;
 	auto g = genTestGraph!32();
 
 	auto id = g.getLeftMostNode();
 	assert(id == 0);
 
 	auto border = g.computeBorder();
-	auto test = [0, 2, 15, 9, 3, 6, 5, 8, 12, 1];
-	assert(border.length == test.length);
+	auto test = [0, 2, 15, 9, 3, 6, 5, 8, 12, 1, 0];
+	assertEqual(border.length, test.length, format("[%(%s, %)]", border[]));
 	for(size_t i = 0; i < border.length; ++i) {
-		assert(border[i] == test[i]);
+		assertEqual(border[i], test[i], format("%s", i));
 	}
 }
 
@@ -710,9 +734,29 @@ Graph!Size genTestGraph12(int Size)() {
 
 unittest {
 	import std.stdio : File;
+	import std.format : format;
 	auto g = genTestGraph12!32();
 	auto f = File("testgraph12.tex", "w");
 	f.write(g.toTikz());
+	auto border = g.computeBorder();
+	auto test = [0, 2, 7, 5, 4, 6, 9, 1, 0];
+	assertEqual(border.length, test.length, format("[%(%s, %)]", border[]));
+	for(size_t i = 0; i < border.length; ++i) {
+		assertEqual(border[i], test[i], format("%s", i));
+	}
+
+	g.numNodes++;
+	g.setEdge(9, 12);
+	g.setNodePos(12, vec3d(3, -0.5, 0));
+	f = File("testgraph12_2.tex", "w");
+	f.write(g.toTikz());
+	border = g.computeBorder();
+	test = [0, 2, 7, 5, 4, 6, 9, 12, 9, 1, 0];
+	assertEqual(border.length, test.length, format("[%(%s, %)]", border[]));
+	for(size_t i = 0; i < border.length; ++i) {
+		assertEqual(border[i], test[i], format("%s", i));
+	}
+
 }
 
 Graph!16 makeTwoTimesTwo() {
@@ -730,6 +774,20 @@ Graph!16 makeTwoTimesTwo() {
 	ret.setEdge(2, 3);
 
 	return ret;
+}
+
+unittest {
+	import std.stdio : File;
+	import std.format : format;
+	auto g = makeTwoTimesTwo;
+	auto f = File("testgraph2x2.tex", "w");
+	f.write(g.toTikz());
+	auto border = g.computeBorder();
+	auto test = [0, 2, 3, 1, 0];
+	assertEqual(border.length, test.length, format("[%(%s, %)]", border[]));
+	for(size_t i = 0; i < border.length; ++i) {
+		assertEqual(border[i], test[i], format("%s", i));
+	}
 }
 
 Graph!Size makeLine(int Size)(int len) {
@@ -1142,11 +1200,8 @@ unittest {
 	assert(areHomomorph!16(six, sixD));
 }
 
-unittest {
-	import std.stdio;
-	import planar;
-	import std.container.array : Array;
-	auto g = Graph!64(8);
+Graph!Size stupidGraph(int Size)() {
+	auto g = Graph!Size(8);
 	g.setEdge(0, 1);
 	g.setEdge(0, 2);
 	g.setEdge(0, 4);
@@ -1175,18 +1230,24 @@ unittest {
 
 	g.setNodePos(7, vec3d(0.0, 2.0, 0.0));
 
+	return g;
+}
+
+unittest {
+	import std.stdio;
+	import planar;
+	import std.container.array : Array;
+	auto g = stupidGraph!64();
+
 	auto f = File("nonplanartestgraph.tex", "w");
 	auto ltw = f.lockingTextWriter();
 
 	g.toTikz(ltw);
-	logf("\n\nbefore last test");
 	assert(g.testEdgeIntersection(0, 4, 0, 7));
 	assert(g.testEdgeIntersection(0, 7, 0, 4));
-	logf("after last test\n\n");
 
 	auto p = isPlanar(g);
 	assert(p.planar == Planar.no);
-	logf("%s", p.edges);
 
 	Array!(Graph!64) planarGs;
 	makePlanar(g, planarGs);
@@ -1197,5 +1258,43 @@ unittest {
 		auto f2 = File(format("nonplanartestgraph%s.tex", i), "w");
 		auto ltw2 = f2.lockingTextWriter();
 		planarGs[i].toTikz(ltw2);
+	}
+}
+
+void graphToFile(G,A...)(auto ref G g, string foldername, A args) {
+	import std.file : mkdirRecurse;
+	import std.stdio;
+	import std.conv : text;
+	mkdirRecurse(foldername);
+
+	auto f = File(foldername ~ "/" ~ text(args) ~ ".tex", "w");
+	auto ltw = f.lockingTextWriter();
+	g.toTikz(ltw);
+}
+
+unittest {
+	import std.stdio;
+	import planar;
+	import std.container.array : Array;
+	import std.algorithm.searching : canFind;
+	import std.format : format;
+	auto g = stupidGraph!64();
+
+	Array!(Graph!64) planarGs;
+	makePlanar(g, planarGs);
+
+	size_t i = 0;
+	foreach(ref it; planarGs[]) {
+		graphToFile(it, "Test/Border1", "planar", i);
+		const size_t gs = it.length();
+		auto b = it.computeBorder();
+		assertEqual(gs, it.length);
+		logf("%s, %(%s, %)", i, b[]);
+		foreach(cnt; 0 .. it.length) {
+			assert(canFind(b[], cnt), format("should have found %s, in "
+					~ "[%(%s,)])", cnt, b[])
+				);
+		}
+		++i;
 	}
 }

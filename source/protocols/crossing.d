@@ -765,9 +765,12 @@ unittest {
 	Array!int left;
 	Array!int right;
 	Array!(int[2]) diagonal;
-	auto border = g.computeBorder();
 
-	c.splitBorderIntoTBLR(border, bottom, top, left, right, 
+	auto border = g.computeBorder();
+	Array!int uniqueBorder;
+	makeArrayUnique!uint(border, uniqueBorder);
+
+	c.splitBorderIntoTBLR(uniqueBorder, bottom, top, left, right, 
 			diagonal
 	);
 }
