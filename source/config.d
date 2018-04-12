@@ -19,6 +19,8 @@ struct SortBy {
 }
 
 struct Config {
+	@Arg('p') size_t numberOfMakePlararIterations = 10_000;
+	@Arg('s') size_t numberOfMakePlararIterationsResult = 2_000;
 	@Arg() bool runMultiThreaded = false;
 	@Arg() int permutationCountStart = -1;
 	@Arg() int permutationCountStop = -1;

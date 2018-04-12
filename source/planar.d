@@ -11,6 +11,7 @@ import graph;
 void makePlanar(Graph)(Graph orignal, ref Array!Graph result) {
 	import std.algorithm.searching : canFind;
 	import std.random : randomShuffle;
+	import config;
 	Array!Graph stack;
 	Array!Graph dump;
 	stack.insertBack(orignal);
@@ -26,13 +27,15 @@ void makePlanar(Graph)(Graph orignal, ref Array!Graph result) {
 			//logf("stack size %10s iterations %10s dump size %10s",
 			//		stack.length, iterations, dump.length);
 		//}
-		if(iterations > 500_000) {
+		if(iterations > getConfig().numberOfMakePlararIterations) {
 			logf("broke out after X stack.length %s dump.length %s",
 					stack.length, dump.length
 				);
 			break outer;
 		}
-		if(iterations > 100_000 && planarCount > 0) {
+		if(iterations > getConfig().numberOfMakePlararIterationsResult 
+				&& planarCount > 0) 
+		{
 			//logf("broke after 1_000_000 iterations");
 			break;
 		}

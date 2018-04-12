@@ -5,6 +5,7 @@ import std.stdio;
 import std.container.array;
 import std.range : lockstep;
 import std.format : format, formattedWrite;
+import std.file : mkdirRecurse;
 import std.algorithm : permutations, Permutations;
 import std.experimental.logger;
 import std.datetime.stopwatch : StopWatch;
@@ -65,7 +66,7 @@ class ShortLogger : Logger {
 
 void genNumberOfConnectedNonIsomorphicGraphs() {
 	for(size_t i = 8; i < 9; ++i) {
-		string f = genNumberOfConnectedNonIsomorphicGraphs(i, 1000);
+		string f = genNumberOfConnectedNonIsomorphicGraphs(i, 2000);
 		manyCircles(f ~ ".json", "Results/" ~ f);
 	}
 }
@@ -674,6 +675,50 @@ void crossingSixteen() {
 	gnuPlot("Results/Crossing16", "", ResultPlot(crs.name, crsRslt));
 }
 
+void crossingSixteenCircleTLP() {
+	mkdirRecurse("Results/Crossing16CircleTLP/");
+	auto tl = Lattice(4, 4);
+	auto tlRslt = tl.calcAC();
+	//Graph!32 pnt = genTestGraph!32();
+	//pnt.unsetEdge(2, 13);
+	{
+		auto f = File("Results/Crossing16CircleTLP/graph.tex", "w");
+		auto ltw = f.lockingTextWriter();
+		tl.getGraph().toTikz(ltw);
+	}
+
+	auto crs = Crossings(tl.getGraph());
+	auto crsRslt = crs.calcAC();
+	auto cip = Circles(tl.getGraph());
+	auto cipRslt = cip.calcAC();
+
+	gnuPlot("Results/Crossing16CircleTLP", "", ResultPlot("Crossing", crsRslt),
+			ResultPlot("Circle", cipRslt),
+			ResultPlot("Lattice", tlRslt),
+		);
+}
+
+void crossingSixteenCircle() {
+	mkdirRecurse("Results/Crossing16Circle/");
+	Graph!32 pnt = genTestGraph!32();
+	pnt.unsetEdge(2, 13);
+	{
+		auto f = File("Results/Crossing16Circle/graph.tex", "w");
+		auto ltw = f.lockingTextWriter();
+		pnt.toTikz(ltw);
+	}
+
+	auto crs = Crossings(pnt);
+	auto crsRslt = crs.calcAC();
+	auto cip = Circles(pnt);
+	auto cipRslt = cip.calcAC();
+
+	gnuPlot("Results/Crossing16Circle", "", ResultPlot(crs.name, crsRslt),
+			ResultPlot("Circle", cipRslt)
+		);
+}
+
+
 void crossingMCSSixteen() {
 	auto pnt = genTestGraph!32();
 
@@ -879,7 +924,7 @@ void main(string[] args) {
 	}
 	//numberOfConnectedNonIsomorphicGraphs();
 	//genNumberOfConnectedNonIsomorphicGraphs(9, 2048);
-	genNumberOfConnectedNonIsomorphicGraphs();
+	//genNumberOfConnectedNonIsomorphicGraphs();
 	//circle();
 	//circleVLattice();
 	//manyCirclesRun();
@@ -905,6 +950,8 @@ void main(string[] args) {
 	//gridMapped();
 	//crossings9();
 	//crossingSixteen();
+	//crossingSixteenCircle();
+	crossingSixteenCircleTLP();
 	//crossingMCSSixteen();
 	//mcsCrossing16();
 	//latticeMapped9quantil();
