@@ -189,6 +189,10 @@ double angleFunc(const vec3d a, const vec3d o) {
 		else if (x > 1.0) x = 1.0 ;
 		return acos(x) ;
 	}
+	ensure(!isNaN(a.x));
+	ensure(!isNaN(a.y));
+	ensure(!isNaN(o.x));
+	ensure(!isNaN(o.y));
 
 	double divident = a.x * o.x + a.y * o.y;
 	ensure(!isNaN(divident));

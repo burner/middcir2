@@ -65,8 +65,8 @@ class ShortLogger : Logger {
 //}
 
 void genNumberOfConnectedNonIsomorphicGraphs() {
-	for(size_t i = 8; i < 9; ++i) {
-		string f = genNumberOfConnectedNonIsomorphicGraphs(i, 2000);
+	for(size_t i = 8; i < 16; ++i) {
+		string f = genNumberOfConnectedNonIsomorphicGraphs(i, 5000);
 		manyCircles(f ~ ".json", "Results/" ~ f);
 	}
 }
@@ -617,6 +617,14 @@ void circle() {
 
 }
 
+void manyCrossingsRun() {
+	//manyCrossings("graphs6nodes3.json", "Results/graph6nodes3");
+	manyCrossings("graphs8nodes3.json", "Results/cp_graph8nodes3");
+	manyCrossings("graphs9nodes3.json", "Results/cp_graph9nodes3");
+	//manyCrossings("graphs12nodes3.json", "Results/graph12nodes3");
+	//manyCrossings("graphs_size_9_num_2048.json", "Results/graphs_size_9_num_2048");
+}
+
 void manyCirclesRun() {
 	//manyCircles("graphs6nodes3.json", "Results/graph6nodes3");
 	manyCircles("graphs8nodes3.json", "Results/graph8nodes3");
@@ -928,6 +936,7 @@ void main(string[] args) {
 	//circle();
 	//circleVLattice();
 	//manyCirclesRun();
+	manyCrossingsRun();
 	//boxplot();
 	//checkGraphUnique("graphs6nodes3.json");
 	//checkGraphUnique("graphs8nodes3.json");
@@ -951,7 +960,7 @@ void main(string[] args) {
 	//crossings9();
 	//crossingSixteen();
 	//crossingSixteenCircle();
-	crossingSixteenCircleTLP();
+	//crossingSixteenCircleTLP();
 	//crossingMCSSixteen();
 	//mcsCrossing16();
 	//latticeMapped9quantil();

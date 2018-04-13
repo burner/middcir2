@@ -203,6 +203,12 @@ struct Graph(int Size) {
 		vec3d curEdgeDir = dirOfEdge(startNodeVec, this.nodePositions[startNode]);
 		vec3d curNodePos;
 
+		scope(exit) {
+			this.unsetEdge(this.numNodes-1, startNode);
+			this.numNodes--;
+			this.nodePositions.removeBack();
+		}
+
 		bool first = true;
 		int lastNode = int.min;
 		int curNode = startNode;
@@ -211,6 +217,7 @@ struct Graph(int Size) {
 			if(ret.length > this.length * 4) {
 				throw new Exception("Unable to find border overflow");
 			}
+			logf("curNode %s lastNode %s", curNude, lastNode);
 			int nextNode;
 			ret.insertBack(curNode);
 			this.nextNode(lastNode, curNode, curEdgeDir, nextNode);
@@ -223,14 +230,12 @@ struct Graph(int Size) {
 			lastNode = curNode;
 			curNode = nextNode;
 			curNodePos = this.nodePositions[curNode];
-			//logf("cur %s, start %s approx %s", curNodePos, startNodeVec,
-			//		vec3dSuperClose(startNodeVec, curNodePos));
+			logf("cur %s, start %s approx %s", curNodePos, startNodeVec,
+					vec3dSuperClose(startNodeVec, curNodePos));
 		} while(!vec3dSuperClose(startNodeVec, curNodePos));
 		//} while(curNode != startNode);
 
-		this.unsetEdge(this.numNodes-1, startNode);
-		this.numNodes--;
-		this.nodePositions.removeBack();
+		ensure(this.nodePositions.length == this.numNodes);
 
 		return ret;
 	}
@@ -1280,7 +1285,7 @@ unittest {
 	import std.format : format;
 	auto g = stupidGraph!64();
 
-	Array!(Graph!64) planarGs;
+	/*Array!(Graph!64) planarGs;
 	makePlanar(g, planarGs);
 
 	size_t i = 0;
@@ -1296,5 +1301,62 @@ unittest {
 				);
 		}
 		++i;
+	}*/
+}
+
+Graph!Size graph8Planar(int Size)() {
+	auto g = Graph!Size(8);
+	g.setEdge(0, 1);
+	g.setEdge(0, 2);
+	g.setEdge(0, 3);
+	g.setEdge(1, 3);
+	g.setEdge(1, 4);
+	g.setEdge(2, 5);
+	g.setEdge(2, 6);
+	g.setEdge(2, 7);
+	g.setEdge(3, 4);
+	g.setEdge(3, 5);
+	g.setEdge(3, 6);
+	g.setEdge(3, 7);
+	g.setEdge(4, 4);
+	g.setEdge(4, 7);
+	g.setEdge(5, 5);
+	g.setEdge(6, 6);
+	g.setEdge(6, 7);
+	g.setNodePos(0, vec3d(4.0,  0.0, 0.0));
+	g.setNodePos(1, vec3d(7.0,  0.0, 0.0));
+	g.setNodePos(2, vec3d(1.0,  1.0, 0.0));
+	g.setNodePos(3, vec3d(5.0,  2.0, 0.0));
+	g.setNodePos(4, vec3d(6.0,  3.0, 0.0));
+	g.setNodePos(5, vec3d(3.0,  3.0, 0.0));
+	g.setNodePos(6, vec3d(3.0,  7.0, 0.0));
+	g.setNodePos(7, vec3d(3.0,  8.0, 0.0));
+	return g;
+}
+
+unittest {
+	import std.stdio;
+	import planar;
+	import std.container.array : Array;
+	import std.algorithm.searching : canFind;
+	import std.format : format;
+
+	auto g = graph8Planar!64();
+
+	Array!(Graph!64) planarGs;
+	makePlanar(g, planarGs);
+	size_t i = 0;
+	foreach(ref it; planarGs[]) {
+		graphToFile(it, "Test/Border1", "planar", i);
+		const size_t gs = it.length();
+		auto b = it.computeBorder();
+		logf("%s, %(%s, %)", i, b[]);
+		//foreach(cnt; 0 .. it.length) {
+		//	assert(canFind(b[], cnt), format("should have found %s, in "
+		//			~ "[%(%s,)])", cnt, b[])
+		//		);
+		//}
+		++i;
 	}
+	assert(false);
 }

@@ -539,7 +539,7 @@ struct CircleImpl(int Size) {
 		Result ret;
 		auto permu = PermutationsImpl!BSType(
 			cast(int)graph.length,
-			1,
+			2,
 			getConfig().permutationStop(cast(int)graph.length)
 		);
 		auto last = 0;
@@ -565,12 +565,12 @@ struct CircleImpl(int Size) {
 
 			if(dir.pathExists == PathOutsideExists.yes && sm) {
 				if(dir.path.length < curCount) {
-					this.store.insert(dirBS);
+					this.store.insert(perm);
 				} else {
 					this.store.insert(perm);
 				}
 			} else if(dir.pathExists == PathOutsideExists.yes && !sm) {
-				this.store.insert(dirBS);
+				this.store.insert(perm);
 			} else if(dir.pathExists != PathOutsideExists.yes && sm) {
 				this.store.insert(perm);
 			}

@@ -5,6 +5,7 @@ import std.stdio;
 import std.typecons : Flag;
 import std.math : approxEqual;
 import std.container.array : Array;
+import std.format : format, formattedWrite;
 
 import gfm.math.vector;
 
@@ -15,6 +16,112 @@ import bitsetrbtree;
 import bitsetmodule;
 import graph;
 import protocols;
+
+struct CpResult {
+	Result result;
+	CrossingsImpl!32 cp;
+}
+
+void manyCrossings(string filename, string resultFolderName) {
+	import plot : ResultPlot;
+	import std.algorithm.sorting : sort;
+	import protocols.circle;
+	import std.file : mkdirRecurse;
+	import planar : makePlanar;
+	import graphgen;
+	import plot.gnuplot;
+	mkdirRecurse(resultFolderName);
+
+	auto f = File(resultFolderName ~ "/result.tex", "w");
+	auto fLtw = f.lockingTextWriter();
+	prepareLatexDoc(fLtw);
+	size_t ok = 0;
+
+	ManyResults mr;
+
+	auto graphs = loadGraphsFromJSON!(32)(filename);
+	for(size_t i = 0; i < graphs.length; ++i) {
+		logf("graph %s of %s", i, graphs.length);
+
+		Array!(Graph!32) planarGraphs;
+		makePlanar(graphs[i], planarGraphs);
+		logf("%s planar graphs", planarGraphs.length);
+
+		Array!(CpResult) results;
+		foreach(it; planarGraphs[]) {
+			if(!isConnected(it)) {
+				logf("Planar graph is no longer connected");
+				continue;
+			}
+			try {
+				auto cur = CrossingsImpl!32(it);
+				Result curRslt = cur.calcAC();
+				CpResult tmp;
+				tmp.result = curRslt;
+				tmp.cp = cur;
+				results.insertBack(tmp);
+			} catch(Exception e) {
+				graphToFile(it, resultFolderName ~ "/borderfail", i);
+				logf("Unable to find border for graph %d %s", i, e.toString());
+			}
+		}
+
+		if(results.empty) {
+			continue;
+		} else {
+			logf("turned one graph into %s graphs %s", planarGraphs.length, results.length);
+		}
+
+		sort!((a,b) => a.result.awr() > b.result.awr())(results[]);
+
+		try {
+			formattedWrite(fLtw, "\\section{Graph %s}\n", i);
+			formattedWrite(fLtw, "outside %(%s, %)\n\\\\",
+					results.front.cp.bestCrossing.graph.computeBorder[]);
+			formattedWrite(fLtw, "t %(%s, %)\\\\",
+					results.front.cp.bestCrossing.top[]);
+			formattedWrite(fLtw, "b %(%s, %)\\\\",
+					results.front.cp.bestCrossing.bottom[]);
+			formattedWrite(fLtw, "l %(%s, %)\\\\",
+					results.front.cp.bestCrossing.left[]);
+			formattedWrite(fLtw, "r %(%s, %)\\\\",
+					results.front.cp.bestCrossing.right[]);
+			formattedWrite(fLtw, "graph %s\n",
+					results.front.cp.bestCrossing.graph.toString());
+			formattedWrite(fLtw, "\\begin{figure}\n");
+			formattedWrite(fLtw, "\\includestandalone{graph%d/graph}\n", i);
+			formattedWrite(fLtw, "\\end{figure}\n");
+
+			auto fnG = format("%s/graph%d/", resultFolderName, i);
+			auto fnGg = fnG ~ "graph.tex";
+			mkdirRecurse(fnG);
+			auto f2 = File(fnGg, "w");
+			auto f2Ltw = f2.lockingTextWriter();
+			results.front.cp.graph.toTikz(f2Ltw);
+			Result curRslt = results.front.result;
+			gnuPlot(fnG, "", ResultPlot("Crossing", curRslt));
+			formattedWrite(fLtw, "\\begin{figure}\n");
+			formattedWrite(fLtw, "\\includegraphics{graph%d/1resultavail}\n", i);
+			formattedWrite(fLtw, "\\caption{graph %d availability}\n", i);
+			formattedWrite(fLtw, "\\end{figure}\n");
+			formattedWrite(fLtw, "\\begin{figure}\n");
+			formattedWrite(fLtw, "\\includegraphics{graph%d/1resultcost}\n", i);
+			formattedWrite(fLtw, "\\caption{graph %d cost}\n", i);
+			formattedWrite(fLtw, "\\end{figure}\n");
+			++ok;
+			loadResults(fnG, mr);
+		} catch(Exception e) {
+			logf("Unable to find border for graph %d %s", i, e.toString());
+			formattedWrite(fLtw, "Unable to process graph with Circle Protocol\n");
+		}
+	}
+
+	formattedWrite(fLtw, "\\section{Results}\n");
+	formattedWrite(fLtw, "%d out of %d worked", ok, graphs.length);
+	logf("%s", mr);
+	manyResultsToFile(resultFolderName, mr);
+	formattedWrite(fLtw, "\\end{document}");
+}
 
 struct CrossingsConfig {
 	int sumStart;
