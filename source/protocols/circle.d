@@ -65,10 +65,10 @@ struct CirResult {
 	CirclesImpl!32 cir;
 }
 
-void loadResults(string folderName, ref ManyResults mr) {
-	auto availLines = readText(folderName ~ "/Circledatafileavail.rslt")
+void loadResults(string folderName, ref ManyResults mr, string proto) {
+	auto availLines = readText(folderName ~ "/" ~ proto ~ "datafileavail.rslt")
 		.splitter("\n");
-	auto costLines = readText(folderName ~ "/Circledatafilecost.rslt")
+	auto costLines = readText(folderName ~ "/" ~ proto ~ "datafilecost.rslt")
 		.splitter("\n");
 
 	for(size_t i = 0; i < 101; ++i) {
@@ -80,7 +80,7 @@ void loadResults(string folderName, ref ManyResults mr) {
 		double rc = to!double(costLine[1]);
 		double wc = to!double(costLine[2]);
 
-		logf("avail %s %s cost %s %s", ra, wa, rc, wc);
+		//logf("avail %s %s cost %s %s", ra, wa, rc, wc);
 		availLines.popFront();
 		costLines.popFront();
 
@@ -143,12 +143,16 @@ void manyCircles(string filename, string resultFolderName) {
 
 		Array!(Graph!32) planarGraphs;
 		makePlanar(graphs[i], planarGraphs);
-		logf("%s planar graphs", planarGraphs.length);
+		//logf("%s planar graphs", planarGraphs.length);
 
 		Array!(CirResult) results;
+		size_t planarIdx = 0;
+		if(planarGraphs.empty) {
+			graphToFile(graphs[i], resultFolderName ~ "/no_planar/", i);
+		}
 		foreach(it; planarGraphs[]) {
 			if(!isConnected(it)) {
-				logf("Planar graph is no longer connected");
+				//logf("Planar graph is no longer connected");
 				continue;
 			}
 			try {
@@ -158,15 +162,18 @@ void manyCircles(string filename, string resultFolderName) {
 				tmp.result = curRslt;
 				tmp.cir = cur;
 				results.insertBack(tmp);
-			} catch(Exception e) {
-				logf("Unable to find border for graph %d %s", i, e.toString());
+			} catch(NoMiddleException e) {
+				//logf("Unable to find border for graph %d %s", i, e.toString());
+				graphToFile(it, resultFolderName ~ "/no_middle/", i, "_",
+						planarIdx);
 			}
+			++planarIdx;
 		}
 
 		if(results.empty) {
 			continue;
 		} else {
-			logf("turned one graph into %s graphs %s", planarGraphs.length, results.length);
+			//logf("turned one graph into %s graphs %s", planarGraphs.length, results.length);
 		}
 
 		sort!((a,b) => a.result.awr() > b.result.awr())(results[]);
@@ -199,16 +206,16 @@ void manyCircles(string filename, string resultFolderName) {
 			formattedWrite(fLtw, "\\caption{graph %d cost}\n", i);
 			formattedWrite(fLtw, "\\end{figure}\n");
 			++ok;
-			loadResults(fnG, mr);
+			loadResults(fnG, mr, "Circle");
 		} catch(Exception e) {
-			logf("Unable to find border for graph %d %s", i, e.toString());
+			//logf("Unable to find border for graph %d %s", i, e.toString());
 			formattedWrite(fLtw, "Unable to process graph with Circle Protocol\n");
 		}
 	}
 
 	formattedWrite(fLtw, "\\section{Results}\n");
 	formattedWrite(fLtw, "%d out of %d worked", ok, graphs.length);
-	logf("%s", mr);
+	//logf("%s", mr);
 	manyResultsToFile(resultFolderName, mr);
 	formattedWrite(fLtw, "\\end{document}");
 }
@@ -449,6 +456,12 @@ struct CircleImplResult(int Size) {
 	}
 }
 
+class NoMiddleException : Exception {
+	this(string s) {
+		super(s);
+	}
+}
+
 alias Circles = CirclesImpl!32;
 
 struct CirclesImpl(int Size) {
@@ -480,14 +493,14 @@ struct CirclesImpl(int Size) {
 			if(canFind(uniqueBorder[], mid)) {
 				continue;
 			}
-			logf("%s", mid);
+			//logf("%s", mid);
 			
 			cirImpls.insertBack(CircleImplResult!(Size)(
 					CircleImpl!(Size)(uniqueBorder, mid))
 				);
 			cirImpls.back.mid = mid;
 			cirImpls.back.result = cirImpls.back.cirImpl.calcAC(this.graph);
-			logf("quorum intersection");
+			//logf("quorum intersection");
 			testQuorumIntersection(cirImpls.back.cirImpl.store,
 					cirImpls.back.cirImpl.store);
 			//logf("all subsets smaller");
@@ -495,12 +508,12 @@ struct CirclesImpl(int Size) {
 		}
 
 		if(cirImpls.empty) {
-			throw new Exception("no valid middle found");
+			throw new NoMiddleException("no valid middle found");
 		}
 
 		for(size_t i = 0; i < cirImpls.length; ++i) {
 			double s = sumResult(cirImpls[i].result, 0.5);
-			logf("%15.13f > %15.13f mid %s", bestResult, s, cirImpls[i].mid);
+			//logf("%15.13f > %15.13f mid %s", bestResult, s, cirImpls[i].mid);
 			if(s > bestResult) {
 				bestIdx = i;
 				bestResult = s;
@@ -510,13 +523,13 @@ struct CirclesImpl(int Size) {
 		}
 
 		if(bestIdx != size_t.max) {
-			logf("best one found idx %s mid %s %15.13f", bestIdx,
-					cirImpls[bestIdx].mid, bestResult
-				);
+			//logf("best one found idx %s mid %s %15.13f", bestIdx,
+			//		cirImpls[bestIdx].mid, bestResult
+			//	);
 			return cirImpls[bestIdx].result;
 		}
 		//testSemetry(cirImpls[bestIdx].result);
-		logf("default one found");
+		//logf("default one found");
 		return ret;
 	}
 }

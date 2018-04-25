@@ -2,6 +2,7 @@ module trigraph;
 
 import std.container.array : Array;
 import gfm.math.vector;
+import std.experimental.logger;
 
 import exceptionhandling;
 
@@ -58,4 +59,39 @@ unittest {
 	Array!(vec3d) r = getTriPositions(11);
 	assertEqual(r.length, 11, format("%(%s, %)", r[]));
 	writefln("%(%s, %)", r[]);	
+}
+
+Array!(vec3d) randomGraphQuad(Rnd)(const size_t graphSize, ref Rnd rnd) {
+	import std.conv : to;
+	import std.random : randomShuffle, uniform;
+	import std.algorithm.iteration : map;
+	import std.algorithm.mutation : copy;
+	import std.range : dropExactly;
+	Array!(vec3d) ret;
+
+	const size_t x = to!size_t(graphSize * 0.9);
+	const size_t y = to!size_t(graphSize * 0.9);
+	logf("x %s, y %s", x, y);
+
+	const size_t xy = x * y;
+
+	Array!(vec3d) all = getTriPositions(xy);
+	logf("[%(%s, %)]", all[]);
+	randomShuffle(all[], rnd);
+	logf("[%(%s, %)]", all[]);
+	ensure(all.length > graphSize);
+
+	foreach(it; all[0 .. graphSize]) {
+		ret.insertBack(it + vec3d(uniform(-0.25, 0.25, rnd), uniform(-0.25, 0.25), 0.0));
+	}
+
+	return ret;
+}
+
+unittest {
+	import std.random;
+	Random r;
+	auto rv = randomGraphQuad(4, r);
+	assert(rv.length == 4);
+	logf("[%(%s, %)]", rv[]);
 }

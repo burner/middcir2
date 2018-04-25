@@ -28,9 +28,9 @@ void makePlanar(Graph)(Graph orignal, ref Array!Graph result) {
 			//		stack.length, iterations, dump.length);
 		//}
 		if(iterations > getConfig().numberOfMakePlararIterations) {
-			logf("broke out after X stack.length %s dump.length %s",
-					stack.length, dump.length
-				);
+			//logf("broke out after X stack.length %s dump.length %s",
+			//		stack.length, dump.length
+			//	);
 			break outer;
 		}
 		if(iterations > getConfig().numberOfMakePlararIterationsResult 
@@ -109,11 +109,11 @@ void makePlanar(Graph)(Graph orignal, ref Array!Graph result) {
 			}
 		}
 	}
-	logf("result size %s in %,s iterations, created multiple times %s, " 
-			~ "dump %s, stack %s",
-			result.length, iterations, createdMultipleTimes, dump.length,
-			stack.length
-		);
+	//logf("result size %s in %,s iterations, created multiple times %s, " 
+	//		~ "dump %s, stack %s",
+	//		result.length, iterations, createdMultipleTimes, dump.length,
+	//		stack.length
+	//	);
 }
 
 alias Planar = Flag!"Planar";

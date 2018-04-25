@@ -198,6 +198,7 @@ double angleFunc(const vec3d a, const vec3d o) {
 	ensure(!isNaN(divident));
 	double divisor = sqrt(pow(a.x, 2) + pow(a.y, 2)) * 
 		sqrt(pow(o.x, 2) + pow(o.y, 2));
+	ensure(!isNaN(divident));
 	ensure(!isNaN(divisor));
 	ensure(!isNaN(divident / divisor));
 	ensure(!isNaN(SafeAcos(divident / divisor)));

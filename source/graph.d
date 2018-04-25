@@ -170,13 +170,23 @@ struct Graph(int Size) {
 	void nextNode(int edgeStart, int edgeEnd, ref vec3d curEdgeDir, 
 			out int nextNodeId) const
 	{
-		double maxAngle;
+		double maxAngle = double.nan;
 		for(int i = 0; i < this.numNodes; ++i) {
-			if(i != edgeStart && this.testEdge(edgeEnd, i)) {
+			if(i != edgeStart && i != edgeEnd && this.testEdge(edgeEnd, i)) {
+			//if(i != edgeEnd && this.testEdge(edgeEnd, i)) {
+				/*logf("from %s(%s) -- %s(%s) to %s(%s)", 
+						edgeStart, edgeStart < 200 && edgeStart >= 0?
+						this.nodePositions[edgeStart] : vec3d(0,0,0), 
+						edgeEnd, this.nodePositions[edgeEnd],
+						i, this.nodePositions[i]
+					);
+				*/
 				vec3d dir = dirOfEdge(this.nodePositions[edgeEnd],
 						this.nodePositions[i]
 				);
+				//logf("cureEdgeDir %s dir %s", curEdgeDir, dir);
 				double angle = angleFunc(curEdgeDir, dir);
+				//logf("angle %s", angle);
 				if(isNaN(maxAngle) || angle > maxAngle) {
 					maxAngle = angle;
 					nextNodeId = i;
@@ -184,6 +194,7 @@ struct Graph(int Size) {
 			}
 		}
 
+		// no edge was found
 		if(isNaN(maxAngle)) {
 			nextNodeId = edgeStart;
 		}
@@ -196,7 +207,7 @@ struct Graph(int Size) {
 	Array!int computeBorder() {
 		Array!int ret;
 
-		log();
+		//log();
 		// compute fake start edge
 		int startNode = this.getLeftMostNode();
 		const vec3d startNodeVec = startEdgeStartNode(this.nodePositions[startNode]);
@@ -217,7 +228,7 @@ struct Graph(int Size) {
 			if(ret.length > this.length * 4) {
 				throw new Exception("Unable to find border overflow");
 			}
-			logf("curNode %s lastNode %s", curNude, lastNode);
+			//logf("curNode %s lastNode %s", curNode, lastNode);
 			int nextNode;
 			ret.insertBack(curNode);
 			this.nextNode(lastNode, curNode, curEdgeDir, nextNode);
@@ -230,8 +241,9 @@ struct Graph(int Size) {
 			lastNode = curNode;
 			curNode = nextNode;
 			curNodePos = this.nodePositions[curNode];
-			logf("cur %s, start %s approx %s", curNodePos, startNodeVec,
+			/*logf("cur %s, start %s approx %s", curNodePos, startNodeVec,
 					vec3dSuperClose(startNodeVec, curNodePos));
+			*/
 		} while(!vec3dSuperClose(startNodeVec, curNodePos));
 		//} while(curNode != startNode);
 
@@ -1285,7 +1297,7 @@ unittest {
 	import std.format : format;
 	auto g = stupidGraph!64();
 
-	/*Array!(Graph!64) planarGs;
+	Array!(Graph!64) planarGs;
 	makePlanar(g, planarGs);
 
 	size_t i = 0;
@@ -1301,7 +1313,7 @@ unittest {
 				);
 		}
 		++i;
-	}*/
+	}
 }
 
 Graph!Size graph8Planar(int Size)() {
@@ -1351,12 +1363,55 @@ unittest {
 		const size_t gs = it.length();
 		auto b = it.computeBorder();
 		logf("%s, %(%s, %)", i, b[]);
-		//foreach(cnt; 0 .. it.length) {
-		//	assert(canFind(b[], cnt), format("should have found %s, in "
-		//			~ "[%(%s,)])", cnt, b[])
-		//		);
-		//}
+		auto bCmp = [0,1,2,4,7];
+		auto bCmpNot = [3,5,6];
+		foreach(jt; bCmp) {
+			assert(canFind(b[], jt), format("should have found %s, in "
+					~ "[%(%s,)])", jt, b[])
+				);
+		}
+		foreach(jt; bCmpNot) {
+			assert(!canFind(b[], jt), format("should not have found %s, in "
+					~ "[%(%s,)])", jt, b[])
+				);
+		}
 		++i;
 	}
-	assert(false);
+}
+
+unittest {
+	import std.stdio;
+	import planar;
+	import std.container.array : Array;
+	import std.algorithm.searching : canFind;
+	import std.format : format;
+
+	auto g = graph8Planar!64();
+	g.numNodes++;
+	g.setEdge(4, 8);
+	g.setNodePos(8, vec3d(7.0, 2.5, 0.0));
+
+	Array!(Graph!64) planarGs;
+	makePlanar(g, planarGs);
+	size_t i = 0;
+	foreach(ref it; planarGs[]) {
+		graphToFile(it, "Test/Border2", "planar", i);
+		const size_t gs = it.length();
+		logf("\n\n\n\n");
+		auto b = it.computeBorder();
+		logf("%s, %(%s, %)", i, b[]);
+		auto bCmp = [0,1,2,4,7,8];
+		auto bCmpNot = [3,5,6];
+		foreach(jt; bCmp) {
+			assert(canFind(b[], jt), format("should have found %s, in "
+					~ "[%(%s,)])", jt, b[])
+				);
+		}
+		foreach(jt; bCmpNot) {
+			assert(!canFind(b[], jt), format("should not have found %s, in "
+					~ "[%(%s,)])", jt, b[])
+				);
+		}
+		++i;
+	}
 }

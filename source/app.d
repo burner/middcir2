@@ -65,10 +65,91 @@ class ShortLogger : Logger {
 //}
 
 void genNumberOfConnectedNonIsomorphicGraphs() {
-	for(size_t i = 8; i < 16; ++i) {
-		string f = genNumberOfConnectedNonIsomorphicGraphs(i, 5000);
-		manyCircles(f ~ ".json", "Results/" ~ f);
+	import core.thread;
+	//Thread[] t;
+	for(size_t i = 8; i < 17; ++i) {
+		//t = new Thread[2];
+		string f = genNumberOfConnectedNonIsomorphicGraphs2(i, 500);
+		//t[0] = new Thread({manyCircles(f ~ ".json", "Results/cip_" ~ f);})
+		//	.start();
+		manyCircles(f ~ ".json", "Results/cip_" ~ f);
+		//t[1] = new Thread({manyCrossings(f ~ ".json", "Results/cp_" ~ f);})
+		//	.start();
+		manyCrossings(f ~ ".json", "Results/cp_" ~ f);
+
+		//t[0].join();
+		//t[1].join();
 	}
+}
+
+string genNumberOfConnectedNonIsomorphicGraphs2(const size_t gs, const size_t numGraphs) {
+	import numbergraphs;
+	import trigraph;
+	import std.random;
+	import std.file : mkdirRecurse;
+	import graphgen : genRandomGraph;
+
+	auto rnd = Random(1337);
+	auto n = new GTNode();
+	size_t p = 0;
+	for(size_t i = 1; i < gs; ++i) {
+		p += i;
+	}
+	//immutable size_t p = ((gs - 1) * (gs - 1)) / 2;
+	immutable size_t upto = 2^^p;
+	logf("graph size %s length of triangle side %s number of graphs to tests,"
+			~ " upto %s", gs, p, numGraphs, upto);
+	size_t inserted = 0;
+	size_t i = 0;
+	while(inserted < numGraphs) {
+		if(i % 100 == 0) {
+			logf("%,s inserted %,s", i, inserted);
+		}
+		ulong r = uniform!("[)", ulong, ulong)(0, upto, rnd);
+		//auto g = numberToGraph(r, gs);
+		auto g = genRandomGraph!64(cast(int)gs, rnd);
+		if(insertGraph(n, g)) {
+			++inserted;
+		}
+		++i;
+	}
+	logf("num of possible graphs with %s vertices %s", gs, countGraphsInTree(n));
+	Array!(Graph!64) arr;
+	GTNodeToArray(n, arr);
+
+	string ret = format("graphs_size_%s_num_%s", gs, numGraphs);
+	auto f = File(ret ~ ".json", "w");
+	auto ltw = f.lockingTextWriter();
+	formattedWrite(ltw, "{\n \"graphs\" : [");
+	int id = 0;
+	bool first = true;
+	Array!(Array!(vec3d)) posses;
+	foreach(it; 0 .. 100) {
+		posses.insertBack(randomGraphQuad(gs, rnd));
+	}
+	string graphFolder = format("graphs_size_%s_num_%s_graphs", gs,
+			numGraphs);
+	mkdirRecurse(graphFolder);
+	foreach(ref g; arr) {
+		foreach(pos; posses) {
+			int idx = 0;
+			foreach(it; pos[]) {
+				g.setNodePos(idx++, it);
+			}
+			if(!first) {
+				formattedWrite(ltw, ",");
+			}
+			first = false;
+			g.id = id;
+			g.toJSON(ltw);
+			auto f2 = File(format(graphFolder ~ "/%s.tex", id), "w");
+			auto ltw2 = f2.lockingTextWriter();
+			g.toTikz(ltw2);
+			++id;
+		}
+	}
+	formattedWrite(ltw, "]}");
+	return ret;
 }
 
 string genNumberOfConnectedNonIsomorphicGraphs(const size_t gs, const size_t numGraphs) {
@@ -627,8 +708,8 @@ void manyCrossingsRun() {
 
 void manyCirclesRun() {
 	//manyCircles("graphs6nodes3.json", "Results/graph6nodes3");
-	manyCircles("graphs8nodes3.json", "Results/graph8nodes3");
-	//manyCircles("graphs9nodes3.json", "Results/graph9nodes3");
+	manyCircles("graphs8nodes3.json", "Results/cir_graph8nodes3");
+	manyCircles("graphs9nodes3.json", "Results/cir_graph9nodes3");
 	//manyCircles("graphs12nodes3.json", "Results/graph12nodes3");
 	//manyCircles("graphs_size_9_num_2048.json", "Results/graphs_size_9_num_2048");
 }
@@ -932,11 +1013,11 @@ void main(string[] args) {
 	}
 	//numberOfConnectedNonIsomorphicGraphs();
 	//genNumberOfConnectedNonIsomorphicGraphs(9, 2048);
-	//genNumberOfConnectedNonIsomorphicGraphs();
+	genNumberOfConnectedNonIsomorphicGraphs();
 	//circle();
 	//circleVLattice();
 	//manyCirclesRun();
-	manyCrossingsRun();
+	//manyCrossingsRun();
 	//boxplot();
 	//checkGraphUnique("graphs6nodes3.json");
 	//checkGraphUnique("graphs8nodes3.json");

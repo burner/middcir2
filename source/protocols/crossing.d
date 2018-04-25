@@ -40,24 +40,31 @@ void manyCrossings(string filename, string resultFolderName) {
 	ManyResults mr;
 
 	auto graphs = loadGraphsFromJSON!(32)(filename);
+	size_t planarGraphCnt = 0;
 	for(size_t i = 0; i < graphs.length; ++i) {
 		logf("graph %s of %s", i, graphs.length);
 
 		Array!(Graph!32) planarGraphs;
 		makePlanar(graphs[i], planarGraphs);
-		logf("%s planar graphs", planarGraphs.length);
+		//logf("%s planar graphs", planarGraphs.length);
+		if(planarGraphs.empty) {
+			graphToFile(graphs[i], resultFolderName ~ "/no_planar/", i);
+		}
 
 		Array!(CpResult) results;
+		if(!planarGraphs.empty) {
+			++planarGraphCnt;
+		}
 		foreach(it; planarGraphs[]) {
 			if(!isConnected(it)) {
-				logf("Planar graph is no longer connected");
+				//logf("Planar graph is no longer connected");
 				continue;
 			}
 			try {
 				auto cur = CrossingsImpl!32(it);
 				Result curRslt = cur.calcAC();
 				CpResult tmp;
-				tmp.result = curRslt;
+				tmp.result = curRslt.dup();
 				tmp.cp = cur;
 				results.insertBack(tmp);
 			} catch(Exception e) {
@@ -69,7 +76,7 @@ void manyCrossings(string filename, string resultFolderName) {
 		if(results.empty) {
 			continue;
 		} else {
-			logf("turned one graph into %s graphs %s", planarGraphs.length, results.length);
+			//logf("turned one graph into %s graphs %s", planarGraphs.length, results.length);
 		}
 
 		sort!((a,b) => a.result.awr() > b.result.awr())(results[]);
@@ -109,7 +116,7 @@ void manyCrossings(string filename, string resultFolderName) {
 			formattedWrite(fLtw, "\\caption{graph %d cost}\n", i);
 			formattedWrite(fLtw, "\\end{figure}\n");
 			++ok;
-			loadResults(fnG, mr);
+			loadResults(fnG, mr, "Crossing");
 		} catch(Exception e) {
 			logf("Unable to find border for graph %d %s", i, e.toString());
 			formattedWrite(fLtw, "Unable to process graph with Circle Protocol\n");
@@ -118,9 +125,10 @@ void manyCrossings(string filename, string resultFolderName) {
 
 	formattedWrite(fLtw, "\\section{Results}\n");
 	formattedWrite(fLtw, "%d out of %d worked", ok, graphs.length);
-	logf("%s", mr);
+	//logf("%s", mr);
 	manyResultsToFile(resultFolderName, mr);
 	formattedWrite(fLtw, "\\end{document}");
+	//logf("planarGraphCnt %s", planarGraphCnt);
 }
 
 struct CrossingsConfig {
@@ -182,22 +190,22 @@ struct CrossingsImpl(int Size) {
 		size_t itCnt = 0;
 		foreach(it; planarGraphs[]) {
 			Array!(TBLR) tblrSets = possibleBorders(it);
-			logf("%s possible borders", tblrSets.length);
+			//logf("%s possible borders", tblrSets.length);
 			for(int i = 0; i < tblrSets.length; ++i) {
 				if(i == 0) {
 					atLeastOne = true;
 					this.bestCrossing = CrossingImpl!Size(this.graph);
 					this.bestResult = this.bestCrossing.calcAC(tblrSets[i]);
 					this.bestSum = sumResult(this.bestResult, 0.99999);
-					logf("%f", this.bestSum);
+					//logf("%f", this.bestSum);
 				} else {
 					auto tmp = CrossingImpl!Size(this.graph);
 					auto tmpRslt = tmp.calcAC(tblrSets[i]);
 					double tmpSum = sumResult(tmpRslt);
 
-					logf("%f %f tblrSet %s of %s planarGraph %s of %s", this.bestSum, tmpSum, i,
-							tblrSets.length, itCnt, planarGraphs.length
-						);
+					//logf("%f %f tblrSet %s of %s planarGraph %s of %s", this.bestSum, tmpSum, i,
+					//		tblrSets.length, itCnt, planarGraphs.length
+					//	);
 
 					if(tmpSum > this.bestSum) {
 						this.bestCrossing = tmp;
@@ -209,10 +217,10 @@ struct CrossingsImpl(int Size) {
 			++itCnt;
 		}
 		ensure(atLeastOne);
-		logf("lft [%(%s %)] tp [%(%s %)] rght[%(%s %)] btm [%(%s %)] dia [%(%s, %)]",
-			this.bestCrossing.left[], this.bestCrossing.top[], this.bestCrossing.right[],
-			this.bestCrossing.bottom[], this.bestCrossing.diagonalPairs[]
-		);
+		//logf("lft [%(%s %)] tp [%(%s %)] rght[%(%s %)] btm [%(%s %)] dia [%(%s, %)]",
+		//	this.bestCrossing.left[], this.bestCrossing.top[], this.bestCrossing.right[],
+		//	this.bestCrossing.bottom[], this.bestCrossing.diagonalPairs[]
+		//);
 		return this.bestResult;
 	}
 
@@ -370,9 +378,9 @@ struct CrossingImpl(int Size) {
 
 		//this.splitBorderIntoTBLR(uniqueBorder, this.bottom, this.top, this.left, 
 		//		this.right, this.diagonalPairs);
-		logf("lft [%(%s %)] tp [%(%s %)] rght[%(%s %)] btm [%(%s %)] dia [%(%s, %)]",
-			tblr.left[], tblr.top[], tblr.right[], tblr.bottom[], tblr.diagonalPairs[]
-		);
+		//logf("lft [%(%s %)] tp [%(%s %)] rght[%(%s %)] btm [%(%s %)] dia [%(%s, %)]",
+		//	tblr.left[], tblr.top[], tblr.right[], tblr.bottom[], tblr.diagonalPairs[]
+		//);
 		//logf("top bottom");
 		testEmptyIntersection(tblr.top, tblr.bottom);
 		//logf("left right");
@@ -397,9 +405,9 @@ struct CrossingImpl(int Size) {
 			test = true;
 		}
 		if(test) {
-			logf("quorum intersection read write");
+			//logf("quorum intersection read write");
 			testQuorumIntersection(this.read, this.write);
-			logf("quorum intersection write write");
+			//logf("quorum intersection write write");
 			testQuorumIntersection(this.write, this.write);
 			//logf("all subsets smaller");
 			testAllSubsetsSmaller(this.read, this.write);
@@ -644,7 +652,7 @@ Array!(TBLR) possibleBorders(G)(auto ref G graph) {
 
 	const size_t len = uniqueBorder.length;
 	const int lenT = cast(int)(len);
-	logf("len %s, lenT %s", len, lenT);
+	//logf("len %s, lenT %s", len, lenT);
 	for(int t = 0; t < lenT; ++t) {
 		TBLR tblr;
 		//logf("t %s", t);

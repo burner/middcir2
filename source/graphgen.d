@@ -269,3 +269,17 @@ void graphsToJSON(G)(const string filename, ref G g) {
 	}
 	f.write("\n ]\n}\n");
 }
+
+Graph!Size genRandomGraph(int Size, Rnd)(const int numNodes, ref Rnd random)
+{
+	import std.random : uniform;
+	auto ret = Graph!Size(numNodes);
+	foreach(from; 0 .. numNodes) {
+		foreach(to; from .. numNodes) {
+			if(uniform(0.0, 1.0, random) > 0.5) {
+				ret.setEdge(from, to);
+			}
+		}
+	}
+	return ret;
+}
