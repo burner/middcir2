@@ -64,6 +64,24 @@ class ShortLogger : Logger {
 	//version = exceptionhandling_release_asserts;
 //}
 
+void mcs4TwoMappings() {
+	auto mcs = MCS(4);
+	Result mcsR = mcs.calcAC();
+
+	auto g = Graph!32(4);
+	g.setEdge(0,1);
+	g.setEdge(1,2);
+	g.setEdge(2,3);
+
+	auto m1 = new Mapping!(32,32)(mcs.getGraph(), g, [0,1,2,3]);
+	m1.calcAC(mcs.read, mcs.write);
+	auto m2 = new Mapping!(32,32)(mcs.getGraph(), g, [1,0,3,2]);
+	m2.calcAC(mcs.read, mcs.write);
+
+	writeln(m1.read);
+	writeln("\n\n\n", m2.read);
+}
+
 void genNumberOfConnectedNonIsomorphicGraphs() {
 	import core.thread;
 	//Thread[] t;
@@ -1013,7 +1031,8 @@ void main(string[] args) {
 	}
 	//numberOfConnectedNonIsomorphicGraphs();
 	//genNumberOfConnectedNonIsomorphicGraphs(9, 2048);
-	genNumberOfConnectedNonIsomorphicGraphs();
+	//mcs4TwoMappings();
+	//genNumberOfConnectedNonIsomorphicGraphs();
 	//circle();
 	//circleVLattice();
 	//manyCirclesRun();
