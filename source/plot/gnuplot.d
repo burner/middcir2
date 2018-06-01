@@ -35,23 +35,23 @@ void gnuPlot(string path, string prefix, ResultPlot[] results ...) {
 	createDataFiles(prefix, results);
 	createGnuplotFiles(prefix, results);
 
-	auto gnuplot = execute(["gnuplot", "-c", prefix ~ to!string(1) ~ gnuplotFilenameAvail]);
-	ensure(gnuplot.status == 0, prefix ~ to!string(1) ~ gnuplotFilenameAvail);
+	//auto gnuplot = execute(["gnuplot", "-c", prefix ~ to!string(1) ~ gnuplotFilenameAvail]);
+	//ensure(gnuplot.status == 0, prefix ~ to!string(1) ~ gnuplotFilenameAvail);
 
-	gnuplot = execute(["gnuplot", "-c", prefix ~ to!string(80) ~ gnuplotFilenameAvail]);
-	ensure(gnuplot.status == 0, prefix ~ to!string(80) ~ gnuplotFilenameAvail);
+	//gnuplot = execute(["gnuplot", "-c", prefix ~ to!string(80) ~ gnuplotFilenameAvail]);
+	//ensure(gnuplot.status == 0, prefix ~ to!string(80) ~ gnuplotFilenameAvail);
 
-	gnuplot = execute(["gnuplot", "-c", prefix ~ to!string(1) ~gnuplotFilenameCost]);
-	ensure(gnuplot.status == 0, prefix ~ to!string(1) ~gnuplotFilenameCost);
+	//gnuplot = execute(["gnuplot", "-c", prefix ~ to!string(1) ~gnuplotFilenameCost]);
+	//ensure(gnuplot.status == 0, prefix ~ to!string(1) ~gnuplotFilenameCost);
 
-	auto epstopdf = execute(["pdflatex", prefix ~ to!string(1) ~ resultFilenameAvail]);
-	ensure(epstopdf.status == 0, prefix ~ to!string(1) ~ resultFilenameAvail);
+	//auto epstopdf = execute(["pdflatex", prefix ~ to!string(1) ~ resultFilenameAvail]);
+	//ensure(epstopdf.status == 0, prefix ~ to!string(1) ~ resultFilenameAvail);
 
-	epstopdf = execute(["pdflatex", prefix ~ to!string(80) ~ resultFilenameAvail]);
-	ensure(epstopdf.status == 0, prefix ~ to!string(80) ~ resultFilenameAvail);
+	//epstopdf = execute(["pdflatex", prefix ~ to!string(80) ~ resultFilenameAvail]);
+	//ensure(epstopdf.status == 0, prefix ~ to!string(80) ~ resultFilenameAvail);
 
-	epstopdf = execute(["pdflatex", prefix ~ to!string(1) ~resultFilenameCost]);
-	ensure(epstopdf.status == 0, prefix ~ to!string(1) ~resultFilenameCost);
+	//epstopdf = execute(["pdflatex", prefix ~ to!string(1) ~resultFilenameCost]);
+	//ensure(epstopdf.status == 0, prefix ~ to!string(1) ~resultFilenameCost);
 }
 
 void createDataFiles(string prefix, ResultPlot[] results ...) {

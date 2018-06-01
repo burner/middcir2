@@ -272,16 +272,16 @@ void fiveMapping() {
 }
 
 void MCSForm() {
-	const NN = 1;
-	MCSFormula[NN] formula;
+	enum nns = [2,3,4,5,6,7,15];
+	const NN = nns.length;
+	MCS[NN] formula;
 	Result[NN] rslt;
 	ResultPlot[NN] rsltPlot;
 
-	//int[NN] nns = [3,5,8,9,16,33,63];
-	int[NN] nns = [5];
+	//int[NN] nns = [2,3,4,5,6,7,63];
 
 	for(int i = 0; i < nns.length; ++i) {
-		formula[i] = MCSFormula(nns[i]);
+		formula[i] = MCS(nns[i]);
 		logf("a %d", i);
 		rslt[i] = formula[i].calcAC();
 		logf("b %d", i);
@@ -289,13 +289,13 @@ void MCSForm() {
 		logf("c %d", i);
 	}
 	gnuPlot("Result/MCS_Many", "", 
-			rsltPlot[0]);
-			//rsltPlot[1],
-			//rsltPlot[2],
-			//rsltPlot[3],
-			//rsltPlot[4],
-			//rsltPlot[5],
-			//rsltPlot[6]);
+			rsltPlot[0],
+			rsltPlot[1],
+			rsltPlot[2],
+			rsltPlot[3],
+			rsltPlot[4],
+			rsltPlot[5],
+			rsltPlot[6]);
 }
 
 void crossingVCrossing() {
@@ -1053,7 +1053,7 @@ void main(string[] args) {
 	//latticeMCSMappedCrossing12();
 	//crossing12();
 	//latticeMapped2();
-	//MCSForm();
+	MCSForm();
 	//mcsMapped();
 	//printProperties();
 	//gridMapped();
