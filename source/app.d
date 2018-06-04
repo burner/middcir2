@@ -460,7 +460,7 @@ void GridForm() {
 }
 
 
-void MCSAgainstMCS(int mcsN = 16) {
+void MCSAgainstMCS(int mcsN = 4) {
 	auto mcs = MCS(mcsN);
 	auto mcsRslt = mcs.calcAC();
 	auto rsltMCS = ResultPlot(mcs.name(), mcsRslt);
@@ -488,7 +488,7 @@ void gridVLattice(int nc, int nr) {
 	logf("grid");
 	auto grid = GridFormula(nc, nr);
 	auto gridRslt = grid.calcAC();
-	auto rsltGrid = ResultPlot(grid.name(), gridRslt);
+	auto rsltGrid = ResultPlot(format("Grid-%d:%d", nc, nr), gridRslt);
 
 	//logf("mcs");
 	//auto mcs = MCSFormula(nc * nr);
@@ -1044,7 +1044,7 @@ void main(string[] args) {
 	//fiveMapping();
 	//lattice(4,4);
 	//gridAgainstGrid(4,4);
-	//MCSAgainstMCS(15);
+	//MCSAgainstMCS(5);
 	//latticeMapped();
 	//latticeMCSMapped6();
 	//latticeMCSMapped9();
@@ -1071,7 +1071,7 @@ void main(string[] args) {
 	//runMappings("9nodegraphs.json", args);
 	//MCSForm();
 	//GridFormXY();
-	//gridVLattice(4,7);
+	gridVLattice(4,4);
 	//gridVLattice(4,4);
 	//gridVLattice(5,5);
 	//gridVLattice(4,2);
