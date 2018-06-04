@@ -55,6 +55,11 @@ void gnuPlot(string path, string prefix, ResultPlot[] results ...) {
 }
 
 void createDataFiles(string prefix, ResultPlot[] results ...) {
+	double getWithNaN(double input) {
+		import std.math : isNaN;
+		return isNaN(input) ? 0.0 : input;
+	}
+
 	import std.algorithm.iteration : joiner;
 	import std.range;
 	import std.conv : to;
@@ -69,11 +74,11 @@ void createDataFiles(string prefix, ResultPlot[] results ...) {
 		for(size_t i = 0; i < 101; ++i) {
 			formattedWrite(ltwAvail, "%.5f ", i/100.0);
 			formattedWrite(ltwCost, "%.5f ", i/100.0);
-			formattedWrite(ltwAvail, "%.15f ", rslt.result.readAvail[i]);
-			formattedWrite(ltwAvail, "%.15f ", rslt.result.writeAvail[i]);
+			formattedWrite(ltwAvail, "%.15f ", getWithNaN(rslt.result.readAvail[i]));
+			formattedWrite(ltwAvail, "%.15f ", getWithNaN(rslt.result.writeAvail[i]));
 
-			formattedWrite(ltwCost, "%.15f ", rslt.result.readCosts[i]);
-			formattedWrite(ltwCost, "%.15f ", rslt.result.writeCosts[i]);
+			formattedWrite(ltwCost, "%.15f ", getWithNaN(rslt.result.readCosts[i]));
+			formattedWrite(ltwCost, "%.15f ", getWithNaN(rslt.result.writeCosts[i]));
 			formattedWrite(ltwAvail, "\n");
 			formattedWrite(ltwCost, "\n");
 		}

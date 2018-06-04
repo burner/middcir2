@@ -272,7 +272,9 @@ void fiveMapping() {
 }
 
 void MCSForm() {
-	enum nns = [2,3,4,5,6,7,15];
+	//enum nns = [2,3,4,5,6,7];
+	//enum nns = [2,4,6];
+	enum nns = [3,5,7];
 	const NN = nns.length;
 	MCS[NN] formula;
 	Result[NN] rslt;
@@ -288,14 +290,10 @@ void MCSForm() {
 		rsltPlot[i] = ResultPlot(formula[i].name(), rslt[i]);
 		logf("c %d", i);
 	}
-	gnuPlot("Result/MCS_Many", "", 
+	gnuPlot("Results/MCS_Many_Odd", "", 
 			rsltPlot[0],
 			rsltPlot[1],
-			rsltPlot[2],
-			rsltPlot[3],
-			rsltPlot[4],
-			rsltPlot[5],
-			rsltPlot[6]);
+			rsltPlot[2]);
 }
 
 void crossingVCrossing() {
@@ -1071,7 +1069,7 @@ void main(string[] args) {
 	//runMappings("9nodegraphs.json", args);
 	//MCSForm();
 	//GridFormXY();
-	gridVLattice(4,4);
+	//gridVLattice(4,4);
 	//gridVLattice(4,4);
 	//gridVLattice(5,5);
 	//gridVLattice(4,2);
