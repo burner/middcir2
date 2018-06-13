@@ -268,6 +268,47 @@ struct BetweennessCentralityOld {
 	double mode;
 }
 
+size_t betweenessCentrality(int Size)(ref Graph!Size graph, size_t vertexId) {
+	import std.container.array;
+	import std.algorithm.sorting : sort;
+	import std.algorithm.iteration : sum;
+	import bitsetmodule;
+	import utils : removeAll;
+
+	alias BitsetTypeType = TypeFromSize!Size;
+	alias BitsetType = Bitset!BitsetTypeType;
+
+	auto paths = floyd!(typeof(graph),Size)(graph);
+	Array!(size_t) store;
+	for(size_t i; i < graph.length; ++i) {
+		store.insertBack(0);
+	}
+	Array!(uint) tmpPath;
+
+	BitsetType one;
+	one.set();
+	paths.execute(graph, one);
+
+	for(uint i; i < graph.length; ++i) {
+		for(uint j; j < graph.length; ++j) {
+			for(uint k = j + 1; k < graph.length; ++k) {
+				tmpPath.removeAll();
+				if(paths.path(j, k, tmpPath)) {
+					assert(tmpPath.front == j);
+					assert(tmpPath.back == k);
+					for(size_t n = 1; n < tmpPath.length - 1; ++n) {
+						if(tmpPath[n] == i) {
+							store[tmpPath[n]]++;
+							break;
+						}
+					}					
+				}
+			}
+		}
+	}
+	return store[vertexId];
+}
+
 BetweennessCentralityOld betweennessCentralityOld(int Size)(ref Graph!Size graph) {
 	import std.container.array;
 	import std.algorithm.sorting : sort;

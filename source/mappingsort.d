@@ -5,6 +5,8 @@ import std.traits : EnumMembers;
 import std.container.array;
 import std.algorithm.sorting : sort;
 import std.algorithm.iteration : sum;
+import std.stdio;
+import std.experimental.logger;
 
 import exceptionhandling;
 
@@ -60,6 +62,8 @@ VertexStat[] sortVerticesByFeature(G)(auto ref G g) {
 		cur.features[Feature.DiaMode] = cast(double)(computeMode(paths).max);
 		cur.features[Feature.DiaMedian] = computeMedian(paths);
 		cur.features[Feature.Dgr] = g.nodes[i].count();
+		cur.features[Feature.BC] = betweenessCentrality(g, i);
+		ret ~= cur;
 	}
 	return ret;
 }
@@ -67,4 +71,5 @@ VertexStat[] sortVerticesByFeature(G)(auto ref G g) {
 unittest {
 	auto g = genTestGraph!(16)();
 	VertexStat[] vs = sortVerticesByFeature(g);
+	logf("%s %(%s\n%)", __LINE__, vs);
 }
