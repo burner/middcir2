@@ -18,6 +18,17 @@ ulong factorial(const ulong fac) {
 	return ret;
 }
 
+double computeMedian(T)(T t) {
+	ensure(t.length > 0);
+	if(t.length % 2 == 1) {
+		return cast(double)(t[t.length / 2]);
+	} else {
+		size_t idx = (t.length-1) / 2;
+		size_t idx2 = ((t.length-1) / 2) + 1;
+		return (t[idx] + t[idx2]) / 2.0;
+	}
+}
+
 unittest {
 	import std.format;
 	assert(factorial(0) == 1);

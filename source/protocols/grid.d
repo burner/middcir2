@@ -200,8 +200,8 @@ unittest {
 
 	auto grc = gridRslt.readCosts[];
 	auto gwc = gridRslt.writeCosts[];
-	grc[] /= 1000.0;
-	gwc[] /= 1000.0;
+	//grc[] /= 1000.0;
+	//gwc[] /= 1000.0;
 
 	compare(gridFRslt.readAvail, gridRslt.readAvail, &equal);
 	compare(gridFRslt.writeAvail, gridRslt.writeAvail, &equal);
@@ -232,8 +232,8 @@ unittest {
 
 	auto grc = gridRslt.readCosts[];
 	auto gwc = gridRslt.writeCosts[];
-	grc[] /= 1000.0;
-	gwc[] /= 1000.0;
+	//grc[] /= 1000.0;
+	//gwc[] /= 1000.0;
 
 	compare(gridFRslt.readAvail, gridRslt.readAvail, &equal);
 	compare(gridFRslt.writeAvail, gridRslt.writeAvail, &equal);
@@ -252,8 +252,8 @@ unittest {
 
 			auto grc = gridRslt.readCosts[];
 			auto gwc = gridRslt.writeCosts[];
-			grc[] /= 1000.0;
-			gwc[] /= 1000.0;
+			//grc[] /= 1000.0;
+			//gwc[] /= 1000.0;
 
 			auto gridF = GridFormula(numColumn,numRows);
 			auto gridFRslt = gridF.calcAC();
@@ -281,20 +281,20 @@ unittest {
 			}
 
 			expect(testQuorumIntersection(grid.read, grid.write),
-				"numColumn %s, numRows %s", numColumn, numRows
+				"numColumn" ,numColumn , " numRows ", numRows
 			);
 
 			expect(compare(gridFRslt.readAvail, gridRslt.readAvail, &equal),
-				"numColumn %s, numRows %s", numColumn, numRows
+				"numColumn ", numColumn, " numRows ", numRows
 			);
 			expect(compare(gridFRslt.writeAvail, gridRslt.writeAvail, &equal),
-				"numColumn %s, numRows %s", numColumn, numRows
+				"numColumn ", numColumn, " numRows ", numRows
 			);
 			expect(compare(gridFRslt.readCosts, grc, &equal),
-				"numColumn %s, numRows %s", numColumn, numRows
+				"numColumn ", numColumn, "numRows ", numRows
 			);
 			expect(compare(gridFRslt.writeCosts, gwc, &equal),
-				"numColumn %s, numRows %s", numColumn, numRows
+				"numColumn ", numColumn, "numRows ", numRows
 			);
 		//}
 	}
