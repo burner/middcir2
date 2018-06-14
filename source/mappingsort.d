@@ -33,10 +33,21 @@ struct VertexStat {
 	int id;
 }
 
-int[] sortForMappingByFeature(G)(auto ref G from, auto ref G to) {
+int[] sortForMappingByFeature(G)(auto ref G from, auto ref G to, 
+		Feature[] sortBy) 
+{
+	ensure(from.length == to.length);
+	VertexStat[] f = sortVerticesByFeature(from, sortBy);
+	VertexStat[] t = sortVerticesByFeature(to, sortBy);
+
+	int[] ret = new int[from.length];
+	for(size_t i = 0; i < ret.length; ++i) {
+		ret[f[i].id] = t[i].id;
+	}
+	return ret;
 }
 
-VertexStat[] sortVerticesByFeature(G)(auto ref G g) {
+VertexStat[] sortVerticesByFeature(G)(auto ref G g, Feature[] sortBy) {
 	import graphmeasures;
 	VertexStat[] ret;
 	auto f = floyd(g);
@@ -65,19 +76,33 @@ VertexStat[] sortVerticesByFeature(G)(auto ref G g) {
 		cur.features[Feature.BC] = betweenessCentrality(g, i);
 		ret ~= cur;
 	}
+
+	sort!(delegate(VertexStat a, VertexStat b) {
+		foreach(ftr; sortBy) {
+			if(a.features[ftr] < b.features[ftr]) {
+				return true;
+			}
+		}
+		return false;
+	})(ret);
 	return ret;
 }
 
 unittest {
 	import protocols.lattice;
 
+	auto sb = [Feature.BC, Feature.DiaMin];
+
 	auto g = genTestGraph!(16)();
-	VertexStat[] vs = sortVerticesByFeature(g);
+	VertexStat[] vs = sortVerticesByFeature(g, sb);
 	logf("%s %(%s\n%)", __LINE__, vs);
 
 	auto tlp = LatticeImpl!16(4,4);
 
 	auto tlpLnt = tlp.getGraph();
-	VertexStat[] vs2 = sortVerticesByFeature(tlpLnt);
+	VertexStat[] vs2 = sortVerticesByFeature(tlpLnt, sb);
 	logf("%s %(%s\n%)", __LINE__, vs2);
+
+	int[] r = sortForMappingByFeature(g, tlpLnt, sb);
+	logf("%(%s, %)", r);
 }
