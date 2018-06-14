@@ -69,7 +69,15 @@ VertexStat[] sortVerticesByFeature(G)(auto ref G g) {
 }
 
 unittest {
+	import protocols.lattice;
+
 	auto g = genTestGraph!(16)();
 	VertexStat[] vs = sortVerticesByFeature(g);
 	logf("%s %(%s\n%)", __LINE__, vs);
+
+	auto tlp = LatticeImpl!16(4,4);
+
+	auto tlpLnt = tlp.getGraph();
+	VertexStat[] vs2 = sortVerticesByFeature(tlpLnt);
+	logf("%s %(%s\n%)", __LINE__, vs2);
 }

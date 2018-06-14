@@ -42,7 +42,7 @@ pragma(inline, true)
 double availability(T,S)(const S numNodes, const(Bitset!T) bitSet, 
 		const size_t p, const double stepWidth = 0.01) pure {
 	//import core.bitop : popcnt;
-	import math : popcnt;
+	import bitsetmodule : popcnt;
 	const bitsSet = popcnt(bitSet.store);
 	return availability(numNodes, bitsSet, p, stepWidth);
 }

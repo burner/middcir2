@@ -6,7 +6,7 @@ import std.experimental.logger;
 import std.conv : to;
 import exceptionhandling;
 import std.format : format, formattedWrite;
-import plot.gnuplot : ResultPlot;
+import plot : ResultPlot;
 
 void latticeBoxplot() {
 	import protocols.lattice;

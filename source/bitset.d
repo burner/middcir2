@@ -2,9 +2,9 @@
 module bitsetmodule;
 
 import std.stdio;
-import std.typecons : isIntegral, isUnsigned;
 import std.range : isRandomAccessRange;
 import std.container : Array;
+import std.traits : isIntegral, isUnsigned;
 
 import bitfiddle;
 
@@ -200,7 +200,7 @@ struct Bitset(Store) if(isIntegral!Store && isUnsigned!Store) {
 	}
 	
 	Bitset!Store flip() {
-		this.store = cast(StoreType)(~cast(StoreType)(this.store));
+		this.store = cast(StoreType)(~this.store);
 
 		return this;
 	}

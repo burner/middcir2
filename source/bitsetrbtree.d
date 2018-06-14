@@ -2,7 +2,8 @@ module bitsetrbtree;
 
 import std.container.array : Array;
 import std.exception : enforce;
-import std.typecons : isIntegral, Nullable;
+import std.traits : isIntegral, isUnsigned;
+import std.typecons : Nullable;
 import std.format : format;
 import std.stdio;
 import std.experimental.logger;

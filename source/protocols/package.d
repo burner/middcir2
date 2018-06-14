@@ -190,7 +190,8 @@ private void calcAvailForTreeImpl(BitsetStoreType)(const int numNodes,
 	import std.algorithm.sorting : sort;
 
 	import config : stepCount;
-	import math : availability, binomial, isNaN, popcnt;
+	import math : availability, binomial;
+	import bitsetmodule : popcnt;
 
 	bool[long] allreadyVisited;
 
