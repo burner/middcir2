@@ -135,6 +135,16 @@ Bitset!T bitsetAll(T)() {
 	return ret;
 }
 
+int[] toIntArray(T)(Bitset!T bs) {
+	int[] ret;
+	for(int i = 0; i < T.sizeof * 8; ++i) {
+		if(bs.test(i)) {
+			ret ~= i;
+		}
+	}
+	return ret;
+}
+
 struct Bitset(Store) if(isIntegral!Store && isUnsigned!Store) {
 	Store store = 0;
 	alias StoreType = Store;
