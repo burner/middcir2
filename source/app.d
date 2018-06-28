@@ -1018,6 +1018,12 @@ void buildSublist(string folderName) {
 	gnuPlot("Results/LatticeJoin", "", ResultPlot("SLJ", sljRslt));
 }
 
+void chessBoard() {
+	import chessboard;
+	Result rslt = calcChessboard();
+	gnuPlot("Results/Chessboard", "", ResultPlot("CB", rslt));
+}
+
 void main(string[] args) {
 	sharedLog = new ShortLogger(LogLevel.all);
 	parseConfig(args);
@@ -1051,7 +1057,8 @@ void main(string[] args) {
 	//latticeMCSMappedCrossing12();
 	//crossing12();
 	//latticeMapped2();
-	MCSForm();
+	chessBoard();
+	//MCSForm();
 	//mcsMapped();
 	//printProperties();
 	//gridMapped();
