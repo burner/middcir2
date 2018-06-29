@@ -513,6 +513,7 @@ void lattice(int nc, int nr) {
 	auto tlRslt = tl.calcAC();
 	auto rsltTL = ResultPlot(tl.name(), tlRslt);
 
+
 	/*closedQuorumListWriter(tl.read, 
 		format("./CQL/Lattice_%02d_%02d/read_%02d_%02d.json", nc, nr, 
 			getConfig().permutationStart(), getConfig().permutationStop()));
@@ -522,7 +523,10 @@ void lattice(int nc, int nr) {
 			getConfig().permutationStart(), getConfig().permutationStop()));
 	*/
 
-	//gnuPlot(format("Results/Lattice%sX%s", nr, nc), "", rsltTL);
+	gnuPlot(format("Results/Lattice%sX%s", nr, nc), "", rsltTL);
+	auto f = File(format("Results/Lattice%sX%s/graph.tex", nr, nc), "w");
+	auto ltw = f.lockingTextWriter();
+	tl.getGraph().toTikz(ltw);
 }
 
 void latticeMapped() {
@@ -1046,7 +1050,7 @@ void main(string[] args) {
 	//checkGraphUnique("graphs8nodes3.json");
 	//checkGraphUnique("graphs9nodes3.json");
 	//fiveMapping();
-	//lattice(4,4);
+	lattice(2,2);
 	//gridAgainstGrid(4,4);
 	//MCSAgainstMCS(5);
 	//latticeMapped();
