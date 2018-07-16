@@ -48,6 +48,8 @@ int[] sortForMappingByFeature(G)(auto ref G from, auto ref G to,
 
 VertexStat[] sortVerticesByFeature(G)(auto ref G g, Feature[] sortBy) {
 	import graphmeasures;
+	assert(!sortBy.empty);
+
 	VertexStat[] ret;
 	auto f = floyd(g);
 	f.execute(g);
@@ -78,12 +80,16 @@ VertexStat[] sortVerticesByFeature(G)(auto ref G g, Feature[] sortBy) {
 
 	sort!(delegate(VertexStat a, VertexStat b) {
 		foreach(ftr; sortBy) {
-			if(a.features[ftr] < b.features[ftr]) {
+			if(approxEqual(a.features[ftr], b.features[ftr])) {
+				continue;
+			} else if(a.features[ftr] < b.features[ftr]) {
 				return true;
+			} else {
+				return false;
 			}
 		}
 		return false;
-	}, SwapStrategy.stable)(ret);
+	})(ret);
 	return ret;
 }
 
@@ -101,8 +107,7 @@ void testLatticeMappingSort(G)(int c, int r, G pnt) {
 	auto tlRslt = tl.calcAC();
 	auto rsltTL = ResultPlot(tl.name(), tlRslt);
 
-	//auto ftr = [Feature.DiaAvg, Feature.BC];
-	auto ftr = [Feature.DiaAvg];
+	auto ftr = [Feature.DiaAvg, Feature.Dgr];
 
 	VertexStat[] stTL = sortVerticesByFeature(tl.getGraph(), ftr);
 	VertexStat[] stPnt = sortVerticesByFeature(pnt, ftr);
