@@ -3,7 +3,7 @@ module mappingsort;
 import std.array : appender, empty, back, front;
 import std.traits : EnumMembers;
 import std.container.array;
-import std.algorithm.sorting : sort;
+import std.algorithm.sorting : sort, SwapStrategy;
 import std.algorithm.iteration : sum;
 import std.stdio;
 import std.experimental.logger;
@@ -83,7 +83,7 @@ VertexStat[] sortVerticesByFeature(G)(auto ref G g, Feature[] sortBy) {
 			}
 		}
 		return false;
-	})(ret);
+	}, SwapStrategy.stable)(ret);
 	return ret;
 }
 
@@ -101,7 +101,8 @@ void testLatticeMappingSort(G)(int c, int r, G pnt) {
 	auto tlRslt = tl.calcAC();
 	auto rsltTL = ResultPlot(tl.name(), tlRslt);
 
-	auto ftr = [Feature.BC, Feature.DiaMin];
+	//auto ftr = [Feature.DiaAvg, Feature.BC];
+	auto ftr = [Feature.DiaAvg];
 
 	VertexStat[] stTL = sortVerticesByFeature(tl.getGraph(), ftr);
 	VertexStat[] stPnt = sortVerticesByFeature(pnt, ftr);
