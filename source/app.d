@@ -24,6 +24,7 @@ import protocols.circle;
 //import learning;
 import learning2;
 import plot;
+import mappingsort;
 import planar;
 import plot.gnuplot;
 import plot.mappingplot;
@@ -1050,7 +1051,7 @@ void main(string[] args) {
 	//checkGraphUnique("graphs8nodes3.json");
 	//checkGraphUnique("graphs9nodes3.json");
 	//fiveMapping();
-	lattice(2,2);
+	//lattice(2,2);
 	//gridAgainstGrid(4,4);
 	//MCSAgainstMCS(5);
 	//latticeMapped();
@@ -1061,7 +1062,8 @@ void main(string[] args) {
 	//latticeMCSMappedCrossing12();
 	//crossing12();
 	//latticeMapped2();
-	chessBoard();
+	//chessBoard();
+	testLatticeMappingSort();
 	//MCSForm();
 	//mcsMapped();
 	//printProperties();

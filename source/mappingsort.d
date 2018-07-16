@@ -10,6 +10,7 @@ import std.experimental.logger;
 
 import exceptionhandling;
 
+import mapping;
 import bitsetmodule;
 import graph;
 import graphmeasures;
@@ -22,9 +23,7 @@ enum Feature {
 	DiaAvg,
 	DiaMode,
 	DiaMedian,
-
 	Dgr,
-
 	BC
 }
 
@@ -86,6 +85,47 @@ VertexStat[] sortVerticesByFeature(G)(auto ref G g, Feature[] sortBy) {
 		return false;
 	})(ret);
 	return ret;
+}
+
+void testLatticeMappingSort() {
+	Graph!32 g = makeSix!32();
+	testLatticeMappingSort(3, 2, g);
+}
+
+void testLatticeMappingSort(G)(int c, int r, G pnt) {
+	import protocols.lattice;
+	import protocols;
+	import plot.gnuplot;
+	import plot;
+	auto tl = LatticeImpl!32(c, r);
+	auto tlRslt = tl.calcAC();
+	auto rsltTL = ResultPlot(tl.name(), tlRslt);
+
+	auto ftr = [Feature.BC, Feature.DiaMin];
+
+	VertexStat[] stTL = sortVerticesByFeature(tl.getGraph(), ftr);
+	VertexStat[] stPnt = sortVerticesByFeature(pnt, ftr);
+	assert(stTL.length == stPnt.length);
+
+	auto map = Mappings!(32,32)(tl.graph, pnt, QTF(1.0), ROW(0.5));
+	auto mapRslt = map.calcAC(tl.read, tl.write);
+	logf("TL\n%(%3s\n%)", stTL);
+	logf("PNT\n%(%3s\n%)", stPnt);
+
+	int[] mapping = new int[stTL.length];
+	foreach(idx, it; stPnt) {
+		mapping[it.id] = stTL[idx].id;
+	}
+	logf("Mapping %(%2d %)", mapping);
+
+	auto mapDirect = new Mapping!(32,32)(tl.getGraph(), pnt, mapping);
+	auto mapDirectRslt = mapDirect.calcAC(tl.read, tl.write);
+
+	gnuPlot("Results/mappingsort_tlp",  "",
+			rsltTL, 
+			ResultPlot("BestMap", map.bestResult()),
+			ResultPlot("SortMap", mapDirectRslt)
+		);
 }
 
 unittest {
