@@ -3,7 +3,7 @@ module mappingsort;
 import std.array : appender, empty, back, front;
 import std.traits : EnumMembers;
 import std.container.array;
-import std.algorithm.sorting : sort, SwapStrategy;
+import std.algorithm.sorting : sort;
 import std.algorithm.iteration : sum;
 import std.stdio;
 import std.experimental.logger;
@@ -79,6 +79,7 @@ VertexStat[] sortVerticesByFeature(G)(auto ref G g, Feature[] sortBy) {
 	}
 
 	sort!(delegate(VertexStat a, VertexStat b) {
+		import std.math : approxEqual;
 		foreach(ftr; sortBy) {
 			if(approxEqual(a.features[ftr], b.features[ftr])) {
 				continue;
@@ -94,8 +95,8 @@ VertexStat[] sortVerticesByFeature(G)(auto ref G g, Feature[] sortBy) {
 }
 
 void testLatticeMappingSort() {
-	Graph!32 g = makeSix!32();
-	testLatticeMappingSort(3, 2, g);
+	Graph!32 g = makeNine!32();
+	testLatticeMappingSort(3, 3, g);
 }
 
 void testLatticeMappingSort(G)(int c, int r, G pnt) {
