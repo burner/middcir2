@@ -100,39 +100,74 @@ void testLatticeMappingSort() {
 }
 
 void testLatticeMappingSort(G)(int c, int r, G pnt) {
+	import std.conv : to;
+	import std.format : format;
+	import std.algorithm : map, joiner;
 	import protocols.lattice;
 	import protocols;
 	import plot.gnuplot;
 	import plot;
+	{
+		auto f = File("Results/mappingsort_tlp/pnt.tex", "w");
+		auto ltw = f.lockingTextWriter();
+		pnt.toTikz(ltw);
+	}
+
 	auto tl = LatticeImpl!32(c, r);
+	{
+		auto f = File("Results/mappingsort_tlp/lnt.tex", "w");
+		auto ltw = f.lockingTextWriter();
+		tl.getGraph().toTikz(ltw);
+	}
 	auto tlRslt = tl.calcAC();
 	auto rsltTL = ResultPlot(tl.name(), tlRslt);
 
-	auto ftr = [Feature.DiaAvg, Feature.Dgr];
+	auto mapping = Mappings!(32,32)(tl.graph, pnt, QTF(1.0), ROW(0.5));
+	auto mapRslt = mapping.calcAC(tl.read, tl.write);
 
-	VertexStat[] stTL = sortVerticesByFeature(tl.getGraph(), ftr);
-	VertexStat[] stPnt = sortVerticesByFeature(pnt, ftr);
-	assert(stTL.length == stPnt.length);
+	auto ftrList = [ Feature.DiaMin, Feature.DiaMax, Feature.DiaAvg, Feature.DiaMode, Feature.DiaMedian,
+			Feature.Dgr, Feature.BC
+		];
 
-	auto map = Mappings!(32,32)(tl.graph, pnt, QTF(1.0), ROW(0.5));
-	auto mapRslt = map.calcAC(tl.read, tl.write);
-	logf("TL\n%(%3s\n%)", stTL);
-	logf("PNT\n%(%3s\n%)", stPnt);
+	Feature[][] ftrs;
+	foreach(i; ftrList) {
+		ftrs ~= [i];
+		foreach(j; ftrList) {
+			if(i != j) {
+				ftrs ~= [i, j];
+			}
+		}
+	}	
 
-	int[] mapping = new int[stTL.length];
-	foreach(idx, it; stPnt) {
-		mapping[it.id] = stTL[idx].id;
+	foreach(ftr; ftrs) {
+		string ftrStr = ftr.map!(a => to!string(a)).joiner("_").to!string();
+		logf("\"%s\"", ftrStr);
+
+		VertexStat[] stTL = sortVerticesByFeature(tl.getGraph(), ftr);
+		VertexStat[] stPnt = sortVerticesByFeature(pnt, ftr);
+		assert(stTL.length == stPnt.length);
+		logf("TL\n%(%3s\n%)", stTL);
+		logf("PNT\n%(%3s\n%)", stPnt);
+
+		int[] mappings = new int[stTL.length];
+		foreach(idx, it; stPnt) {
+			mappings[it.id] = stTL[idx].id;
+		}
+		logf("Mapping %(%2d %)", mappings);
+
+		auto mapDirect = new Mapping!(32,32)(tl.getGraph(), pnt, mappings);
+		auto mapDirectRslt = mapDirect.calcAC(tl.read, tl.write);
+		logf("awr %s", mapDirectRslt.awr());
+		logf("optimal mapping %s awr %s", mapping.bestMapping().mapping[], 
+				mapRslt.awr()
+			);
+
+		gnuPlot(format("Results/mappingsort_tlp/%s", ftrStr),  "",
+				rsltTL, 
+				ResultPlot("BestMap", mapping.bestResult()),
+				ResultPlot("SortMap", mapDirectRslt)
+			);
 	}
-	logf("Mapping %(%2d %)", mapping);
-
-	auto mapDirect = new Mapping!(32,32)(tl.getGraph(), pnt, mapping);
-	auto mapDirectRslt = mapDirect.calcAC(tl.read, tl.write);
-
-	gnuPlot("Results/mappingsort_tlp",  "",
-			rsltTL, 
-			ResultPlot("BestMap", map.bestResult()),
-			ResultPlot("SortMap", mapDirectRslt)
-		);
 }
 
 unittest {
