@@ -564,6 +564,44 @@ void latticeMapped2() {
 	);
 }
 
+void latticeMapped3() {
+	auto lattice = LatticeImpl!32(3,3);
+	auto latticeRslt = lattice.calcAC();
+	auto pnt = makeNine!32();
+	//logf("%s", pnt.toString());
+
+	{
+	auto f = File(format("Results/Lattice3x3Mapped_3/graph.tex"), "w");
+	auto ltw = f.lockingTextWriter();
+	pnt.toTikz(ltw);
+	}
+
+	auto map = Mappings!(32,32)(lattice.graph, pnt, QTF(1.0), ROW(0.5));
+	auto mapRslt = map.calcAC(lattice.read, lattice.write);
+
+	mappingPlot("Results/Lattice3x3Mapped_3", map,
+			ResultPlot(lattice.name(), latticeRslt),
+			ResultPlot(map.name(lattice.name()), mapRslt)
+	);
+}
+
+void latticeMapped3_2() {
+	auto lattice = LatticeImpl!32(3,3);
+	auto latticeRslt = lattice.calcAC();
+	auto pnt = makeNine!32();
+	//logf("%s", pnt.toString());
+
+	{
+	auto f = File(format("Results/Lattice3x3Mapped_3/graph.tex"), "w");
+	auto ltw = f.lockingTextWriter();
+	pnt.toTikz(ltw);
+	}
+
+	auto map = new Mapping!(32,32)(lattice.graph, pnt, [1, 2, 0, 6, 4, 3, 8, 5, 7]);
+	auto mapRslt = map.calcAC(lattice.read, lattice.write);
+	writefln("awr %s", mapRslt.awr());
+}
+
 void crossings6() {
 	auto pnt = makeSix!32();
 
@@ -1062,8 +1100,9 @@ void main(string[] args) {
 	//latticeMCSMappedCrossing12();
 	//crossing12();
 	//latticeMapped2();
+	latticeMapped3_2();
 	//chessBoard();
-	testLatticeMappingSort();
+	//testLatticeMappingSort();
 	//MCSForm();
 	//mcsMapped();
 	//printProperties();
